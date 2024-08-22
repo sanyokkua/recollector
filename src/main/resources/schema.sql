@@ -6,6 +6,9 @@ CREATE TABLE IF NOT EXISTS users
     KEY,
     email
     VARCHAR
+    UNIQUE
+    NOT
+    NULL
 (
     255
 ) UNIQUE NOT NULL,

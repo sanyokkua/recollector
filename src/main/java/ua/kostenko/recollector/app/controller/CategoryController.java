@@ -1,9 +1,10 @@
 package ua.kostenko.recollector.app.controller;
 
 import org.springframework.web.bind.annotation.*;
+import ua.kostenko.recollector.app.dto.CategoryDto;
+import ua.kostenko.recollector.app.dto.response.AppResponse;
 import ua.kostenko.recollector.app.entity.Category;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -11,32 +12,33 @@ import java.util.List;
 public class CategoryController {
 
     @PostMapping
-    public String createCategory(@RequestBody Category category) {
+    public AppResponse<CategoryDto> createCategory(@RequestBody Category category) {
         // Handle category creation
-        return "Category created";
+        return AppResponse.<CategoryDto>builder().build();
     }
 
     @GetMapping
-    public List<Category> getAllCategories() {
+    public AppResponse<List<CategoryDto>> getAllCategories() {
         // Retrieve all categories
-        return new ArrayList<>();
+        return AppResponse.<List<CategoryDto>>builder().build();
     }
 
     @GetMapping("/{category_id}")
-    public Category getCategory(@PathVariable("category_id") Long categoryId) {
+    public AppResponse<CategoryDto> getCategory(@PathVariable("category_id") Long categoryId) {
         // Retrieve a specific category
-        return new Category();
+        return AppResponse.<CategoryDto>builder().build();
     }
 
     @PutMapping("/{category_id}")
-    public String updateCategory(@PathVariable("category_id") Long categoryId, @RequestBody Category category) {
+    public AppResponse<CategoryDto> updateCategory(@PathVariable("category_id") Long categoryId,
+                                                   @RequestBody Category category) {
         // Update a specific category
-        return "Category updated";
+        return AppResponse.<CategoryDto>builder().build();
     }
 
     @DeleteMapping("/{category_id}")
-    public String deleteCategory(@PathVariable("category_id") Long categoryId) {
+    public AppResponse<Void> deleteCategory(@PathVariable("category_id") Long categoryId) {
         // Delete a specific category
-        return "Category deleted";
+        return AppResponse.<Void>builder().build();
     }
 }

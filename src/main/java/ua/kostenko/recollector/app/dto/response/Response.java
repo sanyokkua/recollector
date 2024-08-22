@@ -1,4 +1,4 @@
-package ua.kostenko.recollector.app.dto;
+package ua.kostenko.recollector.app.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
@@ -11,11 +11,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class ItemDto {
+public class Response<T> {
 
-    private Long itemId;
-    private Long categoryId;
-    private String itemName;
-    private String itemStatus;
-    private String itemNotes;
+    private int statusCode;
+    private String statusMessage;
+    private T data;
+    private MetaInfo meta;
+    private String error;
 }
