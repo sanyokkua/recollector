@@ -895,6 +895,7 @@ frontend/lerna-debug.log*
 
 frontend/node_modules
 frontend/dist
+frontend/build
 frontend/dist-ssr
 frontend/*.local
 
@@ -908,3 +909,4 @@ frontend/*.ntvs*
 frontend/*.njsproj
 frontend/*.sln
 frontend/*.sw?
+frontend/node/

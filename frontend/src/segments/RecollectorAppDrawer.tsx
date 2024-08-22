@@ -10,6 +10,7 @@ import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import SettingsIcon from '@mui/icons-material/Settings';
 import {drawerSwitchOff} from "../store/features/drawer/drawerSlice.ts";
 import {useAppDispatch, useAppSelector} from "../store/hooks.ts";
+import {Link} from 'react-router-dom';
 
 type DrawerItem = {
     path: string;
@@ -69,7 +70,7 @@ const RecollectorAppDrawer: React.FC = () => {
     const dispatch = useAppDispatch();
 
     const items = drawerItems.map(item => <ListItem key={item.path} disablePadding>
-        <ListItemButton href={item.path}>
+        <ListItemButton component={Link} to={item.path}>
             <ListItemIcon>
                 {item.icon}
             </ListItemIcon>
@@ -79,7 +80,7 @@ const RecollectorAppDrawer: React.FC = () => {
         </ListItemButton>
     </ListItem>);
     const settings = drawerItemsSettings.map(item => <ListItem key={item.path} disablePadding>
-        <ListItemButton href={item.path}>
+        <ListItemButton component={Link} to={item.path}>
             <ListItemIcon>
                 {item.icon}
             </ListItemIcon>
