@@ -11,7 +11,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "items")
+@Table(name = "items", schema = "recollector")
 @Data
 @Builder
 @NoArgsConstructor
@@ -26,7 +26,7 @@ public class Item {
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
 
-    @Column(name = "item_name", nullable = false, length = 255)
+    @Column(name = "item_name", nullable = false)
     private String itemName;
 
     @Column(name = "item_status", nullable = false, length = 50)

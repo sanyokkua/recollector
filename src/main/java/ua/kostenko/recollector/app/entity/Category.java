@@ -9,9 +9,10 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
-@Table(name = "categories")
+@Table(name = "categories", schema = "recollector")
 @Data
 @Builder
 @NoArgsConstructor
@@ -26,7 +27,7 @@ public class Category {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "category_name", nullable = false, length = 255)
+    @Column(name = "category_name", nullable = false)
     private String categoryName;
 
     @Column(name = "created_at", updatable = false)
@@ -36,4 +37,7 @@ public class Category {
     @Column(name = "updated_at")
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Item> items;
 }

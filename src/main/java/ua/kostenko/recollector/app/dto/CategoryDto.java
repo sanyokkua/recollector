@@ -15,4 +15,7 @@ public class CategoryDto {
 
     private Long categoryId;
     private String categoryName;
+    private Long todoItems;
+    private Long inProgressItems;
+    private Long finishedItems;
 }

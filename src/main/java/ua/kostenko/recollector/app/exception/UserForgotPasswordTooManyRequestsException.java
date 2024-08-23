@@ -1,4 +1,4 @@
-package ua.kostenko.recollector.app.exceptions;
+package ua.kostenko.recollector.app.exception;
 
 public class UserForgotPasswordTooManyRequestsException extends RuntimeException {
 

@@ -1,96 +1,37 @@
-CREATE TABLE IF NOT EXISTS users
-(
-    user_id
-    SERIAL
-    PRIMARY
-    KEY,
-    email
-    VARCHAR
-    UNIQUE
-    NOT
-    NULL
-(
-    255
-) UNIQUE NOT NULL,
-    password_hash VARCHAR
-(
-    255
-) NOT NULL,
-    reset_token VARCHAR
-(
-    255
-),
-    reset_token_expiry TIMESTAMP,
-    last_login TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
+-- Create schema
+CREATE SCHEMA "recollector";
 
-CREATE TABLE IF NOT EXISTS categories
-(
-    category_id
-    SERIAL
-    PRIMARY
-    KEY,
-    user_id
-    INTEGER
-    REFERENCES
-    users
-(
-    user_id
-),
-    category_name VARCHAR
-(
-    255
-) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
+-- Create users table
+CREATE TABLE "recollector"."users" (
+    "user_id"            serial PRIMARY KEY,
+    "email"              VARCHAR(255) NOT NULL UNIQUE,
+    "password_hash"      VARCHAR(255) NOT NULL,
+    "reset_token"        VARCHAR(255),
+    "reset_token_expiry" timestamptz,
+    "last_login"         timestamptz,
+    "created_at"         timestamptz  NOT NULL,
+    "updated_at"         timestamptz  NOT NULL
+                                   );
 
-CREATE TABLE IF NOT EXISTS items
-(
-    item_id
-    SERIAL
-    PRIMARY
-    KEY,
-    category_id
-    INTEGER
-    REFERENCES
-    categories
-(
-    category_id
-),
-    item_name VARCHAR
-(
-    255
-) NOT NULL,
-    item_status VARCHAR
-(
-    50
-) NOT NULL,
-    item_notes TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
+-- Create categories table
+CREATE TABLE "recollector"."categories" (
+    "category_id"   serial PRIMARY KEY,
+    "user_id"       INTEGER      NOT NULL REFERENCES "recollector"."users" ("user_id") ON DELETE CASCADE,
+    "category_name" VARCHAR(255) NOT NULL,
+    "created_at"    timestamptz  NOT NULL,
+    "updated_at"    timestamptz  NOT NULL
+                                        );
 
-CREATE TABLE IF NOT EXISTS custom_fields
-(
-    field_id
-    SERIAL
-    PRIMARY
-    KEY,
-    item_id
-    INTEGER
-    REFERENCES
-    items
-(
-    item_id
-),
-    field_name VARCHAR
-(
-    255
-) NOT NULL,
-    field_value TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
+-- Create items table
+CREATE TABLE "recollector"."items" (
+    "item_id"     serial PRIMARY KEY,
+    "category_id" INTEGER      NOT NULL REFERENCES "recollector"."categories" ("category_id") ON DELETE CASCADE,
+    "item_name"   VARCHAR(255) NOT NULL,
+    "item_status" VARCHAR(50)  NOT NULL,
+    "item_notes"  text,
+    "created_at"  timestamptz  NOT NULL,
+    "updated_at"  timestamptz  NOT NULL
+                                   );
+
+CREATE UNIQUE INDEX "idx_category_name_user_id" ON "recollector"."categories" ("category_name", "user_id");
+CREATE UNIQUE INDEX "idx_item_name_category_id" ON "recollector"."items" ("item_name", "category_id");

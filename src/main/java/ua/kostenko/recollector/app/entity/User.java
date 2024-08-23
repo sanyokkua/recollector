@@ -9,9 +9,10 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
-@Table(name = "users")
+@Table(name = "users", schema = "recollector")
 @Data
 @Builder
 @NoArgsConstructor
@@ -22,13 +23,13 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
 
-    @Column(nullable = false, unique = true, length = 255)
+    @Column(nullable = false, unique = true)
     private String email;
 
-    @Column(nullable = false, length = 255)
+    @Column(nullable = false)
     private String passwordHash;
 
-    @Column(length = 255)
+    @Column
     private String resetToken;
 
     @Column
@@ -44,4 +45,8 @@ public class User {
     @Column(name = "updated_at")
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Category> categories;
 }
+

@@ -10,8 +10,5 @@ import lombok.Data;
 public class UserDto {
 
     private String email;
-    private String password;
-    private String passwordConfirm;
-    private String passwordResetToken;
     private String jwtToken;
 }
