@@ -1,0 +1,3 @@
+databaseChangeLog:
+  - include:
+      file: classpath:/db/changelog/00001-create-db-initial-schema.sql

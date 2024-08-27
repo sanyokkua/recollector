@@ -32,7 +32,8 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable);
         http.authorizeHttpRequests(auth -> auth.requestMatchers("/",
                                                                 "/public/**",
-                                                                "/static/**",
+                                                                "/static/**", "/js/**",
+// TODO: investigate why "js" is not under static
                                                                 "api/v1/auth/login",
                                                                 "api/v1/auth/register",
                                                                 "api/v1/auth/forgot-password",
