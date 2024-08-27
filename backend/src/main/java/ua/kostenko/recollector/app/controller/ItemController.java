@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ua.kostenko.recollector.app.dto.ItemDto;
+import ua.kostenko.recollector.app.dto.ItemFilter;
 import ua.kostenko.recollector.app.dto.response.Response;
 import ua.kostenko.recollector.app.exception.ItemValidationException;
 import ua.kostenko.recollector.app.security.AuthService;
@@ -34,10 +35,11 @@ public class ItemController {
     }
 
     @GetMapping
-    public ResponseEntity<Response<List<ItemDto>>> getAllItems(@PathVariable("categoryId") Long categoryId) {
+    public ResponseEntity<Response<List<ItemDto>>> getAllItems(@PathVariable("categoryId") Long categoryId,
+                                                               ItemFilter itemFilter) {
         var email = authService.getUserEmailFromAuthContext();
-        var dto = itemService.getAllItems(email, categoryId);
-        return ResponseHelper.buildDtoResponse(dto, HttpStatus.OK);
+        var dto = itemService.getItemsByFilters(email, categoryId, itemFilter);
+        return ResponseHelper.buildPageDtoResponse(dto, HttpStatus.OK);
     }
 
     @GetMapping("/{itemId}")

@@ -21,7 +21,8 @@ public class CustomRestExceptionHandler {
                        CategoryAlreadyExistsException.class,
                        ItemAlreadyExistsException.class,
                        ItemValidationException.class,
-                       UserChangePasswordException.class})
+                       UserChangePasswordException.class,
+                       IllegalSpecificationParamException.class})
     public ResponseEntity<Response<Object>> handleBadRequestException(Exception ex, HttpServletRequest request) {
         return buildErrorResponse(ex, request, HttpStatus.BAD_REQUEST);
     }

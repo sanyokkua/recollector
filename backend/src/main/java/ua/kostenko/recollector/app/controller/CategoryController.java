@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ua.kostenko.recollector.app.dto.CategoryDto;
+import ua.kostenko.recollector.app.dto.CategoryFilter;
 import ua.kostenko.recollector.app.dto.response.Response;
 import ua.kostenko.recollector.app.exception.CategoryValidationException;
 import ua.kostenko.recollector.app.security.AuthService;
@@ -30,10 +31,10 @@ public class CategoryController {
     }
 
     @GetMapping
-    public ResponseEntity<Response<List<CategoryDto>>> getAllCategories() {
+    public ResponseEntity<Response<List<CategoryDto>>> getAllCategories(CategoryFilter categoryFilter) {
         var email = authService.getUserEmailFromAuthContext();
-        var dto = categoryService.getAllCategories(email);
-        return ResponseHelper.buildDtoResponse(dto, HttpStatus.OK);
+        var dto = categoryService.getCategoriesByFilters(email, categoryFilter);
+        return ResponseHelper.buildPageDtoResponse(dto, HttpStatus.OK);
     }
 
     @GetMapping("/{category_id}")

@@ -13,8 +13,10 @@ import lombok.NoArgsConstructor;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class PaginationInfo {
 
-    private Integer currentPage;
-    private Integer totalPages;
-    private Integer totalItems;
-    private Integer itemsPerPage;
+    private int currentPage;
+    private int itemsPerPage;
+    private int totalPages;
+    private long totalItems;
+    private String sortField;
+    private String sortDirection;
 }

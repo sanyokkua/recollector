@@ -2,12 +2,16 @@ package ua.kostenko.recollector.app.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ua.kostenko.recollector.app.dto.ItemDto;
+import ua.kostenko.recollector.app.dto.ItemFilter;
 import ua.kostenko.recollector.app.entity.Category;
 import ua.kostenko.recollector.app.entity.Item;
 import ua.kostenko.recollector.app.entity.ItemStatus;
 import ua.kostenko.recollector.app.entity.User;
+import ua.kostenko.recollector.app.entity.specification.ItemSpecification;
 import ua.kostenko.recollector.app.exception.*;
 import ua.kostenko.recollector.app.repository.CategoryRepository;
 import ua.kostenko.recollector.app.repository.ItemRepository;
@@ -18,6 +22,16 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
+import static ua.kostenko.recollector.app.util.PageRequestUtils.createPageRequest;
+
+/**
+ * Service class for handling operations related to {@link Item}.
+ * Provides methods to create, retrieve, update, and delete items,
+ * as well as filtering items based on various criteria.
+ * <p>
+ * Logging is enabled using Lombok's @Slf4j annotation for capturing
+ * important events and debugging information.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -31,7 +45,7 @@ public class ItemService {
      * Creates a new item.
      *
      * @param userEmail the email of the user creating the item
-     * @param itemDto   the item data transfer object
+     * @param itemDto   the item data transfer object containing item details
      *
      * @return the created item as a DTO
      */
@@ -39,21 +53,29 @@ public class ItemService {
         log.info("Creating item for user: {}", userEmail);
 
         validateItemDto(itemDto);
-        var user = getUser(userEmail);
-        var category = validateUserHasCategoryAndGetIt(itemDto.getCategoryId(), user.getUserId());
+        User user = getUser(userEmail);
+        Category category = validateUserHasCategoryAndGetIt(itemDto.getCategoryId(), user.getUserId());
         validateItemExistenceForName(itemDto.getItemName(), "", category);
 
-        var newItem = buildNewItem(itemDto, category);
-        var createdItem = itemRepository.saveAndFlush(newItem);
+        Item newItem = buildNewItem(itemDto, category);
+        Item createdItem = itemRepository.saveAndFlush(newItem);
 
         log.info("Item created successfully with id: {}", createdItem.getItemId());
         return ItemUtils.mapToDto(createdItem);
     }
 
+    /**
+     * Validates that an item with the given name does not already exist in the specified category.
+     *
+     * @param newName     the new item name
+     * @param currentName the current item name
+     * @param category    the category where the item is to be created
+     *
+     * @throws ItemAlreadyExistsException if an item with the new name already exists in the category
+     */
     private void validateItemExistenceForName(String newName, String currentName, Category category) {
-        var isNewNameAndCurrentTheSame = currentName.equals(newName);
-        var exists = itemRepository.existsByItemNameAndCategory_CategoryId(newName, category.getCategoryId());
-        if (!isNewNameAndCurrentTheSame && exists) {
+        if (!currentName.equals(newName) && itemRepository.existsByItemNameAndCategory_CategoryId(newName,
+                                                                                                  category.getCategoryId())) {
             throw new ItemAlreadyExistsException("Item with name '" + newName + "' already exists");
         }
     }
@@ -70,13 +92,47 @@ public class ItemService {
         log.info("Retrieving all items for user: {} and categoryId: {}", userEmail, categoryId);
 
         validateCategoryId(categoryId);
-        var user = getUser(userEmail);
+        User user = getUser(userEmail);
         validateUserHasCategoryAndGetIt(categoryId, user.getUserId());
 
-        var items = itemRepository.findAllByCategory_CategoryId(categoryId);
+        List<Item> items = itemRepository.findAllByCategory_CategoryId(categoryId);
 
         log.info("Retrieved {} items for categoryId: {}", items.size(), categoryId);
         return items.stream().map(ItemUtils::mapToDto).toList();
+    }
+
+    /**
+     * Retrieves items based on filters and pagination.
+     *
+     * @param userEmail  the email of the user
+     * @param categoryId the ID of the category
+     * @param itemFilter the filter criteria and pagination information
+     *
+     * @return a page of item DTOs
+     */
+    public Page<ItemDto> getItemsByFilters(String userEmail, Long categoryId, ItemFilter itemFilter) {
+        validateCategoryId(categoryId);
+        User user = getUser(userEmail);
+        validateUserHasCategoryAndGetIt(categoryId, user.getUserId());
+
+        var pageable = createPageRequest(itemFilter.getPage(),
+                                         itemFilter.getSize(),
+                                         Sort.by(itemFilter.getDirection(), "itemName"));
+
+        var spec = ItemSpecification.builder()
+                                    .userId(user.getUserId())
+                                    .categoryId(itemFilter.getCategoryId())
+                                    .itemName(itemFilter.getItemName())
+                                    .itemStatus(itemFilter.getItemStatus())
+                                    .build();
+
+        Page<Item> resultFromDb = itemRepository.findAll(spec, pageable);
+
+        log.info("Retrieved {} items for categoryId: {} with filters: {}",
+                 resultFromDb.getTotalElements(),
+                 categoryId,
+                 itemFilter);
+        return resultFromDb.map(ItemUtils::mapToDto);
     }
 
     /**
@@ -93,11 +149,11 @@ public class ItemService {
 
         validateCategoryId(categoryId);
         validateItemId(itemId);
-        var user = getUser(userEmail);
+        User user = getUser(userEmail);
         validateUserHasCategoryAndGetIt(categoryId, user.getUserId());
 
-        var foundItem = itemRepository.findByItemIdAndCategory_CategoryId(itemId, categoryId)
-                                      .orElseThrow(() -> new ItemNotFoundException("Item with id '" + itemId + "' not found in category with id '" + categoryId + "'"));
+        Item foundItem = itemRepository.findByItemIdAndCategory_CategoryId(itemId, categoryId)
+                                       .orElseThrow(() -> new ItemNotFoundException("Item with id '" + itemId + "' not found in category with id '" + categoryId + "'"));
 
         log.info("Item retrieved successfully with id: {}", itemId);
         return ItemUtils.mapToDto(foundItem);
@@ -117,15 +173,16 @@ public class ItemService {
         validateItemDto(itemDto);
         validateItemId(itemDto.getItemId());
 
-        var user = getUser(userEmail);
-        var category = validateUserHasCategoryAndGetIt(itemDto.getCategoryId(), user.getUserId());
+        User user = getUser(userEmail);
+        Category category = validateUserHasCategoryAndGetIt(itemDto.getCategoryId(), user.getUserId());
 
-        var foundItem = itemRepository.findByItemIdAndCategory_CategoryId(itemDto.getItemId(), itemDto.getCategoryId())
-                                      .orElseThrow(() -> new ItemNotFoundException("Item with id '" + itemDto.getItemId() + "' not found in category with id '" + itemDto.getCategoryId() + "'"));
+        Item foundItem = itemRepository.findByItemIdAndCategory_CategoryId(itemDto.getItemId(), itemDto.getCategoryId())
+                                       .orElseThrow(() -> new ItemNotFoundException("Item with id '" + itemDto.getItemId() + "' not found in category with id '" + itemDto.getCategoryId() + "'"));
+
         validateItemExistenceForName(itemDto.getItemName(), foundItem.getItemName(), category);
 
         updateItemDetails(foundItem, itemDto);
-        var updatedItem = itemRepository.saveAndFlush(foundItem);
+        Item updatedItem = itemRepository.saveAndFlush(foundItem);
 
         log.info("Item updated successfully with id: {}", updatedItem.getItemId());
         return ItemUtils.mapToDto(updatedItem);
@@ -145,12 +202,10 @@ public class ItemService {
 
         validateCategoryId(categoryId);
         validateItemId(itemId);
-        var user = getUser(userEmail);
+        User user = getUser(userEmail);
         validateUserHasCategoryAndGetIt(categoryId, user.getUserId());
 
-        var foundItem = itemRepository.findByItemIdAndCategory_CategoryId(itemId, categoryId);
-
-        if (foundItem.isEmpty()) {
+        if (itemRepository.findByItemIdAndCategory_CategoryId(itemId, categoryId).isEmpty()) {
             log.warn("Item with id '{}' not found in category with id '{}'", itemId, categoryId);
             return "Item with id '" + itemId + "' not found in category with id '" + categoryId + "'";
         }
@@ -160,13 +215,27 @@ public class ItemService {
         return "Item with id '" + itemId + "' deleted from category with id '" + categoryId + "'";
     }
 
+    /**
+     * Validates that the given item DTO is not null and contains valid data.
+     *
+     * @param itemDto the item DTO to validate
+     *
+     * @throws ItemValidationException if the item DTO is null or contains invalid data
+     */
     private void validateItemDto(ItemDto itemDto) {
         if (!ItemUtils.isValidItem(itemDto)) {
             log.error("Invalid itemDto: {}", itemDto);
-            throw new ItemValidationException("Item is null or has invalid fields values");
+            throw new ItemValidationException("Item is null or has invalid field values");
         }
     }
 
+    /**
+     * Validates that the given category ID is not null.
+     *
+     * @param categoryId the category ID to validate
+     *
+     * @throws CategoryValidationException if the category ID is null
+     */
     private void validateCategoryId(Long categoryId) {
         if (Objects.isNull(categoryId)) {
             log.error("CategoryId is null");
@@ -174,6 +243,13 @@ public class ItemService {
         }
     }
 
+    /**
+     * Validates that the given item ID is not null.
+     *
+     * @param itemId the item ID to validate
+     *
+     * @throws ItemValidationException if the item ID is null
+     */
     private void validateItemId(Long itemId) {
         if (Objects.isNull(itemId)) {
             log.error("ItemId is null");
@@ -181,11 +257,28 @@ public class ItemService {
         }
     }
 
+    /**
+     * Retrieves a user by their email.
+     *
+     * @param userEmail the email of the user
+     *
+     * @return the user entity
+     */
     private User getUser(String userEmail) {
         log.debug("Finding user by email: {}", userEmail);
         return authService.findUserByEmail(userEmail);
     }
 
+    /**
+     * Retrieves a category by its ID for a specific user and validates its existence.
+     *
+     * @param categoryId the ID of the category
+     * @param userId     the ID of the user
+     *
+     * @return the category entity
+     *
+     * @throws CategoryNotFoundException if the category is not found for the user
+     */
     private Category validateUserHasCategoryAndGetIt(Long categoryId, Long userId) {
         log.debug("Finding category with id: {} for userId: {}", categoryId, userId);
         var category = categoryRepository.findByCategoryIdAndUser_UserId(categoryId, userId);
@@ -196,6 +289,14 @@ public class ItemService {
         return category.get();
     }
 
+    /**
+     * Builds a new {@link Item} entity from the given DTO and category.
+     *
+     * @param itemDto  the item data transfer object
+     * @param category the category to associate with the item
+     *
+     * @return the new {@link Item} entity
+     */
     private Item buildNewItem(ItemDto itemDto, Category category) {
         var status = ItemStatus.valueOf(itemDto.getItemStatus());
         var creationTime = LocalDateTime.now();
@@ -209,6 +310,12 @@ public class ItemService {
                    .build();
     }
 
+    /**
+     * Updates the details of an existing item with the provided DTO.
+     *
+     * @param item    the item entity to update
+     * @param itemDto the item data transfer object containing updated information
+     */
     private void updateItemDetails(Item item, ItemDto itemDto) {
         var status = ItemStatus.valueOf(itemDto.getItemStatus());
         item.setItemName(itemDto.getItemName());
