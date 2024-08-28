@@ -96,8 +96,7 @@ public class ResponseHelper {
      */
     public static <T> ResponseEntity<Response<T>> buildDtoErrorResponse(T data, HttpStatus status, Exception ex) {
         var msg = getErrorMessage(ex);
-        var responseBody = Response.<T>builder()
-                                   .data(data).statusCode(status.value()).statusMessage(status.name())
+        var responseBody = Response.<T>builder().data(data).statusCode(status.value()).statusMessage(status.name())
                                    .error(msg)
                                    .build();
 

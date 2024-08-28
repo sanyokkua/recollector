@@ -272,8 +272,7 @@ public class CategoryService {
      */
     private Category buildNewCategory(CategoryDto categoryDto, User user) {
         LocalDateTime now = LocalDateTime.now();
-        return Category.builder()
-                       .user(user).createdAt(now).updatedAt(now)
+        return Category.builder().user(user).createdAt(now).updatedAt(now)
                        .categoryName(categoryDto.getCategoryName())
                        .build();
     }

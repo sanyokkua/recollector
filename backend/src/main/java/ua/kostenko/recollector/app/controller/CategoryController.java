@@ -1,6 +1,7 @@
 package ua.kostenko.recollector.app.controller;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -15,40 +16,84 @@ import ua.kostenko.recollector.app.util.ResponseHelper;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * REST controller for managing categories.
+ * Provides endpoints for creating, retrieving, updating, and deleting categories.
+ */
 @RestController
 @RequestMapping("api/v1/categories")
 @RequiredArgsConstructor
+@Slf4j
 public class CategoryController {
 
     private final CategoryService categoryService;
     private final AuthService authService;
 
+    /**
+     * Creates a new category.
+     *
+     * @param category the category details to be created.
+     *
+     * @return a {@link ResponseEntity} with the created category details and HTTP status {@code 201 Created}.
+     */
     @PostMapping
     public ResponseEntity<Response<CategoryDto>> createCategory(@RequestBody CategoryDto category) {
         var email = authService.getUserEmailFromAuthContext();
+        log.info("Creating category for user with email: {}", email);
         var dto = categoryService.createCategory(email, category);
         return ResponseHelper.buildDtoResponse(dto, HttpStatus.CREATED);
     }
 
+    /**
+     * Retrieves all categories for the authenticated user, optionally filtered by certain criteria.
+     *
+     * @param categoryFilter the filter criteria for categories.
+     *
+     * @return a {@link ResponseEntity} with a list of categories matching the filter criteria and HTTP status {@code 200 OK}.
+     */
     @GetMapping
     public ResponseEntity<Response<List<CategoryDto>>> getAllCategories(CategoryFilter categoryFilter) {
         var email = authService.getUserEmailFromAuthContext();
+        log.info("Retrieving categories for user with email: {}", email);
         var dto = categoryService.getCategoriesByFilters(email, categoryFilter);
         return ResponseHelper.buildPageDtoResponse(dto, HttpStatus.OK);
     }
 
+    /**
+     * Retrieves a specific category by its ID.
+     *
+     * @param categoryId the ID of the category to be retrieved.
+     *
+     * @return a {@link ResponseEntity} with the category details and HTTP status {@code 200 OK}.
+     */
     @GetMapping("/{category_id}")
     public ResponseEntity<Response<CategoryDto>> getCategory(@PathVariable("category_id") Long categoryId) {
         var email = authService.getUserEmailFromAuthContext();
+        log.info("Retrieving category with ID: {} for user with email: {}", categoryId, email);
         var dto = categoryService.getCategory(email, categoryId);
         return ResponseHelper.buildDtoResponse(dto, HttpStatus.OK);
     }
 
+    /**
+     * Updates an existing category.
+     *
+     * @param categoryId the ID of the category to be updated.
+     * @param category   the updated category details.
+     *
+     * @return a {@link ResponseEntity} with the updated category details and HTTP status {@code 202 Accepted}.
+     *
+     * @throws CategoryValidationException if the category ID in the path and the payload do not match.
+     */
     @PutMapping("/{category_id}")
     public ResponseEntity<Response<CategoryDto>> updateCategory(@PathVariable("category_id") Long categoryId,
                                                                 @RequestBody CategoryDto category) {
         var email = authService.getUserEmailFromAuthContext();
+        log.info("Updating category with ID: {} for user with email: {}", categoryId, email);
+
         if (Objects.nonNull(categoryId) && !categoryId.equals(category.getCategoryId())) {
+            log.error("Category ID in path ({}) does not match ID in payload ({})",
+                      categoryId,
+                      category.getCategoryId());
             throw new CategoryValidationException("Category id in path and payload mismatch");
         }
 
@@ -56,9 +101,17 @@ public class CategoryController {
         return ResponseHelper.buildDtoResponse(dto, HttpStatus.ACCEPTED);
     }
 
+    /**
+     * Deletes a specific category by its ID.
+     *
+     * @param categoryId the ID of the category to be deleted.
+     *
+     * @return a {@link ResponseEntity} with a message indicating the result of the deletion and HTTP status {@code 200 OK}.
+     */
     @DeleteMapping("/{category_id}")
     public ResponseEntity<Response<String>> deleteCategory(@PathVariable("category_id") Long categoryId) {
         var email = authService.getUserEmailFromAuthContext();
+        log.info("Deleting category with ID: {} for user with email: {}", categoryId, email);
         var dto = categoryService.deleteCategory(email, categoryId);
         return ResponseHelper.buildDtoResponse(dto, HttpStatus.OK);
     }
