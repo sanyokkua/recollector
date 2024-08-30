@@ -139,13 +139,15 @@ public class AuthService implements AuthenticationManager {
     public void forgotPassword(ForgotPasswordRequestDto requestDto) {
         log.info("Processing forgot password request for email: {}", requestDto.getEmail());
 
-        User user = findUserByEmail(requestDto.getEmail());
-        checkResetTokenAvailability(user);
-        generateAndSaveResetToken(user);
-
-        log.info("Forgot password request processed successfully for email: {}. Reset token generated.",
-                 requestDto.getEmail());
-        log.debug("Generated reset token for email '{}': {}", requestDto.getEmail(), user.getResetToken());
+        try {
+            User user = findUserByEmail(requestDto.getEmail());
+            checkResetTokenAvailability(user);
+            generateAndSaveResetToken(user);
+            log.debug("Generated reset token for email '{}': {}", requestDto.getEmail(), user.getResetToken());
+            log.info("Forgot password request processed for email: {}. Reset token generated.", requestDto.getEmail());
+        } catch (Exception ex) {
+            log.warn("There was bad try to recover password for email '{}'", requestDto.getEmail(), ex);
+        }
     }
 
     /**

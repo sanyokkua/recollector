@@ -6,6 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import ua.kostenko.recollector.app.dto.ItemDto;
 import ua.kostenko.recollector.app.entity.Item;
+import ua.kostenko.recollector.app.exception.CategoryValidationException;
+import ua.kostenko.recollector.app.exception.ItemValidationException;
 
 import java.util.Objects;
 
@@ -64,12 +66,54 @@ public class ItemUtils {
         }
 
         ItemDto itemDto = ItemDto.builder()
-                                 .itemId(item.getItemId())
+                                 .itemId(item.getItemId()).categoryId(item.getCategory().getCategoryId())
                                  .itemName(item.getItemName())
                                  .itemStatus(item.getItemStatus())
                                  .itemNotes(item.getItemNotes())
                                  .build();
         log.debug("Mapped Item to ItemDto: {}", itemDto);
         return itemDto;
+    }
+
+    /**
+     * Validates that the given item DTO is not null and contains valid data.
+     *
+     * @param itemDto the item DTO to validate
+     *
+     * @throws ItemValidationException if the item DTO is null or contains invalid data
+     */
+    public static void validateItemDto(ItemDto itemDto) {
+        if (!ItemUtils.isValidItem(itemDto)) {
+            log.error("Invalid itemDto: {}", itemDto);
+            throw new ItemValidationException("Item is null or has invalid field values");
+        }
+    }
+
+    /**
+     * Validates that the given category ID is not null.
+     *
+     * @param categoryId the category ID to validate
+     *
+     * @throws CategoryValidationException if the category ID is null
+     */
+    public static void validateCategoryId(Long categoryId) {
+        if (Objects.isNull(categoryId)) {
+            log.error("CategoryId is null");
+            throw new CategoryValidationException("CategoryId is null");
+        }
+    }
+
+    /**
+     * Validates that the given item ID is not null.
+     *
+     * @param itemId the item ID to validate
+     *
+     * @throws ItemValidationException if the item ID is null
+     */
+    public static void validateItemId(Long itemId) {
+        if (Objects.isNull(itemId)) {
+            log.error("ItemId is null");
+            throw new ItemValidationException("ItemId is null");
+        }
     }
 }

@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import ua.kostenko.recollector.app.dto.response.Response;
 
 import java.util.List;
+import java.util.Objects;
 
 import static ua.kostenko.recollector.app.util.PageRequestUtils.buildMetaInfo;
 
@@ -70,7 +71,7 @@ public class ResponseHelper {
      */
     public static <T> ResponseEntity<Response<List<T>>> buildPageDtoResponse(Page<T> data, HttpStatus status) {
         var metaInfo = buildMetaInfo(data);
-        List<T> items = data.getContent();
+        List<T> items = Objects.nonNull(data) ? data.getContent() : List.of();
 
         var responseBody = Response.<List<T>>builder()
                                    .data(items)

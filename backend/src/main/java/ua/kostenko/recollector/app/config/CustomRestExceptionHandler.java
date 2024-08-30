@@ -21,13 +21,13 @@ public class CustomRestExceptionHandler {
                        CategoryAlreadyExistsException.class,
                        ItemAlreadyExistsException.class,
                        ItemValidationException.class,
-                       UserChangePasswordException.class,
+                       UserChangePasswordException.class, UserAccountDeleteException.class,
                        IllegalSpecificationParamException.class})
     public ResponseEntity<Response<Object>> handleBadRequestException(Exception ex, HttpServletRequest request) {
         return buildErrorResponse(ex, request, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler({UserLoginException.class, UserNotAuthenticatedException.class})
+    @ExceptionHandler({UserLoginException.class, UserNotAuthenticatedException.class, JwtTokenException.class})
     public ResponseEntity<Response<Object>> handleUnauthorizedException(Exception ex, HttpServletRequest request) {
         return buildErrorResponse(ex, request, HttpStatus.UNAUTHORIZED);
     }

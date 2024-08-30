@@ -13,15 +13,12 @@ import ua.kostenko.recollector.app.entity.User;
 import ua.kostenko.recollector.app.entity.specification.CategorySpecification;
 import ua.kostenko.recollector.app.exception.CategoryAlreadyExistsException;
 import ua.kostenko.recollector.app.exception.CategoryNotFoundException;
-import ua.kostenko.recollector.app.exception.CategoryValidationException;
 import ua.kostenko.recollector.app.repository.CategoryRepository;
 import ua.kostenko.recollector.app.repository.ItemRepository;
 import ua.kostenko.recollector.app.security.AuthService;
 import ua.kostenko.recollector.app.util.CategoryUtils;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Objects;
 
 import static ua.kostenko.recollector.app.util.PageRequestUtils.createPageRequest;
 
@@ -49,7 +46,7 @@ public class CategoryService {
     public CategoryDto createCategory(String userEmail, CategoryDto category) {
         log.info("Creating category for user: {}", userEmail);
 
-        validateCategoryDto(category);
+        CategoryUtils.validateCategoryDto(category);
         User user = getUser(userEmail);
         String categoryName = category.getCategoryName();
 
@@ -60,27 +57,6 @@ public class CategoryService {
 
         log.info("Category created successfully with id: {}", createdCategory.getCategoryId());
         return CategoryUtils.mapToDto(createdCategory);
-    }
-
-    /**
-     * Retrieves all categories for a given user.
-     *
-     * @param userEmail the email of the user
-     *
-     * @return a list of category DTOs
-     */
-    public List<CategoryDto> getAllCategories(String userEmail) {
-        log.info("Retrieving all categories for user: {}", userEmail);
-
-        User user = getUser(userEmail);
-        List<Category> allCategories = categoryRepository.findAllByUser_UserId(user.getUserId());
-
-        List<CategoryDto> categoryDtoList = allCategories.stream().map(CategoryUtils::mapToDto).toList();
-
-        categoryDtoList.forEach(this::updateCategoryWithCounts);
-
-        log.info("Retrieved {} categories for user: {}", allCategories.size(), userEmail);
-        return categoryDtoList;
     }
 
     /**
@@ -136,8 +112,8 @@ public class CategoryService {
     public CategoryDto updateCategory(String userEmail, CategoryDto category) {
         log.info("Updating category with id: {} for user: {}", category.getCategoryId(), userEmail);
 
-        validateCategoryDto(category);
-        validateCategoryId(category.getCategoryId());
+        CategoryUtils.validateCategoryDto(category);
+        CategoryUtils.validateCategoryId(category.getCategoryId());
 
         User user = getUser(userEmail);
         Category categoryToUpdate = categoryRepository.findByCategoryIdAndUser_UserId(category.getCategoryId(),
@@ -164,7 +140,7 @@ public class CategoryService {
     public String deleteCategory(String userEmail, Long categoryId) {
         log.info("Deleting category with id: {} for user: {}", categoryId, userEmail);
 
-        validateCategoryId(categoryId);
+        CategoryUtils.validateCategoryId(categoryId);
         User user = getUser(userEmail);
         categoryRepository.findByCategoryIdAndUser_UserId(categoryId, user.getUserId())
                           .orElseThrow(() -> new CategoryNotFoundException("Category with id '" + categoryId + "' not found"));
@@ -199,36 +175,6 @@ public class CategoryService {
 
         log.info("Retrieved {} categories with filters for user: {}", resultFromDb.getTotalElements(), userEmail);
         return resultFromDb.map(CategoryUtils::mapToDto);
-    }
-
-    /**
-     * Validates a CategoryDto object.
-     * Ensures that the category name is not null or blank.
-     *
-     * @param categoryDto the category data transfer object to validate
-     *
-     * @throws CategoryValidationException if the category is invalid
-     */
-    private void validateCategoryDto(CategoryDto categoryDto) {
-        if (!CategoryUtils.isValidCategory(categoryDto)) {
-            log.error("Invalid categoryDto: {}", categoryDto);
-            throw new CategoryValidationException("Category is null or has blank name");
-        }
-    }
-
-    /**
-     * Validates a category ID.
-     * Ensures that the category ID is not null.
-     *
-     * @param categoryId the ID of the category to validate
-     *
-     * @throws CategoryValidationException if the category ID is null
-     */
-    private void validateCategoryId(Long categoryId) {
-        if (Objects.isNull(categoryId)) {
-            log.error("CategoryId is null");
-            throw new CategoryValidationException("Category id is null");
-        }
     }
 
     /**

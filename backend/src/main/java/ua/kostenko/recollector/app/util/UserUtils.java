@@ -206,7 +206,8 @@ public class UserUtils {
         if (!isPasswordConfirmValid) {
             errors.add("Password Confirm is not valid");
         }
-        if (isPasswordValid && isPasswordConfirmValid && !password.equals(passwordConfirm)) {
+        if (StringUtils.isNotBlank(password) && StringUtils.isNotBlank(passwordConfirm) && !password.equals(
+                passwordConfirm)) {
             errors.add("Passwords do not match");
         }
     }
@@ -236,7 +237,8 @@ public class UserUtils {
         if (!isCurrentPasswordValid) {
             errors.add("Current Password is not valid (in terms of structure and length)");
         }
-        if (isCurrentPasswordValid && isPasswordValid(newPassword) && currentPassword.equals(newPassword)) {
+        if (StringUtils.isNotBlank(currentPassword) && StringUtils.isNotBlank(newPassword) && currentPassword.equals(
+                newPassword)) {
             errors.add("New and Current Passwords should not match");
         }
     }

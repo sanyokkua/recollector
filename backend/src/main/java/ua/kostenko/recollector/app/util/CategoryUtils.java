@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import ua.kostenko.recollector.app.dto.CategoryDto;
 import ua.kostenko.recollector.app.entity.Category;
+import ua.kostenko.recollector.app.exception.CategoryValidationException;
 
 import java.util.Objects;
 
@@ -30,7 +31,7 @@ public class CategoryUtils {
      * @return true if the CategoryDto is valid, false otherwise
      */
     public static boolean isValidCategory(CategoryDto categoryDto) {
-        boolean isValid = !Objects.isNull(categoryDto) && !StringUtils.isBlank(categoryDto.getCategoryName());
+        var isValid = !Objects.isNull(categoryDto) && !StringUtils.isBlank(categoryDto.getCategoryName());
         log.debug("CategoryDto validation result: {}", isValid);
         return isValid;
     }
@@ -55,5 +56,35 @@ public class CategoryUtils {
                                              .build();
         log.debug("Mapped Category to CategoryDto: {}", categoryDto);
         return categoryDto;
+    }
+
+    /**
+     * Validates a CategoryDto object.
+     * Ensures that the category name is not null or blank.
+     *
+     * @param categoryDto the category data transfer object to validate
+     *
+     * @throws CategoryValidationException if the category is invalid
+     */
+    public static void validateCategoryDto(CategoryDto categoryDto) {
+        if (!CategoryUtils.isValidCategory(categoryDto)) {
+            log.error("Invalid categoryDto: {}", categoryDto);
+            throw new CategoryValidationException("Category is null or has blank name");
+        }
+    }
+
+    /**
+     * Validates a category ID.
+     * Ensures that the category ID is not null.
+     *
+     * @param categoryId the ID of the category to validate
+     *
+     * @throws CategoryValidationException if the category ID is null
+     */
+    public static void validateCategoryId(Long categoryId) {
+        if (Objects.isNull(categoryId)) {
+            log.error("CategoryId is null");
+            throw new CategoryValidationException("Category id is null");
+        }
     }
 }

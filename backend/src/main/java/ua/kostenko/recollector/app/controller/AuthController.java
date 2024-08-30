@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,7 +25,6 @@ import ua.kostenko.recollector.app.util.ResponseHelper;
 @Slf4j
 public class AuthController {
 
-    private final AuthenticationManager authenticationManager;
     private final AuthService authService;
 
     /**
@@ -54,7 +52,7 @@ public class AuthController {
     public ResponseEntity<Response<UserDto>> loginUser(@RequestBody LoginRequestDto requestDto) {
         log.info("Attempting to authenticate user with email: {}", requestDto.getEmail());
         var authentication = new UsernamePasswordAuthenticationToken(requestDto.getEmail(), requestDto.getPassword());
-        var auth = authenticationManager.authenticate(authentication);
+        var auth = authService.authenticate(authentication);
         var email = auth.getPrincipal() + "";
         var jwt = auth.getCredentials() + "";
         var userDto = UserDto.builder().email(email).jwtToken(jwt).build();

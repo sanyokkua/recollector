@@ -12,15 +12,15 @@ import ua.kostenko.recollector.app.entity.Item;
 import ua.kostenko.recollector.app.entity.ItemStatus;
 import ua.kostenko.recollector.app.entity.User;
 import ua.kostenko.recollector.app.entity.specification.ItemSpecification;
-import ua.kostenko.recollector.app.exception.*;
+import ua.kostenko.recollector.app.exception.CategoryNotFoundException;
+import ua.kostenko.recollector.app.exception.ItemAlreadyExistsException;
+import ua.kostenko.recollector.app.exception.ItemNotFoundException;
 import ua.kostenko.recollector.app.repository.CategoryRepository;
 import ua.kostenko.recollector.app.repository.ItemRepository;
 import ua.kostenko.recollector.app.security.AuthService;
 import ua.kostenko.recollector.app.util.ItemUtils;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Objects;
 
 import static ua.kostenko.recollector.app.util.PageRequestUtils.createPageRequest;
 
@@ -52,7 +52,7 @@ public class ItemService {
     public ItemDto createItem(String userEmail, ItemDto itemDto) {
         log.info("Creating item for user: {}", userEmail);
 
-        validateItemDto(itemDto);
+        ItemUtils.validateItemDto(itemDto);
         User user = getUser(userEmail);
         Category category = validateUserHasCategoryAndGetIt(itemDto.getCategoryId(), user.getUserId());
         validateItemExistenceForName(itemDto.getItemName(), "", category);
@@ -81,27 +81,6 @@ public class ItemService {
     }
 
     /**
-     * Retrieves all items for a given user and category.
-     *
-     * @param userEmail  the email of the user
-     * @param categoryId the ID of the category
-     *
-     * @return a list of item DTOs
-     */
-    public List<ItemDto> getAllItems(String userEmail, Long categoryId) {
-        log.info("Retrieving all items for user: {} and categoryId: {}", userEmail, categoryId);
-
-        validateCategoryId(categoryId);
-        User user = getUser(userEmail);
-        validateUserHasCategoryAndGetIt(categoryId, user.getUserId());
-
-        List<Item> items = itemRepository.findAllByCategory_CategoryId(categoryId);
-
-        log.info("Retrieved {} items for categoryId: {}", items.size(), categoryId);
-        return items.stream().map(ItemUtils::mapToDto).toList();
-    }
-
-    /**
      * Retrieves items based on filters and pagination.
      *
      * @param userEmail  the email of the user
@@ -111,7 +90,7 @@ public class ItemService {
      * @return a page of item DTOs
      */
     public Page<ItemDto> getItemsByFilters(String userEmail, Long categoryId, ItemFilter itemFilter) {
-        validateCategoryId(categoryId);
+        ItemUtils.validateCategoryId(categoryId);
         User user = getUser(userEmail);
         validateUserHasCategoryAndGetIt(categoryId, user.getUserId());
 
@@ -147,8 +126,8 @@ public class ItemService {
     public ItemDto getItem(String userEmail, Long categoryId, Long itemId) {
         log.info("Retrieving item with id: {} for user: {} and categoryId: {}", itemId, userEmail, categoryId);
 
-        validateCategoryId(categoryId);
-        validateItemId(itemId);
+        ItemUtils.validateCategoryId(categoryId);
+        ItemUtils.validateItemId(itemId);
         User user = getUser(userEmail);
         validateUserHasCategoryAndGetIt(categoryId, user.getUserId());
 
@@ -170,8 +149,8 @@ public class ItemService {
     public ItemDto updateItem(String userEmail, ItemDto itemDto) {
         log.info("Updating item with id: {} for user: {}", itemDto.getItemId(), userEmail);
 
-        validateItemDto(itemDto);
-        validateItemId(itemDto.getItemId());
+        ItemUtils.validateItemDto(itemDto);
+        ItemUtils.validateItemId(itemDto.getItemId());
 
         User user = getUser(userEmail);
         Category category = validateUserHasCategoryAndGetIt(itemDto.getCategoryId(), user.getUserId());
@@ -200,8 +179,8 @@ public class ItemService {
     public String deleteItem(String userEmail, Long categoryId, Long itemId) {
         log.info("Deleting item with id: {} for user: {} and categoryId: {}", itemId, userEmail, categoryId);
 
-        validateCategoryId(categoryId);
-        validateItemId(itemId);
+        ItemUtils.validateCategoryId(categoryId);
+        ItemUtils.validateItemId(itemId);
         User user = getUser(userEmail);
         validateUserHasCategoryAndGetIt(categoryId, user.getUserId());
 
@@ -213,48 +192,6 @@ public class ItemService {
         itemRepository.deleteById(itemId);
         log.info("Item with id '{}' deleted from category with id '{}'", itemId, categoryId);
         return "Item with id '" + itemId + "' deleted from category with id '" + categoryId + "'";
-    }
-
-    /**
-     * Validates that the given item DTO is not null and contains valid data.
-     *
-     * @param itemDto the item DTO to validate
-     *
-     * @throws ItemValidationException if the item DTO is null or contains invalid data
-     */
-    private void validateItemDto(ItemDto itemDto) {
-        if (!ItemUtils.isValidItem(itemDto)) {
-            log.error("Invalid itemDto: {}", itemDto);
-            throw new ItemValidationException("Item is null or has invalid field values");
-        }
-    }
-
-    /**
-     * Validates that the given category ID is not null.
-     *
-     * @param categoryId the category ID to validate
-     *
-     * @throws CategoryValidationException if the category ID is null
-     */
-    private void validateCategoryId(Long categoryId) {
-        if (Objects.isNull(categoryId)) {
-            log.error("CategoryId is null");
-            throw new CategoryValidationException("CategoryId is null");
-        }
-    }
-
-    /**
-     * Validates that the given item ID is not null.
-     *
-     * @param itemId the item ID to validate
-     *
-     * @throws ItemValidationException if the item ID is null
-     */
-    private void validateItemId(Long itemId) {
-        if (Objects.isNull(itemId)) {
-            log.error("ItemId is null");
-            throw new ItemValidationException("ItemId is null");
-        }
     }
 
     /**

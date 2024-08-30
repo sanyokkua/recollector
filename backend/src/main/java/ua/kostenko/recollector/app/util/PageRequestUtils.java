@@ -10,6 +10,8 @@ import org.springframework.data.domain.Sort;
 import ua.kostenko.recollector.app.dto.response.MetaInfo;
 import ua.kostenko.recollector.app.dto.response.PaginationInfo;
 
+import java.util.Objects;
+
 /**
  * Utility class for handling pagination-related operations.
  * Provides static methods to build MetaInfo from a Page object and to create a Pageable object.
@@ -32,6 +34,10 @@ public class PageRequestUtils {
      * @return the {@link MetaInfo} object containing pagination metadata
      */
     public static <T> MetaInfo buildMetaInfo(Page<T> data) {
+        if (Objects.isNull(data)) {
+            return MetaInfo.builder().build();
+        }
+
         var currentPage = data.getNumber() + 1;
         var itemsPerPage = data.getNumberOfElements();
         var totalPages = data.getTotalPages();

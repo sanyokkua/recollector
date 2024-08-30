@@ -30,8 +30,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, JwtRequestFilter jwtRequestFilter) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable);
+        http.httpBasic(AbstractHttpConfigurer::disable);
         http.authorizeHttpRequests(auth -> auth.requestMatchers("/", "/public/**", "/static/**", "/js/**",
-// TODO: investigate why "js" is not under static
+                                                                // TODO: investigate why "js" is not under static
                                                                 "api/v1/auth/login",
                                                                 "api/v1/auth/register",
                                                                 "api/v1/auth/forgot-password",
