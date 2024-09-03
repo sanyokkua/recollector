@@ -35,8 +35,7 @@ public class JwtUtil {
         log.info("Generating token for username: {}", username);
         Date currentDate = dateService.getCurrentDate();
         Date expirationDate = dateService.getAdjustedDateByHours(currentDate, 1, DateService.Adjuster.HOURS);
-        return Jwts.builder()
-                   .subject(username).issuedAt(currentDate).expiration(expirationDate)
+        return Jwts.builder().subject(username).issuedAt(currentDate).expiration(expirationDate)
                    .signWith(secretKey)
                    .compact();
     }

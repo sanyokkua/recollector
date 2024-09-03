@@ -2,6 +2,9 @@ package ua.kostenko.recollector.app.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -12,18 +15,19 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import ua.kostenko.recollector.app.dto.CategoryDto;
 import ua.kostenko.recollector.app.dto.CategoryFilter;
+import ua.kostenko.recollector.app.exception.*;
 import ua.kostenko.recollector.app.security.AuthService;
 import ua.kostenko.recollector.app.security.JwtUtil;
 import ua.kostenko.recollector.app.service.CategoryService;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
@@ -33,7 +37,6 @@ class CategoryControllerTest {
 
     private static final String BASE_URL = "/api/v1/categories";
     private static final String CATEGORY_NAME = "Test Category";
-    private static final String CATEGORY_NOT_FOUND_MESSAGE = "Category not found";
     private static final String VALID_EMAIL = "valid@email.com";
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -46,6 +49,15 @@ class CategoryControllerTest {
     private AuthService authService;
     @MockBean
     private JwtUtil jwtUtil;
+
+    private static Stream<Arguments> exceptionScenarios() {
+        String msg = "Failed";
+        return Stream.of(Arguments.of(new UserNotAuthenticatedException(msg), HttpStatus.UNAUTHORIZED, msg),
+                         Arguments.of(new CategoryValidationException(msg), HttpStatus.BAD_REQUEST, msg),
+                         Arguments.of(new CategoryAlreadyExistsException(msg), HttpStatus.BAD_REQUEST, msg),
+                         Arguments.of(new IllegalSpecificationParamException(msg), HttpStatus.BAD_REQUEST, msg),
+                         Arguments.of(new CategoryNotFoundException(msg), HttpStatus.NOT_FOUND, msg));
+    }
 
     @Test
     void createCategory_ValidInput_ShouldReturnCreatedCategory() throws Exception {
@@ -124,11 +136,80 @@ class CategoryControllerTest {
 
     @Test
     void updateCategory_ValidInput_ShouldReturnUpdatedCategory() throws Exception {
-        //TODO:
+        long categoryId = 1L;
+        CategoryDto responseDto = CategoryDto.builder().categoryName(CATEGORY_NAME).categoryId(categoryId).build();
+
+        when(authService.getUserEmailFromAuthContext()).thenReturn(VALID_EMAIL);
+        when(categoryService.updateCategory(VALID_EMAIL, responseDto)).thenReturn(responseDto);
+
+        mockMvc.perform(put(BASE_URL + "/{category_id}", categoryId).contentType(MediaType.APPLICATION_JSON)
+                                                                    .content(objectMapper.writeValueAsString(responseDto)))
+               .andExpect(jsonPath("$.statusCode").value(HttpStatus.ACCEPTED.value()))
+               .andExpect(jsonPath("$.statusMessage").value(HttpStatus.ACCEPTED.name()))
+               .andExpect(jsonPath("$.data.categoryName").value(responseDto.getCategoryName()))
+               .andExpect(jsonPath("$.data.categoryId").value(responseDto.getCategoryId()))
+               .andExpect(jsonPath("$.meta").doesNotExist())
+               .andExpect(jsonPath("$.error").doesNotExist())
+               .andDo(print());
     }
 
     @Test
     void deleteCategory_ValidInput_ShouldReturnDeletedCategory() throws Exception {
-        //TODO:
+        long categoryId = 1L;
+        when(authService.getUserEmailFromAuthContext()).thenReturn(VALID_EMAIL);
+        when(categoryService.deleteCategory(VALID_EMAIL, categoryId)).thenReturn("Test Msg");
+
+        mockMvc.perform(delete(BASE_URL + "/{category_id}", categoryId))
+               .andExpect(jsonPath("$.statusCode").value(HttpStatus.OK.value()))
+               .andExpect(jsonPath("$.statusMessage").value(HttpStatus.OK.name()))
+               .andExpect(jsonPath("$.data.categoryName").doesNotExist())
+               .andExpect(jsonPath("$.data.categoryId").doesNotExist())
+               .andExpect(jsonPath("$.data").value("Test Msg"))
+               .andExpect(jsonPath("$.meta").doesNotExist())
+               .andExpect(jsonPath("$.error").doesNotExist())
+               .andDo(print());
+    }
+
+    @Test
+    void updateCategory_invalidInput_ShouldThrowExceptionAndAdviceProcessResponse() throws Exception {
+        long categoryId = 1L;
+        long differentCategoryId = 222L;
+        CategoryDto responseDto = CategoryDto.builder().categoryName(CATEGORY_NAME).categoryId(categoryId).build();
+
+        when(authService.getUserEmailFromAuthContext()).thenReturn(VALID_EMAIL);
+        when(categoryService.updateCategory(VALID_EMAIL, responseDto)).thenReturn(responseDto);
+
+        mockMvc.perform(put(BASE_URL + "/{category_id}", differentCategoryId).contentType(MediaType.APPLICATION_JSON)
+                                                                             .content(objectMapper.writeValueAsString(
+                                                                                     responseDto)))
+               .andExpect(jsonPath("$.statusCode").value(HttpStatus.BAD_REQUEST.value()))
+               .andExpect(jsonPath("$.statusMessage").value(HttpStatus.BAD_REQUEST.name()))
+               .andExpect(jsonPath("$.data.categoryName").doesNotExist())
+               .andExpect(jsonPath("$.data.categoryId").doesNotExist())
+               .andExpect(jsonPath("$.meta").doesNotExist())
+               .andExpect(jsonPath("$.error").value(
+                       "CategoryValidationException: Category id in path and payload mismatch"))
+               .andDo(print());
+    }
+
+    @ParameterizedTest
+    @MethodSource("exceptionScenarios")
+    void anyMethod_invalidInput_ShouldThrowExceptionAndAdviceProcessResponse(Exception exception, HttpStatus status,
+                                                                             String errorMessage) throws Exception {
+        long categoryId = 1L;
+        CategoryDto responseDto = CategoryDto.builder().categoryName(CATEGORY_NAME).categoryId(categoryId).build();
+
+        when(authService.getUserEmailFromAuthContext()).thenReturn(VALID_EMAIL);
+        when(categoryService.updateCategory(VALID_EMAIL, responseDto)).thenThrow(exception);
+
+        mockMvc.perform(put(BASE_URL + "/{category_id}", categoryId).contentType(MediaType.APPLICATION_JSON)
+                                                                    .content(objectMapper.writeValueAsString(responseDto)))
+               .andExpect(jsonPath("$.statusCode").value(status.value()))
+               .andExpect(jsonPath("$.statusMessage").value(status.name()))
+               .andExpect(jsonPath("$.data.categoryName").doesNotExist())
+               .andExpect(jsonPath("$.data.categoryId").doesNotExist())
+               .andExpect(jsonPath("$.meta").doesNotExist())
+               .andExpect(jsonPath("$.error").value(exception.getClass().getSimpleName() + ": " + errorMessage))
+               .andDo(print());
     }
 }

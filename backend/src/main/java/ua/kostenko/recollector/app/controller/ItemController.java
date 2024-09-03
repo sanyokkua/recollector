@@ -98,10 +98,6 @@ public class ItemController {
     public ResponseEntity<Response<ItemDto>> updateItem(@PathVariable("categoryId") Long categoryId,
                                                         @PathVariable("itemId") Long itemId,
                                                         @RequestBody ItemDto itemDto) {
-        if (Objects.isNull(itemDto)) {
-            log.error("Validation failed: Item payload is null");
-            throw new ItemValidationException("Item cannot be null");
-        }
         if (!categoryId.equals(itemDto.getCategoryId()) || !itemId.equals(itemDto.getItemId())) {
             log.error("Validation failed: Path categoryId and itemId do not match the values in item payload");
             throw new ItemValidationException(

@@ -65,8 +65,7 @@ public class ItemUtils {
             return null;
         }
 
-        ItemDto itemDto = ItemDto.builder()
-                                 .itemId(item.getItemId()).categoryId(item.getCategory().getCategoryId())
+        ItemDto itemDto = ItemDto.builder().itemId(item.getItemId()).categoryId(item.getCategory().getCategoryId())
                                  .itemName(item.getItemName())
                                  .itemStatus(item.getItemStatus())
                                  .itemNotes(item.getItemNotes())

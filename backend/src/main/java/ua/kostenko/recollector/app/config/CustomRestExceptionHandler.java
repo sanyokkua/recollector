@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ua.kostenko.recollector.app.dto.response.Response;
@@ -21,8 +22,11 @@ public class CustomRestExceptionHandler {
                        CategoryAlreadyExistsException.class,
                        ItemAlreadyExistsException.class,
                        ItemValidationException.class,
-                       UserChangePasswordException.class, UserAccountDeleteException.class,
-                       IllegalSpecificationParamException.class})
+                       UserChangePasswordException.class,
+                       UserAccountDeleteException.class,
+                       IllegalSpecificationParamException.class,
+                       HttpMessageNotReadableException.class,
+                       IllegalArgumentException.class})
     public ResponseEntity<Response<Object>> handleBadRequestException(Exception ex, HttpServletRequest request) {
         return buildErrorResponse(ex, request, HttpStatus.BAD_REQUEST);
     }
