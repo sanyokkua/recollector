@@ -35,6 +35,10 @@ public class CategoryService {
     private final CategoryRepository categoryRepository;
     private final ItemRepository itemRepository;
 
+    private static String buildErrorMessage(Long categoryId) {
+        return "Category with id '" + categoryId + "' not found";
+    }
+
     /**
      * Creates a new category.
      *
@@ -92,7 +96,8 @@ public class CategoryService {
 
         User user = getUser(userEmail);
         Category foundCategory = categoryRepository.findByCategoryIdAndUser_UserId(categoryId, user.getUserId())
-                                                   .orElseThrow(() -> new CategoryNotFoundException("Category with id '" + categoryId + "' not found"));
+                                                   .orElseThrow(() -> new CategoryNotFoundException(buildErrorMessage(
+                                                           categoryId)));
 
         CategoryDto categoryDto = CategoryUtils.mapToDto(foundCategory);
         updateCategoryWithCounts(categoryDto);
@@ -118,8 +123,8 @@ public class CategoryService {
         User user = getUser(userEmail);
         Category categoryToUpdate = categoryRepository.findByCategoryIdAndUser_UserId(category.getCategoryId(),
                                                                                       user.getUserId())
-                                                      .orElseThrow(() -> new CategoryNotFoundException(
-                                                              "Category with id '" + category.getCategoryId() + "' not found"));
+                                                      .orElseThrow(() -> new CategoryNotFoundException(buildErrorMessage(
+                                                              category.getCategoryId())));
 
         checkCategoryExists(category.getCategoryName(), categoryToUpdate.getCategoryName(), user.getUserId());
         updateCategoryDetails(categoryToUpdate, category);
@@ -142,8 +147,11 @@ public class CategoryService {
 
         CategoryUtils.validateCategoryId(categoryId);
         User user = getUser(userEmail);
-        categoryRepository.findByCategoryIdAndUser_UserId(categoryId, user.getUserId())
-                          .orElseThrow(() -> new CategoryNotFoundException("Category with id '" + categoryId + "' not found"));
+        var category = categoryRepository.findByCategoryIdAndUser_UserId(categoryId, user.getUserId());
+
+        if (category.isEmpty()) {
+            throw new CategoryNotFoundException(buildErrorMessage(categoryId));
+        }
 
         categoryRepository.deleteById(categoryId);
         log.info("Category with id '{}' deleted", categoryId);
@@ -167,8 +175,7 @@ public class CategoryService {
                                          Sort.by(categoryFilter.getDirection(), "categoryName"));
 
         var spec = CategorySpecification.builder()
-                                        .userId(user.getUserId())
-                                        .categoryName(categoryFilter.getName())
+                                        .userId(user.getUserId()).categoryName(categoryFilter.getCategoryName())
                                         .build();
 
         Page<Category> resultFromDb = categoryRepository.findAll(spec, pageable);

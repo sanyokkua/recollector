@@ -79,7 +79,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 log.warn("Invalid JWT token for user '{}'", email);
             }
         } else {
-            log.debug("User '{}' is already authenticated or no valid JWT token provided", email);
+            log.debug("User '{}' is not authenticated or no valid JWT token provided", email);
         }
 
         // Continue the filter chain

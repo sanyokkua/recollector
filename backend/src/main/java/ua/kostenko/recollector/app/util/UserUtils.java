@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
 public class UserUtils {
 
     private static final int MIN_PASSWORD_LENGTH = 6;
-    private static final int MAX_PASSWORD_LENGTH = 16;
+    private static final int MAX_PASSWORD_LENGTH = 24;
     private static final String EMAIL_REGEX = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$";
     private static final Pattern EMAIL_PATTERN = Pattern.compile(EMAIL_REGEX);
 

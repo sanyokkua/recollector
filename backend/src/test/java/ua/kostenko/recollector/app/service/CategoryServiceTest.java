@@ -196,8 +196,7 @@ class CategoryServiceTest {
     @Test
     void getCategoriesByFilters_whenFiltersApplied_returnsPagedCategoryDto() {
         // Arrange
-        CategoryFilter filter = CategoryFilter.builder()
-                                              .name("Work")
+        CategoryFilter filter = CategoryFilter.builder().categoryName("Work")
                                               .page(0)
                                               .size(10)
                                               .direction(Sort.Direction.ASC)

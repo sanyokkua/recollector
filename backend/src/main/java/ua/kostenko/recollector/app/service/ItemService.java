@@ -41,6 +41,10 @@ public class ItemService {
     private final ItemRepository itemRepository;
     private final CategoryRepository categoryRepository;
 
+    private static String buildErrorMessage(Long categoryId, Long itemId) {
+        return "Item with id '" + itemId + "' not found in category with id '" + categoryId + "'";
+    }
+
     /**
      * Creates a new item.
      *
@@ -132,7 +136,8 @@ public class ItemService {
         validateUserHasCategoryAndGetIt(categoryId, user.getUserId());
 
         Item foundItem = itemRepository.findByItemIdAndCategory_CategoryId(itemId, categoryId)
-                                       .orElseThrow(() -> new ItemNotFoundException("Item with id '" + itemId + "' not found in category with id '" + categoryId + "'"));
+                                       .orElseThrow(() -> new ItemNotFoundException(buildErrorMessage(categoryId,
+                                                                                                      itemId)));
 
         log.info("Item retrieved successfully with id: {}", itemId);
         return ItemUtils.mapToDto(foundItem);
@@ -156,7 +161,8 @@ public class ItemService {
         Category category = validateUserHasCategoryAndGetIt(itemDto.getCategoryId(), user.getUserId());
 
         Item foundItem = itemRepository.findByItemIdAndCategory_CategoryId(itemDto.getItemId(), itemDto.getCategoryId())
-                                       .orElseThrow(() -> new ItemNotFoundException("Item with id '" + itemDto.getItemId() + "' not found in category with id '" + itemDto.getCategoryId() + "'"));
+                                       .orElseThrow(() -> new ItemNotFoundException(buildErrorMessage(itemDto.getCategoryId(),
+                                                                                                      itemDto.getItemId())));
 
         validateItemExistenceForName(itemDto.getItemName(), foundItem.getItemName(), category);
 
@@ -186,7 +192,7 @@ public class ItemService {
 
         if (itemRepository.findByItemIdAndCategory_CategoryId(itemId, categoryId).isEmpty()) {
             log.warn("Item with id '{}' not found in category with id '{}'", itemId, categoryId);
-            return "Item with id '" + itemId + "' not found in category with id '" + categoryId + "'";
+            return buildErrorMessage(categoryId, itemId);
         }
 
         itemRepository.deleteById(itemId);

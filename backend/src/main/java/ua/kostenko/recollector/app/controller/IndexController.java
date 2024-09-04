@@ -17,6 +17,7 @@ public class IndexController {
      *
      * @return the name of the view to be rendered, in this case, "index".
      */
+    @SuppressWarnings("SameReturnValue")
     @RequestMapping(value = "/")
     public String index() {
         log.info("Accessing the index page");

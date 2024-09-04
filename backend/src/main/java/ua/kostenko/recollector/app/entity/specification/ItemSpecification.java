@@ -43,7 +43,7 @@ public class ItemSpecification implements Specification<Item> {
         predicate = cb.and(predicate, cb.equal(categoryJoin.get("categoryId"), categoryId));
 
         if (StringUtils.isNotBlank(itemName)) {
-            predicate = cb.and(predicate, cb.like(cb.lower(root.get("itemName")), "%" + itemName.toLowerCase() + "%"));
+            predicate = cb.and(predicate, cb.like(root.get("itemName"), "%" + itemName + "%"));
         }
 
         if (StringUtils.isNotBlank(itemStatus)) {

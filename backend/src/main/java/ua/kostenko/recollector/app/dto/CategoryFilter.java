@@ -14,6 +14,6 @@ public class CategoryFilter {
 
     private int page = 0;
     private int size = 2;
-    private String name = "";
+    private String categoryName = "";
     private Sort.Direction direction = Sort.Direction.ASC;
 }

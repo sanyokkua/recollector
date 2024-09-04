@@ -193,7 +193,7 @@ public class AuthService implements AuthenticationManager {
 
         user.setPasswordHash(passwordEncoder.encode(requestDto.getPassword()));
         clearResetToken(user);
-
+        // TODO: Change behavior of the change password and blacklist current JWT after password change
         return saveUserAndReturnDto(user, "password changed");
     }
 

@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import ua.kostenko.recollector.app.dto.response.Response;
@@ -36,6 +38,11 @@ public class CustomRestExceptionHandler {
         return buildErrorResponse(ex, request, HttpStatus.UNAUTHORIZED);
     }
 
+    @ExceptionHandler({AccessDeniedException.class})
+    public ResponseEntity<Response<Object>> handleAccessDeniedException(Exception ex, HttpServletRequest request) {
+        return buildErrorResponse(ex, request, HttpStatus.FORBIDDEN);
+    }
+
     @ExceptionHandler({UserNotFoundException.class, CategoryNotFoundException.class, ItemNotFoundException.class})
     public ResponseEntity<Response<Object>> handleNotFoundException(Exception ex, HttpServletRequest request) {
         return buildErrorResponse(ex, request, HttpStatus.NOT_FOUND);
@@ -58,4 +65,10 @@ public class CustomRestExceptionHandler {
         var requestBody = request.getAttribute("requestBody");
         return ResponseHelper.buildDtoErrorResponse(requestBody, status, ex);
     }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<String> handleAuthenticationException(AuthenticationException ex) {
+        return new ResponseEntity<>("Unauthorized access", HttpStatus.UNAUTHORIZED);
+    }
+
 }

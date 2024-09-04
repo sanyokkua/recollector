@@ -82,8 +82,7 @@ class CategoryControllerTest {
     void getAllCategories_ValidInput_ShouldReturnAllCategories() throws Exception {
         CategoryFilter requestDto = CategoryFilter.builder()
                                                   .page(1)
-                                                  .size(2)
-                                                  .name("")
+                                                  .size(2).categoryName("")
                                                   .direction(Sort.Direction.ASC)
                                                   .build();
         CategoryDto dto1 = CategoryDto.builder().categoryName(CATEGORY_NAME).categoryId(1L).build();

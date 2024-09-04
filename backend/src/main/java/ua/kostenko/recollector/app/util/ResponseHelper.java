@@ -96,12 +96,19 @@ public class ResponseHelper {
      * @return a {@link ResponseEntity} containing the error response
      */
     public static <T> ResponseEntity<Response<T>> buildDtoErrorResponse(T data, HttpStatus status, Exception ex) {
-        var msg = getErrorMessage(ex);
-        var responseBody = Response.<T>builder().data(data).statusCode(status.value()).statusMessage(status.name())
-                                   .error(msg)
-                                   .build();
+        var responseBody = createErrorResponseBody(data, status, ex);
 
         log.error("Built error response with status {}: {}", status, responseBody);
         return ResponseEntity.status(status).body(responseBody);
+    }
+
+    public static <T> Response<T> createErrorResponseBody(T data, HttpStatus status, Exception ex) {
+        var msg = getErrorMessage(ex);
+        return Response.<T>builder()
+                       .data(data)
+                       .statusCode(status.value())
+                       .statusMessage(status.name())
+                       .error(msg)
+                       .build();
     }
 }
