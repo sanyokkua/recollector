@@ -1,5 +1,8 @@
 package ua.kostenko.recollector.app.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -24,6 +27,7 @@ import java.util.Objects;
 @RequestMapping("api/v1/categories/{categoryId}/items")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "Item Management", description = "Endpoints for managing items within categories, including creation, retrieval, updating, and deletion.")
 public class ItemController {
 
     private final AuthService authService;
@@ -37,9 +41,11 @@ public class ItemController {
      *
      * @return a {@link ResponseEntity} with the created item and HTTP status {@code 201 CREATED}
      */
+    @Operation(summary = "Create a new item", description = "Creates a new item within the specified category using the provided item data.")
     @PostMapping
-    public ResponseEntity<Response<ItemDto>> createItem(@PathVariable("categoryId") Long categoryId,
-                                                        @RequestBody ItemDto itemDto) {
+    public ResponseEntity<Response<ItemDto>> createItem(
+            @PathVariable("categoryId") @Parameter(description = "ID of the category to which the item belongs") Long categoryId,
+            @RequestBody @Parameter(description = "Details of the item to be created") ItemDto itemDto) {
         if (Objects.isNull(categoryId) || (Objects.nonNull(itemDto) && !categoryId.equals(itemDto.getCategoryId()))) {
             log.error("Validation failed: Category ID in path is null or does not match the item payload");
             throw new ItemValidationException("Category id cannot be empty or different in path and body");
@@ -59,9 +65,11 @@ public class ItemController {
      *
      * @return a {@link ResponseEntity} with the list of items and HTTP status {@code 200 OK}
      */
+    @Operation(summary = "Retrieve all items", description = "Retrieves all items within the specified category that match the provided filters.")
     @GetMapping
-    public ResponseEntity<Response<List<ItemDto>>> getAllItems(@PathVariable("categoryId") Long categoryId,
-                                                               ItemFilter itemFilter) {
+    public ResponseEntity<Response<List<ItemDto>>> getAllItems(
+            @PathVariable("categoryId") @Parameter(description = "ID of the category") Long categoryId,
+            @Parameter(description = "Filter criteria for items") ItemFilter itemFilter) {
         var email = authService.getUserEmailFromAuthContext();
         log.info("Fetching items for category ID {} with filters by user {}", categoryId, email);
         var dto = itemService.getItemsByFilters(email, categoryId, itemFilter);
@@ -76,9 +84,11 @@ public class ItemController {
      *
      * @return a {@link ResponseEntity} with the requested item and HTTP status {@code 200 OK}
      */
+    @Operation(summary = "Retrieve a specific item", description = "Retrieves the item with the specified ID within the specified category.")
     @GetMapping("/{itemId}")
-    public ResponseEntity<Response<ItemDto>> getItem(@PathVariable("categoryId") Long categoryId,
-                                                     @PathVariable("itemId") Long itemId) {
+    public ResponseEntity<Response<ItemDto>> getItem(
+            @PathVariable("categoryId") @Parameter(description = "ID of the category") Long categoryId,
+            @PathVariable("itemId") @Parameter(description = "ID of the item to retrieve") Long itemId) {
         var email = authService.getUserEmailFromAuthContext();
         log.info("Fetching item ID {} for category ID {} by user {}", itemId, categoryId, email);
         var dto = itemService.getItem(email, categoryId, itemId);
@@ -94,10 +104,12 @@ public class ItemController {
      *
      * @return a {@link ResponseEntity} with the updated item and HTTP status {@code 202 ACCEPTED}
      */
+    @Operation(summary = "Update an existing item", description = "Updates the item with the specified ID within the specified category using the provided item data.")
     @PutMapping("/{itemId}")
-    public ResponseEntity<Response<ItemDto>> updateItem(@PathVariable("categoryId") Long categoryId,
-                                                        @PathVariable("itemId") Long itemId,
-                                                        @RequestBody ItemDto itemDto) {
+    public ResponseEntity<Response<ItemDto>> updateItem(
+            @PathVariable("categoryId") @Parameter(description = "ID of the category") Long categoryId,
+            @PathVariable("itemId") @Parameter(description = "ID of the item to update") Long itemId,
+            @RequestBody @Parameter(description = "Updated item details") ItemDto itemDto) {
         if (!categoryId.equals(itemDto.getCategoryId()) || !itemId.equals(itemDto.getItemId())) {
             log.error("Validation failed: Path categoryId and itemId do not match the values in item payload");
             throw new ItemValidationException(
@@ -118,9 +130,11 @@ public class ItemController {
      *
      * @return a {@link ResponseEntity} with a confirmation message and HTTP status {@code 200 OK}
      */
+    @Operation(summary = "Delete a specific item", description = "Deletes the item with the specified ID within the specified category.")
     @DeleteMapping("/{itemId}")
-    public ResponseEntity<Response<String>> deleteItem(@PathVariable("categoryId") Long categoryId,
-                                                       @PathVariable("itemId") Long itemId) {
+    public ResponseEntity<Response<String>> deleteItem(
+            @PathVariable("categoryId") @Parameter(description = "ID of the category") Long categoryId,
+            @PathVariable("itemId") @Parameter(description = "ID of the item to delete") Long itemId) {
         var email = authService.getUserEmailFromAuthContext();
         log.info("Deleting item ID {} for category ID {} by user {}", itemId, categoryId, email);
         var dto = itemService.deleteItem(email, categoryId, itemId);

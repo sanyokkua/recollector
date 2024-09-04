@@ -1,0 +1,616 @@
+openapi: 3.0.1
+info:
+  title: OpenAPI definition
+  version: v0
+servers:
+  - url: http://localhost:8081
+    description: Generated server url
+tags:
+  - name: Item Management
+    description: >-
+      Endpoints for managing items within categories, including creation,
+      retrieval, updating, and deletion.
+  - name: Authentication REST Controller
+    description: >-
+      Handles user registration, login, password management, and account
+      deletion.
+  - name: Category Management
+    description: >-
+      Endpoints for managing categories including creation, retrieval, updating,
+      and deletion.
+  - name: Helper Operations
+    description: >-
+      Endpoints for retrieving helper information such as item statuses and user
+      statistics.
+paths:
+  /api/v1/categories/{category_id}:
+    get:
+      tags:
+        - Category Management
+      summary: Retrieve a specific category
+      description: Retrieves the category with the specified ID.
+      operationId: getCategory
+      parameters:
+        - name: category_id
+          in: path
+          description: ID of the category to retrieve
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: OK
+          content: { }
+    put:
+      tags:
+        - Category Management
+      summary: Update an existing category
+      description: Updates the category with the specified ID using the provided details.
+      operationId: updateCategory
+      parameters:
+        - name: category_id
+          in: path
+          description: ID of the category to be updated
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryDto'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content: { }
+    delete:
+      tags:
+        - Category Management
+      summary: Delete a specific category
+      description: Deletes the category with the specified ID.
+      operationId: deleteCategory
+      parameters:
+        - name: category_id
+          in: path
+          description: ID of the category to be deleted
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: OK
+          content: { }
+  /api/v1/categories/{categoryId}/items/{itemId}:
+    get:
+      tags:
+        - Item Management
+      summary: Retrieve a specific item
+      description: Retrieves the item with the specified ID within the specified category.
+      operationId: getItem
+      parameters:
+        - name: categoryId
+          in: path
+          description: ID of the category
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: itemId
+          in: path
+          description: ID of the item to retrieve
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: OK
+          content: { }
+    put:
+      tags:
+        - Item Management
+      summary: Update an existing item
+      description: >-
+        Updates the item with the specified ID within the specified category
+        using the provided item data.
+      operationId: updateItem
+      parameters:
+        - name: categoryId
+          in: path
+          description: ID of the category
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: itemId
+          in: path
+          description: ID of the item to update
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemDto'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content: { }
+    delete:
+      tags:
+        - Item Management
+      summary: Delete a specific item
+      description: Deletes the item with the specified ID within the specified category.
+      operationId: deleteItem
+      parameters:
+        - name: categoryId
+          in: path
+          description: ID of the category
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: itemId
+          in: path
+          description: ID of the item to delete
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: OK
+          content: { }
+  /api/v1/categories:
+    get:
+      tags:
+        - Category Management
+      summary: Retrieve all categories
+      description: >-
+        Retrieves all categories for the authenticated user, with optional
+        filtering by criteria.
+      operationId: getAllCategories
+      parameters:
+        - name: categoryFilter
+          in: query
+          description: Filter criteria for categories
+          required: true
+          schema:
+            $ref: '#/components/schemas/CategoryFilter'
+      responses:
+        '200':
+          description: OK
+          content: { }
+    post:
+      tags:
+        - Category Management
+      summary: Create a new category
+      description: Creates a new category with the provided details.
+      operationId: createCategory
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryDto'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content: { }
+  /api/v1/categories/{categoryId}/items:
+    get:
+      tags:
+        - Item Management
+      summary: Retrieve all items
+      description: >-
+        Retrieves all items within the specified category that match the
+        provided filters.
+      operationId: getAllItems
+      parameters:
+        - name: categoryId
+          in: path
+          description: ID of the category
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: itemFilter
+          in: query
+          description: Filter criteria for items
+          required: true
+          schema:
+            $ref: '#/components/schemas/ItemFilter'
+      responses:
+        '200':
+          description: OK
+          content: { }
+    post:
+      tags:
+        - Item Management
+      summary: Create a new item
+      description: >-
+        Creates a new item within the specified category using the provided item
+        data.
+      operationId: createItem
+      parameters:
+        - name: categoryId
+          in: path
+          description: ID of the category to which the item belongs
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemDto'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content: { }
+  /api/v1/auth/reset-password:
+    post:
+      tags:
+        - Authentication REST Controller
+      summary: Reset user password
+      description: >-
+        Resets the user's password with the new password provided in the
+        request.
+      operationId: resetPassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequestDto'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content: { }
+  /api/v1/auth/register:
+    post:
+      tags:
+        - Authentication REST Controller
+      summary: Register a new user
+      description: >-
+        Registers a new user by providing user details such as email and
+        password.
+      operationId: registerUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequestDto'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content: { }
+  /api/v1/auth/login:
+    post:
+      tags:
+        - Authentication REST Controller
+      summary: Login an existing user
+      description: >-
+        Authenticates a user with the provided email and password, and returns a
+        JWT token.
+      operationId: loginUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequestDto'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content: { }
+  /api/v1/auth/forgot-password:
+    post:
+      tags:
+        - Authentication REST Controller
+      summary: Initiate password reset
+      description: Sends a password reset link to the email provided in the request.
+      operationId: forgotPassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgotPasswordRequestDto'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content: { }
+  /api/v1/auth/delete-account:
+    post:
+      tags:
+        - Authentication REST Controller
+      summary: Delete user account
+      description: >-
+        Deletes the user account specified in the request. The user must be
+        authenticated to perform this action.
+      operationId: deleteAccount
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountDeleteRequestDto'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content: { }
+  /api/v1/auth/change-password:
+    post:
+      tags:
+        - Authentication REST Controller
+      summary: Change user password
+      description: >-
+        Changes the user's password from the old one to the new password
+        provided in the request.
+      operationId: changePassword
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequestDto'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content: { }
+  /api/v1/helper/statistics:
+    get:
+      tags:
+        - Helper Operations
+      summary: Retrieve user statistics
+      description: Retrieves statistics for the authenticated user based on their email.
+      operationId: getStatistics
+      responses:
+        '200':
+          description: OK
+          content: { }
+  /api/v1/helper/itemStatuses:
+    get:
+      tags:
+        - Helper Operations
+      summary: Retrieve item statuses
+      description: Retrieves a list of available item statuses.
+      operationId: getItemStatuses
+      responses:
+        '200':
+          description: OK
+          content: { }
+components:
+  schemas:
+    CategoryDto:
+      type: object
+      properties:
+        categoryId:
+          type: integer
+          description: Unique identifier for the category.
+          format: int64
+          example: 1
+        categoryName:
+          type: string
+          description: Name of the category.
+          example: Work
+        todoItems:
+          type: integer
+          description: >-
+            (Only in response) Number of items in the 'To Do' state for this
+            category.
+          format: int64
+          example: 5
+        inProgressItems:
+          type: integer
+          description: >-
+            (Only in response) Number of items in the 'In Progress' state for
+            this category.
+          format: int64
+          example: 3
+        finishedItems:
+          type: integer
+          description: >-
+            (Only in response) Number of items in the 'Finished' state for this
+            category.
+          format: int64
+          example: 10
+      description: Details of the category to be created
+    ItemDto:
+      type: object
+      properties:
+        itemId:
+          type: integer
+          description: Unique identifier for the item.
+          format: int64
+          example: 1
+        categoryId:
+          type: integer
+          description: Unique identifier for the category to which the item belongs.
+          format: int64
+          example: 10
+        itemName:
+          type: string
+          description: Name of the item.
+          example: Buy groceries
+        itemStatus:
+          type: string
+          description: Current status of the item.
+          example: In Progress
+        itemNotes:
+          type: string
+          description: Additional notes or description for the item.
+          example: Need to buy fruits and vegetables.
+      description: Details of the item to be created
+    ResetPasswordRequestDto:
+      type: object
+      properties:
+        email:
+          type: string
+          description: Email of the user requesting the password reset.
+          example: user@example.com
+        password:
+          type: string
+          description: New password for the user account.
+          example: newPassword123
+        passwordConfirm:
+          type: string
+          description: Confirmation of the new password to ensure it matches.
+          example: newPassword123
+        passwordResetToken:
+          type: string
+          description: Token used to verify the password reset request.
+          example: abc123xyz
+      description: New password details
+    RegisterRequestDto:
+      type: object
+      properties:
+        email:
+          type: string
+          description: Email of the user registering for the application.
+          example: user@example.com
+        password:
+          type: string
+          description: Password for the user account.
+          example: newPassword123
+        passwordConfirm:
+          type: string
+          description: Confirmation of the password to ensure it matches.
+          example: newPassword123
+      description: Details of the user to be registered
+    LoginRequestDto:
+      type: object
+      properties:
+        email:
+          type: string
+          description: Email of the user attempting to log in.
+          example: user@example.com
+        password:
+          type: string
+          description: Password of the user for authentication.
+          example: yourPassword123
+      description: User credentials for login
+    ForgotPasswordRequestDto:
+      type: object
+      properties:
+        email:
+          type: string
+          description: Email of the user who requested the password reset.
+          example: user@example.com
+      description: Email of the user requesting password reset
+    AccountDeleteRequestDto:
+      type: object
+      properties:
+        email:
+          type: string
+          description: Email of the user requesting account deletion.
+          example: user@example.com
+        password:
+          type: string
+          description: Password of the user for account verification.
+          example: securePassword123
+        passwordConfirm:
+          type: string
+          description: Confirmation of the password for account verification.
+          example: securePassword123
+      description: Details of the user account to be deleted
+    ChangePasswordRequestDto:
+      type: object
+      properties:
+        email:
+          type: string
+          description: Email of the user requesting the password change.
+          example: user@example.com
+        passwordCurrent:
+          type: string
+          description: Current password of the user for authentication.
+          example: currentPassword123
+        password:
+          type: string
+          description: New password that the user wants to set.
+          example: newSecurePassword456
+        passwordConfirm:
+          type: string
+          description: Confirmation of the new password to ensure it matches.
+          example: newSecurePassword456
+      description: Old and new password details
+    CategoryFilter:
+      type: object
+      properties:
+        page:
+          type: integer
+          description: Page number for pagination.
+          format: int32
+          example: 0
+          default: 0
+        size:
+          type: integer
+          description: Number of categories per page for pagination.
+          format: int32
+          example: 2
+          default: 2
+        categoryName:
+          type: string
+          description: Name of the category to filter by.
+          example: Work
+        direction:
+          type: string
+          description: Sorting direction for the category list.
+          example: ASC
+          default: ASC
+          enum:
+            - ASC
+            - DESC
+      description: >-
+        Data Transfer Object for filtering categories, including pagination and
+        sorting.
+    ItemFilter:
+      type: object
+      properties:
+        page:
+          type: integer
+          description: Page number for pagination.
+          format: int32
+          example: 0
+          default: 0
+        size:
+          type: integer
+          description: Number of items per page for pagination.
+          format: int32
+          example: 2
+          default: 2
+        categoryId:
+          type: integer
+          description: Unique identifier for the category to which the items belong.
+          format: int64
+          example: 10
+        itemName:
+          type: string
+          description: Name of the item to filter by.
+          example: Buy groceries
+        itemStatus:
+          type: string
+          description: Current status of the item to filter by.
+          example: In Progress
+        direction:
+          type: string
+          description: Sorting direction for the item list.
+          example: ASC
+          default: ASC
+          enum:
+            - ASC
+            - DESC
+      description: >-
+        Data Transfer Object for filtering items, including pagination and
+        sorting.

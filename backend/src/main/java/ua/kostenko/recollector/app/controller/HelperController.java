@@ -1,5 +1,7 @@
 package ua.kostenko.recollector.app.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -23,6 +25,7 @@ import java.util.List;
 @RequestMapping("api/v1/helper")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "Helper Operations", description = "Endpoints for retrieving helper information such as item statuses and user statistics.")
 public class HelperController {
 
     private final HelperService helperService;
@@ -33,6 +36,7 @@ public class HelperController {
      *
      * @return a {@link ResponseEntity} with the list of item statuses and HTTP status {@code 200 OK}.
      */
+    @Operation(summary = "Retrieve item statuses", description = "Retrieves a list of available item statuses.")
     @GetMapping("/itemStatuses")
     public ResponseEntity<Response<List<String>>> getItemStatuses() {
         log.info("Fetching item statuses");
@@ -45,6 +49,7 @@ public class HelperController {
      *
      * @return a {@link ResponseEntity} with the user's statistics and HTTP status {@code 200 OK}.
      */
+    @Operation(summary = "Retrieve user statistics", description = "Retrieves statistics for the authenticated user based on their email.")
     @GetMapping("/statistics")
     public ResponseEntity<Response<StatisticDto>> getStatistics() {
         var email = authService.getUserEmailFromAuthContext();
