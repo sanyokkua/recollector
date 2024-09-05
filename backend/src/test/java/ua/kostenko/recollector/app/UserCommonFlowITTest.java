@@ -254,11 +254,7 @@ class UserCommonFlowITTest {
     }
 
     private ItemDto createItem(Long categoryId, String itemName, ItemStatus itemStatus, String token) throws Exception {
-        ItemDto itemDto = ItemDto.builder()
-                                 .categoryId(categoryId)
-                                 .itemName(itemName)
-                                 .itemStatus(itemStatus.name())
-                                 .build();
+        ItemDto itemDto = ItemDto.builder().categoryId(categoryId).itemName(itemName).itemStatus(itemStatus).build();
         var response = mockMvc.perform(post(BASE_ITEM_URL, categoryId).header(AUTH_HEADER, BEARER_TOKEN + token)
                                                                       .contentType(MediaType.APPLICATION_JSON)
                                                                       .content(objectMapper.writeValueAsString(itemDto)))
@@ -395,8 +391,7 @@ class UserCommonFlowITTest {
         ItemDto itemDto = ItemDto.builder()
                                  .categoryId(categoryId)
                                  .itemId(itemId)
-                                 .itemName(newName)
-                                 .itemStatus(status)
+                                 .itemName(newName).itemStatus(ItemStatus.valueOf(status))
                                  .build();
         var result = mockMvc.perform(put(BASE_ITEM_URL + "/" + ITEM_ID, categoryId, itemId).header(AUTH_HEADER,
                                                                                                    BEARER_TOKEN + token)

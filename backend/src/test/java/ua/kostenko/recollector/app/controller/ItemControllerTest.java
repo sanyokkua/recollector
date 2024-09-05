@@ -15,6 +15,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import ua.kostenko.recollector.app.dto.ItemDto;
 import ua.kostenko.recollector.app.dto.ItemFilter;
+import ua.kostenko.recollector.app.entity.ItemStatus;
 import ua.kostenko.recollector.app.exception.ItemAlreadyExistsException;
 import ua.kostenko.recollector.app.exception.ItemNotFoundException;
 import ua.kostenko.recollector.app.exception.ItemValidationException;
@@ -69,8 +70,7 @@ class ItemControllerTest {
                                      .itemId(itemId)
                                      .categoryId(categoryId)
                                      .itemName(ITEM_NAME)
-                                     .itemNotes("Notes")
-                                     .itemStatus("IN_PROGRESS")
+                                     .itemNotes("Notes").itemStatus(ItemStatus.IN_PROGRESS)
                                      .build();
         when(authService.getUserEmailFromAuthContext()).thenReturn(VALID_EMAIL);
         when(itemService.createItem(VALID_EMAIL, requestDto)).thenReturn(responseDto);
@@ -82,7 +82,7 @@ class ItemControllerTest {
                .andExpect(jsonPath("$.data.itemId").value(responseDto.getItemId()))
                .andExpect(jsonPath("$.data.categoryId").value(responseDto.getCategoryId()))
                .andExpect(jsonPath("$.data.itemName").value(responseDto.getItemName()))
-               .andExpect(jsonPath("$.data.itemStatus").value(responseDto.getItemStatus()))
+               .andExpect(jsonPath("$.data.itemStatus").value(responseDto.getItemStatus().name()))
                .andExpect(jsonPath("$.data.itemNotes").value(responseDto.getItemNotes()))
                .andExpect(jsonPath("$.meta").doesNotExist())
                .andExpect(jsonPath("$.error").doesNotExist())
@@ -155,8 +155,7 @@ class ItemControllerTest {
                                      .itemId(itemId)
                                      .categoryId(categoryId)
                                      .itemName(ITEM_NAME)
-                                     .itemNotes("Notes")
-                                     .itemStatus("IN_PROGRESS")
+                                     .itemNotes("Notes").itemStatus(ItemStatus.IN_PROGRESS)
                                      .build();
         when(authService.getUserEmailFromAuthContext()).thenReturn(VALID_EMAIL);
         when(itemService.getItem(VALID_EMAIL, categoryId, itemId)).thenReturn(responseDto);
@@ -167,7 +166,7 @@ class ItemControllerTest {
                .andExpect(jsonPath("$.data.itemId").value(responseDto.getItemId()))
                .andExpect(jsonPath("$.data.categoryId").value(responseDto.getCategoryId()))
                .andExpect(jsonPath("$.data.itemName").value(responseDto.getItemName()))
-               .andExpect(jsonPath("$.data.itemStatus").value(responseDto.getItemStatus()))
+               .andExpect(jsonPath("$.data.itemStatus").value(responseDto.getItemStatus().name()))
                .andExpect(jsonPath("$.data.itemNotes").value(responseDto.getItemNotes()))
                .andExpect(jsonPath("$.meta").doesNotExist())
                .andExpect(jsonPath("$.error").doesNotExist())
@@ -182,8 +181,7 @@ class ItemControllerTest {
                                      .itemId(itemId)
                                      .categoryId(categoryId)
                                      .itemName(ITEM_NAME)
-                                     .itemNotes("Notes")
-                                     .itemStatus("IN_PROGRESS")
+                                     .itemNotes("Notes").itemStatus(ItemStatus.IN_PROGRESS)
                                      .build();
         when(authService.getUserEmailFromAuthContext()).thenReturn(VALID_EMAIL);
         when(itemService.updateItem(any(String.class), any(ItemDto.class))).thenReturn(responseDto);
@@ -196,7 +194,7 @@ class ItemControllerTest {
                .andExpect(jsonPath("$.data.itemId").value(responseDto.getItemId()))
                .andExpect(jsonPath("$.data.categoryId").value(responseDto.getCategoryId()))
                .andExpect(jsonPath("$.data.itemName").value(responseDto.getItemName()))
-               .andExpect(jsonPath("$.data.itemStatus").value(responseDto.getItemStatus()))
+               .andExpect(jsonPath("$.data.itemStatus").value(responseDto.getItemStatus().name()))
                .andExpect(jsonPath("$.data.itemNotes").value(responseDto.getItemNotes()))
                .andExpect(jsonPath("$.meta").doesNotExist())
                .andExpect(jsonPath("$.error").doesNotExist())
@@ -211,8 +209,7 @@ class ItemControllerTest {
                                     .itemId(itemId)
                                     .categoryId(categoryId)
                                     .itemName(ITEM_NAME)
-                                    .itemNotes("Notes")
-                                    .itemStatus("IN_PROGRESS")
+                                    .itemNotes("Notes").itemStatus(ItemStatus.IN_PROGRESS)
                                     .build();
         mockMvc.perform(put(BASE_URL + "/{itemId}", categoryId, 999L).contentType(MediaType.APPLICATION_JSON)
                                                                      .content(objectMapper.writeValueAsString(requestDto)))
@@ -276,8 +273,7 @@ class ItemControllerTest {
                                     .itemId(itemId)
                                     .categoryId(categoryId)
                                     .itemName(ITEM_NAME)
-                                    .itemNotes("Notes")
-                                    .itemStatus("IN_PROGRESS")
+                                    .itemNotes("Notes").itemStatus(ItemStatus.IN_PROGRESS)
                                     .build();
 
         when(authService.getUserEmailFromAuthContext()).thenReturn(VALID_EMAIL);

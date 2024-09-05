@@ -9,7 +9,6 @@ import ua.kostenko.recollector.app.dto.ItemDto;
 import ua.kostenko.recollector.app.dto.ItemFilter;
 import ua.kostenko.recollector.app.entity.Category;
 import ua.kostenko.recollector.app.entity.Item;
-import ua.kostenko.recollector.app.entity.ItemStatus;
 import ua.kostenko.recollector.app.entity.User;
 import ua.kostenko.recollector.app.entity.specification.ItemSpecification;
 import ua.kostenko.recollector.app.exception.CategoryNotFoundException;
@@ -241,7 +240,7 @@ public class ItemService {
      * @return the new {@link Item} entity
      */
     private Item buildNewItem(ItemDto itemDto, Category category) {
-        var status = ItemStatus.valueOf(itemDto.getItemStatus());
+        var status = itemDto.getItemStatus();
         var creationTime = LocalDateTime.now();
         return Item.builder()
                    .category(category)
@@ -260,7 +259,7 @@ public class ItemService {
      * @param itemDto the item data transfer object containing updated information
      */
     private void updateItemDetails(Item item, ItemDto itemDto) {
-        var status = ItemStatus.valueOf(itemDto.getItemStatus());
+        var status = itemDto.getItemStatus();
         item.setItemName(itemDto.getItemName());
         item.setItemStatus(status.name());
         item.setItemNotes(itemDto.getItemNotes());

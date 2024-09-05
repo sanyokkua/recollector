@@ -63,8 +63,7 @@ class ItemServiceTest {
         itemDto = ItemDto.builder()
                          .itemId(1L)
                          .categoryId(1L)
-                         .itemName("Test Item")
-                         .itemStatus(ItemStatus.IN_PROGRESS.name())
+                         .itemName("Test Item").itemStatus(ItemStatus.IN_PROGRESS)
                          .build();
         item = Item.builder()
                    .itemId(1L)
@@ -96,7 +95,7 @@ class ItemServiceTest {
     @Test
     void createItem_invalidItemDto_throwsItemValidationException() {
         // Arrange
-        ItemDto invalidItemDto = ItemDto.builder().categoryId(null).itemName("").itemStatus("PENDING").build();
+        ItemDto invalidItemDto = ItemDto.builder().categoryId(null).itemName("").itemStatus(null).build();
 
         // Act & Assert
         assertThrows(ItemValidationException.class, () -> itemService.createItem(userEmail, invalidItemDto));
@@ -111,8 +110,7 @@ class ItemServiceTest {
         ItemFilter itemFilter = ItemFilter.builder()
                                           .categoryId(category.getCategoryId())
                                           .direction(Sort.Direction.ASC)
-                                          .itemName(itemDto.getItemName())
-                                          .itemStatus(itemDto.getItemStatus())
+                                          .itemName(itemDto.getItemName()).itemStatus(itemDto.getItemStatus().name())
                                           .page(0)
                                           .size(10)
                                           .build();

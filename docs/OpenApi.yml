@@ -447,7 +447,11 @@ components:
         itemStatus:
           type: string
           description: Current status of the item.
-          example: In Progress
+          example: IN_PROGRESS
+          enum:
+            - FINISHED
+            - IN_PROGRESS
+            - TODO_LATER
         itemNotes:
           type: string
           description: Additional notes or description for the item.

@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ua.kostenko.recollector.app.entity.ItemStatus;
 
 /**
  * Data Transfer Object representing an item.
@@ -28,8 +29,8 @@ public class ItemDto {
     @Schema(description = "Name of the item.", example = "Buy groceries")
     private String itemName;
 
-    @Schema(description = "Current status of the item.", example = "In Progress")
-    private String itemStatus;
+    @Schema(description = "Current status of the item.", example = "IN_PROGRESS")
+    private ItemStatus itemStatus;
 
     @Schema(description = "Additional notes or description for the item.", example = "Need to buy fruits and vegetables.")
     private String itemNotes;

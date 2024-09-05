@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import ua.kostenko.recollector.app.dto.ItemDto;
 import ua.kostenko.recollector.app.entity.Category;
 import ua.kostenko.recollector.app.entity.Item;
+import ua.kostenko.recollector.app.entity.ItemStatus;
 import ua.kostenko.recollector.app.exception.CategoryValidationException;
 import ua.kostenko.recollector.app.exception.ItemValidationException;
 
@@ -17,8 +18,7 @@ class ItemUtilsTest {
     void isValidItem_whenItemDtoIsValid_returnsTrue() {
         ItemDto validItemDto = ItemDto.builder()
                                       .categoryId(1L)
-                                      .itemName("Test Item")
-                                      .itemStatus("Pending")
+                                      .itemName("Test Item").itemStatus(ItemStatus.TODO_LATER)
                                       .itemNotes("Some notes")
                                       .build();
 
@@ -27,7 +27,11 @@ class ItemUtilsTest {
 
     @Test
     void isValidItem_whenCategoryIdIsNull_returnsFalse() {
-        ItemDto invalidItemDto = ItemDto.builder().categoryId(null).itemName("Test Item").itemStatus("Pending").build();
+        ItemDto invalidItemDto = ItemDto.builder()
+                                        .categoryId(null)
+                                        .itemName("Test Item")
+                                        .itemStatus(ItemStatus.TODO_LATER)
+                                        .build();
 
         assertFalse(ItemUtils.isValidItem(invalidItemDto), "The ItemDto should be invalid with null categoryId");
     }
@@ -35,7 +39,7 @@ class ItemUtilsTest {
     @Test
     void isValidItem_whenItemNameIsBlank_returnsFalse() {
         ItemDto invalidItemDto = ItemDto.builder().categoryId(1L).itemName("") // blank item name
-                                        .itemStatus("Pending").build();
+                                        .itemStatus(ItemStatus.TODO_LATER).build();
 
         assertFalse(ItemUtils.isValidItem(invalidItemDto), "The ItemDto should be invalid with blank itemName");
     }
@@ -44,8 +48,7 @@ class ItemUtilsTest {
     void isValidItem_whenItemStatusIsBlank_returnsFalse() {
         ItemDto invalidItemDto = ItemDto.builder()
                                         .categoryId(1L)
-                                        .itemName("Test Item")
-                                        .itemStatus("") // blank item status
+                                        .itemName("Test Item").itemStatus(null) // blank item status
                                         .build();
 
         assertFalse(ItemUtils.isValidItem(invalidItemDto), "The ItemDto should be invalid with blank itemStatus");
@@ -53,7 +56,7 @@ class ItemUtilsTest {
 
     @Test
     void isValidItem_whenAllFieldsAreInvalid_returnsFalse() {
-        ItemDto invalidItemDto = ItemDto.builder().categoryId(null).itemName("").itemStatus("").build();
+        ItemDto invalidItemDto = ItemDto.builder().categoryId(null).itemName("").itemStatus(null).build();
 
         assertFalse(ItemUtils.isValidItem(invalidItemDto), "The ItemDto should be invalid with all invalid fields");
     }
@@ -73,8 +76,7 @@ class ItemUtilsTest {
         Item item = Item.builder()
                         .itemId(1L)
                         .category(category)
-                        .itemName("Test Item")
-                        .itemStatus("Pending")
+                        .itemName("Test Item").itemStatus("TODO_LATER")
                         .itemNotes("Some notes")
                         .createdAt(LocalDateTime.now())
                         .updatedAt(LocalDateTime.now())
@@ -85,7 +87,7 @@ class ItemUtilsTest {
         assertNotNull(itemDto, "ItemDto should not be null");
         assertEquals(item.getItemId(), itemDto.getItemId(), "Item ID should match");
         assertEquals(item.getItemName(), itemDto.getItemName(), "Item Name should match");
-        assertEquals(item.getItemStatus(), itemDto.getItemStatus(), "Item Status should match");
+        assertEquals(item.getItemStatus(), itemDto.getItemStatus().name(), "Item Status should match");
         assertEquals(item.getItemNotes(), itemDto.getItemNotes(), "Item Notes should match");
     }
 
@@ -97,7 +99,11 @@ class ItemUtilsTest {
     @Test
     void validateItemDto_whenItemDtoIsValid_doesNotThrowException() {
         // Arrange
-        ItemDto validItemDto = ItemDto.builder().categoryId(1L).itemName("Test Item").itemStatus("Pending").build();
+        ItemDto validItemDto = ItemDto.builder()
+                                      .categoryId(1L)
+                                      .itemName("Test Item")
+                                      .itemStatus(ItemStatus.TODO_LATER)
+                                      .build();
 
         // Act & Assert
         assertDoesNotThrow(() -> ItemUtils.validateItemDto(validItemDto),
@@ -109,7 +115,7 @@ class ItemUtilsTest {
         // Arrange
         ItemDto invalidItemDto = ItemDto.builder().categoryId(null) // Invalid categoryId
                                         .itemName("") // Invalid itemName
-                                        .itemStatus("Pending").build();
+                                        .itemStatus(ItemStatus.TODO_LATER).build();
 
         // Act & Assert
         ItemValidationException exception = assertThrows(ItemValidationException.class,

@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import ua.kostenko.recollector.app.dto.ItemDto;
 import ua.kostenko.recollector.app.entity.Item;
+import ua.kostenko.recollector.app.entity.ItemStatus;
 import ua.kostenko.recollector.app.exception.CategoryValidationException;
 import ua.kostenko.recollector.app.exception.ItemValidationException;
 
@@ -39,7 +40,7 @@ public class ItemUtils {
 
         boolean hasCategoryId = Objects.nonNull(itemDto.getCategoryId());
         boolean hasName = StringUtils.isNotBlank(itemDto.getItemName());
-        boolean hasStatus = StringUtils.isNotBlank(itemDto.getItemStatus());
+        boolean hasStatus = Objects.nonNull(itemDto.getItemStatus());
 
         boolean isValid = hasCategoryId && hasName && hasStatus;
         log.debug("ItemDto validation result: {}, Category ID: {}, Name: {}, Status: {}",
@@ -65,9 +66,9 @@ public class ItemUtils {
             return null;
         }
 
+        ItemStatus itemStatus = ItemStatus.valueOf(item.getItemStatus());
         ItemDto itemDto = ItemDto.builder().itemId(item.getItemId()).categoryId(item.getCategory().getCategoryId())
-                                 .itemName(item.getItemName())
-                                 .itemStatus(item.getItemStatus())
+                                 .itemName(item.getItemName()).itemStatus(itemStatus)
                                  .itemNotes(item.getItemNotes())
                                  .build();
         log.debug("Mapped Item to ItemDto: {}", itemDto);
