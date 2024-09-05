@@ -1,6 +1,7 @@
 import {configureStore} from '@reduxjs/toolkit';
 import drawerToggledReducer from './features/drawer/drawerSlice';
 import appBarSliceReducer from './features/appBar/appBarSlice';
+import categoriesSliceReducer from './features/categories/categoriesSlice';
 
 /**
  * Configures and creates the Redux store with the specified reducers.
@@ -13,6 +14,8 @@ const store = configureStore({
 
         // Reducer for managing the AppBar header state
         appBarHeader: appBarSliceReducer,
+
+        categories: categoriesSliceReducer,
     },
 });
 

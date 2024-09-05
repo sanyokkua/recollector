@@ -8,14 +8,18 @@ import {Provider} from 'react-redux';
 import router from './routes/router';
 import store from './store/store';
 
+import {logger} from "./config/appConfig.ts"
+
 // Get the root element from the DOM where the React app will be mounted
 const rootElement = document.getElementById('root');
 
 if (!rootElement) {
+    logger.warn("Failed to load root element");
     throw new Error('Root element not found. Please ensure there is an element with id "root" in your HTML.');
 }
 
 // Create the React root and render the app
+logger.debug("Will be rendered React App");
 createRoot(rootElement).render(
     <StrictMode>
         {/* Redux Provider to supply the store to the entire app */}
