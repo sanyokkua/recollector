@@ -30,10 +30,13 @@ const browserStore = new BrowserStore();
 
 export const jwtTokenExtractor = () => {
     return browserStore.getData(ItemType.JWT_TOKEN);
-}
+};
 
-export const jwtTokenSaver = (token: string) => {
+export const jwtTokenSaver = (token: string | undefined) => {
+    if (!token || token.trim().length === 0) {
+        throw new Error("Token is undefined or empty");
+    }
     return browserStore.saveData(ItemType.JWT_TOKEN, token);
-}
+};
 
 export default BrowserStore;

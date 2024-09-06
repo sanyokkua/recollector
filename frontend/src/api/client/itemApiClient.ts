@@ -1,11 +1,11 @@
-import {AxiosInstance} from 'axios';
-import {ItemDto, ItemFilter} from '../dto/itemDto';
-import {Response} from '../dto/common';
-import {handleError, handleResponse} from './utils';
+import {AxiosInstance} from "axios";
+import {ItemDto, ItemFilter} from "../dto/itemDto";
+import {Response} from "../dto/common";
+import {handleError, handleResponse} from "./utils";
 import {logger} from "../../config/appConfig.ts";
 import {TokenExtractor} from "../types/types.ts";
 
-const BASE_URL = '/v1/categories';
+const BASE_URL = "/v1/categories";
 const log = logger.getLogger("ItemApiClient");
 
 class ItemApiClient {
@@ -13,7 +13,7 @@ class ItemApiClient {
         log.debug("Initialized ItemApiClient");
     }
 
-    async createItem(categoryId: number, itemDto: ItemDto): Promise<ItemDto> {
+    async createItem(categoryId: number, itemDto: ItemDto): Promise<Response<ItemDto>> {
         log.info("createItem called");
         log.debug(`Category ID: ${categoryId}, Request: ${JSON.stringify(itemDto)}`);
         try {
@@ -21,7 +21,7 @@ class ItemApiClient {
             const response = await this.apiClient.post<Response<ItemDto>>(`${BASE_URL}/${categoryId}/items`, itemDto,
                 {
                     headers: {
-                        'Authorization': `Bearer ${jwt}`
+                        "Authorization": `Bearer ${jwt}`
                     }
                 });
             log.info("createItem successful");
@@ -32,7 +32,7 @@ class ItemApiClient {
         }
     }
 
-    async getAllItems(categoryId: number, itemFilter: ItemFilter): Promise<ItemDto[]> {
+    async getAllItems(categoryId: number, itemFilter: ItemFilter): Promise<Response<ItemDto[]>> {
         log.info("getAllItems called");
         log.debug(`Category ID: ${categoryId}, Filter: ${JSON.stringify(itemFilter)}`);
         try {
@@ -40,7 +40,7 @@ class ItemApiClient {
             const response = await this.apiClient.get<Response<ItemDto[]>>(`${BASE_URL}/${categoryId}/items`, {
                 params: itemFilter,
                 headers: {
-                    'Authorization': `Bearer ${jwt}`
+                    "Authorization": `Bearer ${jwt}`
                 }
             });
             log.info("getAllItems successful");
@@ -51,7 +51,7 @@ class ItemApiClient {
         }
     }
 
-    async getItem(categoryId: number, itemId: number): Promise<ItemDto> {
+    async getItem(categoryId: number, itemId: number): Promise<Response<ItemDto>> {
         log.info("getItem called");
         log.debug(`Category ID: ${categoryId}, Item ID: ${itemId}`);
         try {
@@ -59,7 +59,7 @@ class ItemApiClient {
             const response = await this.apiClient.get<Response<ItemDto>>(`${BASE_URL}/${categoryId}/items/${itemId}`,
                 {
                     headers: {
-                        'Authorization': `Bearer ${jwt}`
+                        "Authorization": `Bearer ${jwt}`
                     }
                 });
             log.info("getItem successful");
@@ -70,7 +70,7 @@ class ItemApiClient {
         }
     }
 
-    async updateItem(categoryId: number, itemId: number, itemDto: ItemDto): Promise<ItemDto> {
+    async updateItem(categoryId: number, itemId: number, itemDto: ItemDto): Promise<Response<ItemDto>> {
         log.info("updateItem called");
         log.debug(`Category ID: ${categoryId}, Item ID: ${itemId}, Request: ${JSON.stringify(itemDto)}`);
         try {
@@ -78,7 +78,7 @@ class ItemApiClient {
             const response = await this.apiClient.put<Response<ItemDto>>(`${BASE_URL}/${categoryId}/items/${itemId}`, itemDto,
                 {
                     headers: {
-                        'Authorization': `Bearer ${jwt}`
+                        "Authorization": `Bearer ${jwt}`
                     }
                 });
             log.info("updateItem successful");
@@ -89,7 +89,7 @@ class ItemApiClient {
         }
     }
 
-    async deleteItem(categoryId: number, itemId: number): Promise<string> {
+    async deleteItem(categoryId: number, itemId: number): Promise<Response<string>> {
         log.info("deleteItem called");
         log.debug(`Category ID: ${categoryId}, Item ID: ${itemId}`);
         try {
@@ -97,7 +97,7 @@ class ItemApiClient {
             const response = await this.apiClient.delete<Response<string>>(`${BASE_URL}/${categoryId}/items/${itemId}`,
                 {
                     headers: {
-                        'Authorization': `Bearer ${jwt}`
+                        "Authorization": `Bearer ${jwt}`
                     }
                 });
             log.info("deleteItem successful");

@@ -1,4 +1,4 @@
-import {AxiosInstance} from 'axios';
+import {AxiosInstance} from "axios";
 import {
     AccountDeleteRequestDto,
     ChangePasswordRequestDto,
@@ -6,8 +6,8 @@ import {
     LoginRequestDto,
     RegisterRequestDto,
     ResetPasswordRequestDto,
-    UserDto,
-} from '../dto/authenticationDto.ts';
+    UserDto
+} from "../dto/authenticationDto.ts";
 import {Response} from "../dto/common.ts";
 import {handleError, handleResponse} from "./utils.ts";
 import {logger} from "../../config/appConfig.ts";
@@ -21,7 +21,7 @@ class AuthApiClient {
         log.debug("Initialized AuthApiClient");
     }
 
-    async registerUser(request: RegisterRequestDto): Promise<UserDto> {
+    async registerUser(request: RegisterRequestDto): Promise<Response<UserDto>> {
         log.info("registerUser called");
         log.debug(`Request: ${JSON.stringify(request)}`);
         try {
@@ -34,14 +34,14 @@ class AuthApiClient {
         }
     }
 
-    async loginUser(request: LoginRequestDto): Promise<UserDto> {
+    async loginUser(request: LoginRequestDto): Promise<Response<UserDto>> {
         log.info("loginUser called");
         log.debug(`Request: ${JSON.stringify(request)}`);
         try {
             const response = await this.apiClient.post<Response<UserDto>>(`${BASE_URL}/login`, request);
             log.info("loginUser successful");
             const data = handleResponse(response);
-            this.saver(data.jwtToken);
+            this.saver(data.data?.jwtToken ?? "");
             return data;
         } catch (error) {
             log.warn(`loginUser failed with error: ${error}`);
@@ -49,7 +49,7 @@ class AuthApiClient {
         }
     }
 
-    async forgotPassword(request: ForgotPasswordRequestDto): Promise<string> {
+    async forgotPassword(request: ForgotPasswordRequestDto): Promise<Response<string>> {
         log.info("forgotPassword called");
         log.debug(`Request: ${JSON.stringify(request)}`);
         try {
@@ -62,7 +62,7 @@ class AuthApiClient {
         }
     }
 
-    async resetPassword(request: ResetPasswordRequestDto): Promise<UserDto> {
+    async resetPassword(request: ResetPasswordRequestDto): Promise<Response<UserDto>> {
         log.info("resetPassword called");
         log.debug(`Request: ${JSON.stringify(request)}`);
         try {
@@ -70,7 +70,7 @@ class AuthApiClient {
             const response = await this.apiClient.post<Response<UserDto>>(`${BASE_URL}/reset-password`, request,
                 {
                     headers: {
-                        'Authorization': `Bearer ${jwt}`
+                        "Authorization": `Bearer ${jwt}`
                     }
                 });
             log.info("resetPassword successful");
@@ -81,7 +81,7 @@ class AuthApiClient {
         }
     }
 
-    async changePassword(request: ChangePasswordRequestDto): Promise<UserDto> {
+    async changePassword(request: ChangePasswordRequestDto): Promise<Response<UserDto>> {
         log.info("changePassword called");
         log.debug(`Request: ${JSON.stringify(request)}`);
         try {
@@ -89,7 +89,7 @@ class AuthApiClient {
             const response = await this.apiClient.post<Response<UserDto>>(`${BASE_URL}/change-password`, request,
                 {
                     headers: {
-                        'Authorization': `Bearer ${jwt}`
+                        "Authorization": `Bearer ${jwt}`
                     }
                 });
             log.info("changePassword successful");
@@ -100,7 +100,7 @@ class AuthApiClient {
         }
     }
 
-    async deleteAccount(request: AccountDeleteRequestDto): Promise<string> {
+    async deleteAccount(request: AccountDeleteRequestDto): Promise<Response<string>> {
         log.info("deleteAccount called");
         log.debug(`Request: ${JSON.stringify(request)}`);
         try {
@@ -108,7 +108,7 @@ class AuthApiClient {
             const response = await this.apiClient.post<Response<string>>(`${BASE_URL}/delete-account`, request,
                 {
                     headers: {
-                        'Authorization': `Bearer ${jwt}`
+                        "Authorization": `Bearer ${jwt}`
                     }
                 });
             log.info("deleteAccount successful");

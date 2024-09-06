@@ -1,11 +1,11 @@
-import {AxiosInstance} from 'axios';
-import {CategoryDto, CategoryFilter} from '../dto/categoryDto';
-import {Response} from '../dto/common';
-import {handleError, handleResponse} from './utils';
+import {AxiosInstance} from "axios";
+import {CategoryDto, CategoryFilter} from "../dto/categoryDto";
+import {Response} from "../dto/common";
+import {handleError, handleResponse} from "./utils";
 import {logger} from "../../config/appConfig.ts";
 import {TokenExtractor} from "../types/types.ts";
 
-const BASE_URL: string = '/v1/categories';
+const BASE_URL: string = "/v1/categories";
 const log = logger.getLogger("CategoryApiClient");
 
 class CategoryApiClient {
@@ -13,7 +13,7 @@ class CategoryApiClient {
         log.debug("Initialized CategoryApiClient");
     }
 
-    async createCategory(category: CategoryDto): Promise<CategoryDto> {
+    async createCategory(category: CategoryDto): Promise<Response<CategoryDto>> {
         log.info("createCategory called");
         log.debug(`Request: ${JSON.stringify(category)}`);
         try {
@@ -21,7 +21,7 @@ class CategoryApiClient {
             const response = await this.apiClient.post<Response<CategoryDto>>(`${BASE_URL}`, category,
                 {
                     headers: {
-                        'Authorization': `Bearer ${jwt}`
+                        "Authorization": `Bearer ${jwt}`
                     }
                 });
             log.info("createCategory successful");
@@ -32,7 +32,7 @@ class CategoryApiClient {
         }
     }
 
-    async getAllCategories(categoryFilter?: CategoryFilter): Promise<CategoryDto[]> {
+    async getAllCategories(categoryFilter?: CategoryFilter): Promise<Response<CategoryDto[]>> {
         log.info("getAllCategories called");
         log.debug(`Request Filter: ${JSON.stringify(categoryFilter)}`);
         try {
@@ -41,7 +41,7 @@ class CategoryApiClient {
                 {
                     params: categoryFilter,
                     headers: {
-                        'Authorization': `Bearer ${jwt}`
+                        "Authorization": `Bearer ${jwt}`
                     }
                 });
             log.info("getAllCategories successful");
@@ -52,7 +52,7 @@ class CategoryApiClient {
         }
     }
 
-    async getCategory(categoryId: number): Promise<CategoryDto> {
+    async getCategory(categoryId: number): Promise<Response<CategoryDto>> {
         log.info("getCategory called");
         log.debug(`Category ID: ${categoryId}`);
         try {
@@ -60,7 +60,7 @@ class CategoryApiClient {
             const response = await this.apiClient.get<Response<CategoryDto>>(`${BASE_URL}/${categoryId}`,
                 {
                     headers: {
-                        'Authorization': `Bearer ${jwt}`
+                        "Authorization": `Bearer ${jwt}`
                     }
                 });
             log.info("getCategory successful");
@@ -71,7 +71,7 @@ class CategoryApiClient {
         }
     }
 
-    async updateCategory(categoryId: number, category: CategoryDto): Promise<CategoryDto> {
+    async updateCategory(categoryId: number, category: CategoryDto): Promise<Response<CategoryDto>> {
         log.info("updateCategory called");
         log.debug(`Category ID: ${categoryId}, Request: ${JSON.stringify(category)}`);
         try {
@@ -79,7 +79,7 @@ class CategoryApiClient {
             const response = await this.apiClient.put<Response<CategoryDto>>(`${BASE_URL}/${categoryId}`, category,
                 {
                     headers: {
-                        'Authorization': `Bearer ${jwt}`
+                        "Authorization": `Bearer ${jwt}`
                     }
                 });
             log.info("updateCategory successful");
@@ -90,7 +90,7 @@ class CategoryApiClient {
         }
     }
 
-    async deleteCategory(categoryId: number): Promise<string> {
+    async deleteCategory(categoryId: number): Promise<Response<string>> {
         log.info("deleteCategory called");
         log.debug(`Category ID: ${categoryId}`);
         try {
@@ -98,7 +98,7 @@ class CategoryApiClient {
             const response = await this.apiClient.delete<Response<string>>(`${BASE_URL}/${categoryId}`,
                 {
                     headers: {
-                        'Authorization': `Bearer ${jwt}`
+                        "Authorization": `Bearer ${jwt}`
                     }
                 });
             log.info("deleteCategory successful");

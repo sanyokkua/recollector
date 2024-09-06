@@ -1,6 +1,8 @@
-import React, {FC, useEffect, useState} from "react";
+import React, {FC, useCallback, useEffect, useState} from "react";
 import {
+    Alert,
     Box,
+    CircularProgress,
     Fab,
     IconButton,
     List,
@@ -12,100 +14,130 @@ import {
     TextField,
     Typography
 } from "@mui/material";
-import AddIcon from '@mui/icons-material/Add';
-import EditIcon from '@mui/icons-material/Edit';
-import {useAppDispatch, useAppSelector} from "../store/hooks.ts";
-import {appBarSetCustomState} from "../store/features/appBar/appBarSlice.ts";
-import CategoryView, {CategoryViewMode} from "../components/CategoryView.tsx";
-import {CategoryDto} from "../api/dto/categoryDto.ts";
+import AddIcon from "@mui/icons-material/Add";
+import EditIcon from "@mui/icons-material/Edit";
+import {useAppDispatch, useAppSelector} from "../store/hooks";
+import {appBarSetCustomState} from "../store/features/appBar/appBarSlice";
+import CategoryView, {CategoryViewMode} from "../components/CategoryView";
+import {CategoryDto} from "../api/dto/categoryDto";
 import {
     createCategory,
-    fetchCategories,
-    setCategoryName,
-    setPage,
-    setSelectedCategory
-} from "../store/features/categories/categoriesSlice.ts";
+    getAllCategories,
+    setFilterCategoryName,
+    setFilterPage,
+    setSelectedCategory,
+    updateCategory
+} from "../store/features/categories/categoriesSlice";
+import {logger} from "../config/appConfig";
+
+const log = logger.getLogger("DashboardCategories");
 
 // Styles
 const containerStyle: SxProps = {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100vh',
-    width: '100%',
-    padding: 2
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    height: "100vh",
+    width: "100%",
+    padding: 1
 };
 
 const fabStyle: SxProps = {
-    position: 'fixed',
+    position: "fixed",
     bottom: 16,
-    right: 16,
+    right: 16
 };
 
 const DashboardCategories: FC = () => {
     const dispatch = useAppDispatch();
-    // @ts-ignore
-    const {filter, allCategories, selectedCategory, loading, error} = useAppSelector((state) => state.categories);
+
+    const {
+        filter,
+        allCategories,
+        selectedCategory,
+        loading,
+        error,
+        currentPage,
+        totalItems,
+        totalPages
+    } = useAppSelector((state) => state.categories);
 
     const [open, setOpen] = useState<boolean>(false);
+    const [mode, setMode] = useState<CategoryViewMode>("view"); // 'view' | 'edit' | 'create'
+
+    const showPagination = totalPages > 1;
+
+    useEffect(() => {
+        log.debug("Component mounted, fetching categories");
+        dispatch(appBarSetCustomState("Categories"));
+        dispatch(getAllCategories(filter));
+    }, [dispatch, filter]);
+
     const handleOpen = () => setOpen(true);
     const handleClose = () => setOpen(false);
 
-    const [mode, setMode] = useState<CategoryViewMode>("view"); // 'view' | 'edit' | 'create'
-    // @ts-ignore
-    const setModeView = () => setMode("view");
-    // @ts-ignore
-    const setModeEdit = () => setMode("edit");
-    const setModeCreate = () => setMode("create");
+    const setModeView = useCallback(() => setMode("view"), []);
+    const setModeEdit = useCallback(() => setMode("edit"), []);
+    const setModeCreate = useCallback(() => setMode("create"), []);
 
-    const handleSave = (updatedCategory: CategoryDto) => {
-        switch (mode) {
-            case "create": {
-                try {
-                    // Dispatch the createCategory action and wait for it to complete
-                    dispatch(createCategory(updatedCategory)).unwrap(); // unwrap to catch any errors
+    const handleSave = async (updatedCategory: CategoryDto) => {
+        log.debug(`Saving category in ${mode} mode`, updatedCategory);
 
-                    // Dispatch fetchCategories to get the latest data from the server
-                    dispatch(fetchCategories(filter)); // This ensures the state remains in sync with the server
-                } catch (error) {
-                    console.error('Failed to create category:', error);
-                }
-                break;
+        try {
+            if (mode === "create") {
+                await dispatch(createCategory(updatedCategory)).unwrap();
+                log.info("Category created successfully");
+            } else if (mode === "edit" && selectedCategory) {
+                await dispatch(
+                    updateCategory({
+                        id: selectedCategory.categoryId ?? -1,
+                        categoryDto: updatedCategory
+                    })
+                ).unwrap();
+                log.info(`Category ${selectedCategory.categoryId} updated successfully`);
             }
-            case "edit": {
-                break;
-            }
-            case "view": {
-                break;
-            }
+
+            // Refresh categories after save
+            dispatch(getAllCategories(filter));
+            handleClose();
+        } catch (error) {
+            log.error(`Failed to save category in ${mode} mode:`, error);
         }
     };
 
-    useEffect(() => {
-        dispatch(appBarSetCustomState("Categories"));
-        fetchCategories(filter);
-    }, [dispatch]);
-
     const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
-        dispatch(setPage(value));
-        console.log(event);
+        log.debug("Page changed to", value, event);
+        dispatch(setFilterPage(value));
+        dispatch(getAllCategories(filter));
     };
 
     const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        dispatch(setCategoryName(event.target.value));
+        const searchValue = event.target.value;
+        log.debug("Search input changed:", searchValue);
+        dispatch(setFilterCategoryName(searchValue));
+        dispatch(getAllCategories(filter));
     };
 
     const handleAddButtonClick = () => {
-        console.log('Add button clicked');
+        log.debug("Add button clicked");
         setModeCreate();
         handleOpen();
     };
 
-    const handleEditButtonClick = (categoryId: number | undefined) => {
-        console.log(`Edit button clicked for category ${categoryId}`);
-        const chosenCat = allCategories.find(c => c.categoryId === categoryId);
-        dispatch(setSelectedCategory(chosenCat ?? null))
+    const handleItemClick = (categoryId?: number) => {
+        log.debug("Category item clicked:", categoryId);
+        const chosenCat = allCategories.find((c) => c.categoryId === categoryId) || null;
+        dispatch(setSelectedCategory(chosenCat));
+        setModeView();
+        handleOpen();
+    };
+
+    const handleEditButtonClick = (event: React.MouseEvent, categoryId?: number) => {
+        event.stopPropagation(); // Prevent the click from reaching the list item
+        log.debug("Edit button clicked for category:", categoryId);
+        const chosenCat = allCategories.find((c) => c.categoryId === categoryId) || null;
+        dispatch(setSelectedCategory(chosenCat));
         setModeEdit();
         handleOpen();
     };
@@ -119,54 +151,69 @@ const DashboardCategories: FC = () => {
                 onSave={handleSave}
                 mode={mode}
             />
-            <TextField
-                id="category-search"
-                label="Search"
-                type="search"
-                variant="outlined"
-                onChange={handleSearchChange}
-                sx={{mb: 2}}
-            />
-            <Typography sx={{mb: 2}} variant="h6" component="div" align="center">
-                Categories
-            </Typography>
-            <List dense={false}>
-                {allCategories.map(cat =>
-                    <ListItem
-                        disablePadding
-                        secondaryAction={
-                            <IconButton edge="end" aria-label="edit"
-                                        onClick={() => handleEditButtonClick(cat.categoryId)}>
-                                <EditIcon/>
-                            </IconButton>
-                        }
-                    >
-                        <ListItemButton>
-                            <ListItemText
-                                primary={cat.categoryName}
-                                secondary={`${cat.todoItems ?? 0}/${((cat.finishedItems ?? 0) + (cat.inProgressItems ?? 0))}`}
-                            />
-                        </ListItemButton>
-                    </ListItem>
-                )}
-            </List>
-            <Pagination
-                count={filter.size}
-                color="primary"
-                page={filter.page}
-                onChange={handlePageChange}
-                sx={{mt: 2}}
-            />
-            <Fab
-                color="success"
-                aria-label="add"
-                sx={fabStyle}
-                onClick={handleAddButtonClick}
-            >
+
+            {error && <Alert severity="warning">{error}</Alert>}
+
+            {loading ? (
+                <CircularProgress/>
+            ) : (
+                <>
+                    <TextField
+                        id="category-search"
+                        label="Search"
+                        type="search"
+                        variant="outlined"
+                        onChange={handleSearchChange}
+                        sx={{mb: 2}}
+                    />
+                    <Typography sx={{mb: 2}} variant="h6" component="div" align="center">
+                        Categories. Total: {totalItems}
+                    </Typography>
+                    <List dense={false}>
+                        {allCategories.map((cat) => (
+                            <ListItem
+                                key={cat.categoryId}
+                                disablePadding
+                                onClick={() => handleItemClick(cat.categoryId)}
+                                secondaryAction={
+                                    <IconButton
+                                        edge="end"
+                                        aria-label="edit"
+                                        onClick={(event) => handleEditButtonClick(event, cat.categoryId)}
+                                    >
+                                        <EditIcon/>
+                                    </IconButton>
+                                }
+                            >
+                                <ListItemButton>
+                                    <ListItemText
+                                        primary={cat.categoryName}
+                                        secondary={`${cat.todoItems ?? 0}/${
+                                            (cat.finishedItems ?? 0) + (cat.inProgressItems ?? 0)
+                                        }`}
+                                    />
+                                </ListItemButton>
+                            </ListItem>
+                        ))}
+                    </List>
+
+                    {showPagination && (
+                        <Pagination
+                            count={totalPages}
+                            color="primary"
+                            page={currentPage}
+                            onChange={handlePageChange}
+                            sx={{mt: 2}}
+                        />
+                    )}
+                </>
+            )}
+
+            <Fab color="success" aria-label="add" sx={fabStyle} onClick={handleAddButtonClick}>
                 <AddIcon/>
             </Fab>
         </Box>
     );
-}
+};
 
 export default DashboardCategories;
