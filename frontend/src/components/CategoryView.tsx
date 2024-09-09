@@ -1,5 +1,4 @@
-import {CategoryDto} from "../api/dto/categoryDto.ts";
-import React, {FC, useState} from 'react';
+import React, {FC, useCallback, useEffect, useState} from "react";
 import {
     Box,
     Button,
@@ -9,93 +8,203 @@ import {
     DialogTitle,
     Grid,
     TextField,
-    Typography,
-} from '@mui/material';
+    Typography
+} from "@mui/material";
+import {CategoryDto} from "../api/dto/categoryDto.ts";
+import {logger} from "../config/appConfig.ts";
 
-export type CategoryViewMode = 'view' | 'edit' | 'create';
+const log = logger.getLogger("CategoryView");
+
+interface ViewConfig {
+    dialogTitle: string;
+    actionButtonLabel: string;
+    isNameEditable: boolean;
+}
+
+export type CategoryViewMode = "view" | "edit" | "create";
+
+function getViewConfig(mode: CategoryViewMode): ViewConfig {
+    switch (mode) {
+        case "create":
+            return {
+                dialogTitle: "Create New Category",
+                actionButtonLabel: "Create",
+                isNameEditable: true
+            };
+        case "edit":
+            return {
+                dialogTitle: "Edit Category",
+                actionButtonLabel: "Save",
+                isNameEditable: true
+            };
+        default:
+            return {
+                dialogTitle: "View Category",
+                actionButtonLabel: "",
+                isNameEditable: false
+            };
+    }
+}
 
 interface CategoryViewProps {
+    mode: CategoryViewMode;
     category?: CategoryDto | null;
     open: boolean;
     onClose: () => void;
     onSave: (updatedCategory: CategoryDto) => void;
-    mode: CategoryViewMode; // Mode prop to control view behavior
+    onDelete: (deleteCategory: CategoryDto) => void;
 }
 
-const CategoryView: FC<CategoryViewProps> = ({category, open, onClose, onSave, mode}) => {
-    if (!category) {
-        category = {};
-    }
-    const [editableCategory, setEditableCategory] = useState<CategoryDto>(category);
+const CategoryView: FC<CategoryViewProps> = React.memo(({category, open, onClose, onSave, onDelete, mode}) => {
+        log.debug(`View is created in mode: ${mode}`);
+        log.debug(`Category received: ${JSON.stringify(category)}`);
 
-    // Handle changes to the category name
-    const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setEditableCategory({...editableCategory, categoryName: event.target.value});
-    };
+        // Initial state of category
+        const initialCategoryState: CategoryDto = {
+            categoryName: "",
+            todoItems: 0,
+            inProgressItems: 0,
+            finishedItems: 0
+        };
 
-    // Handle save or create action
-    const handleSave = () => {
-        onSave(editableCategory);
-        onClose();
-    };
+        const [categoryToProcess, setCategoryToProcess] = useState<CategoryDto>(
+            mode === "create" ? initialCategoryState : {...initialCategoryState, ...category}
+        );
 
-    // Determine if the name field should be editable
-    const isNameEditable = mode === 'edit' || mode === 'create';
-    // Determine the title of the dialog based on the mode
-    const dialogTitle = mode === 'view' ? 'View Category' : mode === 'edit' ? 'Edit Category' : 'Create New Category';
-    // Determine the action button label based on the mode
-    const actionButtonLabel = mode === 'create' ? 'Create' : 'Save';
+        const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
-    return (
-        <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-            <DialogTitle>{dialogTitle}</DialogTitle>
-            <DialogContent>
-                <Box component="form" noValidate autoComplete="off" sx={{mt: 2}}>
-                    <Grid container spacing={2}>
-                        <Grid item xs={12}>
-                            <TextField
-                                label="Category Name"
-                                value={editableCategory.categoryName || ''}
-                                onChange={handleNameChange}
-                                fullWidth
-                                variant="outlined"
-                                InputProps={{readOnly: !isNameEditable}}
-                            />
+        useEffect(() => {
+            if (mode === "create") {
+                // Reset to initial state when in create mode
+                setCategoryToProcess(initialCategoryState);
+            } else if (category) {
+                // Update the state with the provided category when not in create mode
+                setCategoryToProcess({...initialCategoryState, ...category});
+            }
+        }, [category, mode]);
+
+        const {dialogTitle, actionButtonLabel, isNameEditable} = getViewConfig(mode);
+
+        const handleNameTextChanged = useCallback(
+            (event: React.ChangeEvent<HTMLInputElement>) => {
+                setCategoryToProcess((prev) => ({
+                    ...prev,
+                    categoryName: event.target.value
+                }));
+            }, []
+        );
+        const handleOnSaveClicked = useCallback(
+            () => {
+                if (categoryToProcess) {
+                    onSave(categoryToProcess);
+                }
+            }, [categoryToProcess, onSave]
+        );
+        const handleOnCloseClicked = useCallback(
+            () => {
+                onClose();
+            }, [onClose]
+        );
+        const handleDeleteClick = useCallback(
+            () => {
+                setShowDeleteConfirmation(true);
+            }, []
+        );
+        const handleConfirmDelete = useCallback(
+            () => {
+                setShowDeleteConfirmation(false);
+                onDelete(categoryToProcess);
+            }, [categoryToProcess, onDelete]
+        );
+        const handleCancelDelete = useCallback(
+            () => {
+                setShowDeleteConfirmation(false);
+            }, []
+        );
+
+        return (
+            <>
+                <Dialog open={open} onClose={handleOnCloseClicked} maxWidth="sm" fullWidth>
+                    <DialogTitle>{dialogTitle}</DialogTitle>
+
+                    <DialogContent>
+                        <Box component="form" noValidate autoComplete="off" sx={{mt: 2}}>
+                            <Grid container spacing={2}>
+                                <Grid item xs={12}>
+                                    <TextField
+                                        fullWidth
+                                        variant="outlined"
+                                        label="Category Name"
+                                        value={categoryToProcess.categoryName ?? ""}
+                                        onChange={handleNameTextChanged}
+                                        InputProps={{readOnly: !isNameEditable}}
+                                    />
+                                </Grid>
+                                {mode === "view" && (
+                                    <>
+                                        <Grid item xs={12}>
+                                            <Typography variant="body1">
+                                                Todo Items: {categoryToProcess.todoItems ?? 0}
+                                            </Typography>
+                                        </Grid>
+                                        <Grid item xs={12}>
+                                            <Typography variant="body1">
+                                                In Progress Items: {categoryToProcess.inProgressItems ?? 0}
+                                            </Typography>
+                                        </Grid>
+                                        <Grid item xs={12}>
+                                            <Typography variant="body1">
+                                                Finished Items: {categoryToProcess.finishedItems ?? 0}
+                                            </Typography>
+                                        </Grid>
+                                    </>
+                                )}
+                            </Grid>
+                        </Box>
+                    </DialogContent>
+
+                    <DialogActions>
+                        <Grid container justifyContent="space-between" alignItems="center">
+                            {mode === "edit" && (
+                                <Grid item>
+                                    <Button onClick={handleDeleteClick} color="error" variant="outlined">Delete</Button>
+                                </Grid>
+                            )}
+                            <Grid item xs>
+                                <Grid container justifyContent={"flex-end"} spacing={1}>
+                                    <Grid item>
+                                        <Button onClick={handleOnCloseClicked} color="secondary">Cancel</Button>
+                                    </Grid>
+                                    {mode !== "view" && (
+                                        <Grid item>
+                                            <Button onClick={handleOnSaveClicked} color="primary"
+                                                    variant="contained">{actionButtonLabel}</Button>
+                                        </Grid>
+                                    )}
+                                </Grid>
+                            </Grid>
                         </Grid>
-                        {mode !== 'create' && (
-                            <>
-                                <Grid item xs={12}>
-                                    <Typography variant="body1">
-                                        Todo Items: {editableCategory.todoItems ?? 0}
-                                    </Typography>
-                                </Grid>
-                                <Grid item xs={12}>
-                                    <Typography variant="body1">
-                                        In Progress Items: {editableCategory.inProgressItems ?? 0}
-                                    </Typography>
-                                </Grid>
-                                <Grid item xs={12}>
-                                    <Typography variant="body1">
-                                        Finished Items: {editableCategory.finishedItems ?? 0}
-                                    </Typography>
-                                </Grid>
-                            </>
-                        )}
-                    </Grid>
-                </Box>
-            </DialogContent>
-            <DialogActions>
-                <Button onClick={onClose} color="secondary">
-                    Cancel
-                </Button>
-                {mode !== 'view' && (
-                    <Button onClick={handleSave} color="primary" variant="contained">
-                        {actionButtonLabel}
-                    </Button>
-                )}
-            </DialogActions>
-        </Dialog>
-    );
-};
+                    </DialogActions>
+
+
+                </Dialog>
+
+                <Dialog open={showDeleteConfirmation} onClose={handleCancelDelete} maxWidth="xs">
+                    <DialogTitle>Confirm Delete</DialogTitle>
+
+                    <DialogContent>
+                        <Typography>Are you sure you want to delete this category?</Typography>
+                    </DialogContent>
+
+                    <DialogActions>
+                        <Button onClick={handleCancelDelete} color="secondary">Cancel</Button>
+                        <Button onClick={handleConfirmDelete} color="error" variant="contained">Delete</Button>
+                    </DialogActions>
+
+                </Dialog>
+            </>
+        );
+    }
+);
 
 export default CategoryView;

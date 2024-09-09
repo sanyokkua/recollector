@@ -11,8 +11,9 @@ export interface CategoryState {
     itemsPerPage: number;
     totalItems: number;
     totalPages: number;
+
     filter: CategoryFilter;
-    selectedCategory: CategoryDto | null;
+    selectedCategory?: CategoryDto | null;
     allCategories: CategoryDto[];
     loading: boolean;
     error: string | null;
@@ -111,6 +112,7 @@ export const categoriesSlice = createSlice({
         setFilterSize: (state, action: PayloadAction<number>) => {
             log.debug(`categoriesSlice.reducers.setFilterSize. current state: ${JSON.stringify(state)}, action: ${JSON.stringify(action.payload)}`);
             state.filter.size = action.payload;
+            state.itemsPerPage = action.payload;
         },
         setFilterCategoryName: (state, action: PayloadAction<string>) => {
             log.debug(`categoriesSlice.reducers.setFilterCategoryName. current state: ${JSON.stringify(state)}, action: ${JSON.stringify(action.payload)}`);
@@ -152,11 +154,8 @@ export const categoriesSlice = createSlice({
                 log.info("getAllCategories.fulfilled: Categories fetched successfully");
                 state.allCategories = action.payload.data ?? [];
                 state.currentPage = action.payload.meta?.pagination?.currentPage ?? 0;
-                state.itemsPerPage = action.payload.meta?.pagination?.itemsPerPage ?? 0;
                 state.totalPages = action.payload.meta?.pagination?.totalPages ?? 0;
                 state.totalItems = action.payload.meta?.pagination?.totalItems ?? 0;
-                state.filter.page = state.currentPage;
-                state.filter.size = state.itemsPerPage;
 
                 state.loading = false;
                 state.error = action.payload.error ?? null;

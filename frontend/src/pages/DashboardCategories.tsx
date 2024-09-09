@@ -1,27 +1,13 @@
-import React, {FC, useCallback, useEffect, useState} from "react";
-import {
-    Alert,
-    Box,
-    CircularProgress,
-    Fab,
-    IconButton,
-    List,
-    ListItem,
-    ListItemButton,
-    ListItemText,
-    Pagination,
-    SxProps,
-    TextField,
-    Typography
-} from "@mui/material";
+import {FC, useCallback, useEffect, useState} from "react";
+import {Alert, Box, Fab, SxProps} from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import EditIcon from "@mui/icons-material/Edit";
 import {useAppDispatch, useAppSelector} from "../store/hooks";
 import {appBarSetCustomState} from "../store/features/appBar/appBarSlice";
 import CategoryView, {CategoryViewMode} from "../components/CategoryView";
 import {CategoryDto} from "../api/dto/categoryDto";
 import {
     createCategory,
+    deleteCategory,
     getAllCategories,
     setFilterCategoryName,
     setFilterPage,
@@ -29,6 +15,7 @@ import {
     updateCategory
 } from "../store/features/categories/categoriesSlice";
 import {logger} from "../config/appConfig";
+import GenericItemView, {GenericViewItem} from "../components/GenericItemView.tsx";
 
 const log = logger.getLogger("DashboardCategories");
 
@@ -63,25 +50,31 @@ const DashboardCategories: FC = () => {
         totalPages
     } = useAppSelector((state) => state.categories);
 
-    const [open, setOpen] = useState<boolean>(false);
-    const [mode, setMode] = useState<CategoryViewMode>("view"); // 'view' | 'edit' | 'create'
-
-    const showPagination = totalPages > 1;
-
     useEffect(() => {
         log.debug("Component mounted, fetching categories");
         dispatch(appBarSetCustomState("Categories"));
         dispatch(getAllCategories(filter));
     }, [dispatch, filter]);
 
-    const handleOpen = () => setOpen(true);
-    const handleClose = () => setOpen(false);
-
+    const [open, setOpen] = useState<boolean>(false);
+    const [mode, setMode] = useState<CategoryViewMode>("view"); // 'view' | 'edit' | 'create'
     const setModeView = useCallback(() => setMode("view"), []);
     const setModeEdit = useCallback(() => setMode("edit"), []);
     const setModeCreate = useCallback(() => setMode("create"), []);
 
-    const handleSave = async (updatedCategory: CategoryDto) => {
+    const items: Array<GenericViewItem> = allCategories.map(item => {
+        const addText = `${item.todoItems ?? 0}/${(item.finishedItems ?? 0) + (item.inProgressItems ?? 0)}`;
+        return {
+            itemId: item.categoryId,
+            itemName: item.categoryName,
+            itemAdditionalText: addText
+        };
+    });
+
+    // Handlers
+    const handleOpen = () => setOpen(true);
+    const handleViewClose = () => setOpen(false);
+    const handleViewSave = async (updatedCategory: CategoryDto) => {
         log.debug(`Saving category in ${mode} mode`, updatedCategory);
 
         try {
@@ -89,43 +82,53 @@ const DashboardCategories: FC = () => {
                 await dispatch(createCategory(updatedCategory)).unwrap();
                 log.info("Category created successfully");
             } else if (mode === "edit" && selectedCategory) {
-                await dispatch(
-                    updateCategory({
-                        id: selectedCategory.categoryId ?? -1,
-                        categoryDto: updatedCategory
-                    })
-                ).unwrap();
+                await dispatch(updateCategory({
+                    id: selectedCategory.categoryId ?? -1,
+                    categoryDto: updatedCategory
+                })).unwrap();
                 log.info(`Category ${selectedCategory.categoryId} updated successfully`);
             }
-
-            // Refresh categories after save
+            handleViewClose();
             dispatch(getAllCategories(filter));
-            handleClose();
         } catch (error) {
             log.error(`Failed to save category in ${mode} mode:`, error);
         }
     };
+    const handleViewDelete = async (categoryDto: CategoryDto) => {
+        log.debug(`Deleting category in ${mode} mode`, categoryDto);
+        try {
+            await dispatch(deleteCategory(categoryDto?.categoryId ?? -1)).unwrap();
+            log.info("Category deleted successfully");
+            handleViewClose();
+            dispatch(getAllCategories(filter));
+        } catch (error) {
+            log.error(`Failed to delete category in ${mode} mode:`, error);
+        }
+    };
 
-    const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
-        log.debug("Page changed to", value, event);
-        dispatch(setFilterPage(value));
+    const handleSearchChange = (searchText?: string | null) => {
+        log.debug("Search input changed:", searchText);
+        dispatch(setFilterCategoryName(searchText ?? ""));
         dispatch(getAllCategories(filter));
     };
 
-    const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const searchValue = event.target.value;
-        log.debug("Search input changed:", searchValue);
-        dispatch(setFilterCategoryName(searchValue));
-        dispatch(getAllCategories(filter));
+    const handlePageChange = (pageNumber: number | null | undefined) => {
+        log.debug("Page changed to", pageNumber);
+        dispatch(setFilterPage(pageNumber ?? 0));
+        dispatch(getAllCategories({
+            ...filter,
+            page: pageNumber ?? 0
+        }));
     };
 
     const handleAddButtonClick = () => {
         log.debug("Add button clicked");
+        dispatch(setSelectedCategory(null));
         setModeCreate();
         handleOpen();
     };
 
-    const handleItemClick = (categoryId?: number) => {
+    const handleItemClick = (categoryId: number | null | undefined) => {
         log.debug("Category item clicked:", categoryId);
         const chosenCat = allCategories.find((c) => c.categoryId === categoryId) || null;
         dispatch(setSelectedCategory(chosenCat));
@@ -133,8 +136,7 @@ const DashboardCategories: FC = () => {
         handleOpen();
     };
 
-    const handleEditButtonClick = (event: React.MouseEvent, categoryId?: number) => {
-        event.stopPropagation(); // Prevent the click from reaching the list item
+    const handleEditButtonClick = (categoryId: number | null | undefined) => {
         log.debug("Edit button clicked for category:", categoryId);
         const chosenCat = allCategories.find((c) => c.categoryId === categoryId) || null;
         dispatch(setSelectedCategory(chosenCat));
@@ -144,70 +146,23 @@ const DashboardCategories: FC = () => {
 
     return (
         <Box sx={containerStyle}>
-            <CategoryView
-                category={selectedCategory}
-                open={open}
-                onClose={handleClose}
-                onSave={handleSave}
-                mode={mode}
-            />
+            <CategoryView category={selectedCategory} open={open} onClose={handleViewClose} onSave={handleViewSave}
+                          onDelete={handleViewDelete} mode={mode}/>
 
             {error && <Alert severity="warning">{error}</Alert>}
 
-            {loading ? (
-                <CircularProgress/>
-            ) : (
-                <>
-                    <TextField
-                        id="category-search"
-                        label="Search"
-                        type="search"
-                        variant="outlined"
-                        onChange={handleSearchChange}
-                        sx={{mb: 2}}
-                    />
-                    <Typography sx={{mb: 2}} variant="h6" component="div" align="center">
-                        Categories. Total: {totalItems}
-                    </Typography>
-                    <List dense={false}>
-                        {allCategories.map((cat) => (
-                            <ListItem
-                                key={cat.categoryId}
-                                disablePadding
-                                onClick={() => handleItemClick(cat.categoryId)}
-                                secondaryAction={
-                                    <IconButton
-                                        edge="end"
-                                        aria-label="edit"
-                                        onClick={(event) => handleEditButtonClick(event, cat.categoryId)}
-                                    >
-                                        <EditIcon/>
-                                    </IconButton>
-                                }
-                            >
-                                <ListItemButton>
-                                    <ListItemText
-                                        primary={cat.categoryName}
-                                        secondary={`${cat.todoItems ?? 0}/${
-                                            (cat.finishedItems ?? 0) + (cat.inProgressItems ?? 0)
-                                        }`}
-                                    />
-                                </ListItemButton>
-                            </ListItem>
-                        ))}
-                    </List>
-
-                    {showPagination && (
-                        <Pagination
-                            count={totalPages}
-                            color="primary"
-                            page={currentPage}
-                            onChange={handlePageChange}
-                            sx={{mt: 2}}
-                        />
-                    )}
-                </>
-            )}
+            <GenericItemView header={"Category"}
+                             currentPage={currentPage}
+                             totalPages={totalPages}
+                             totalItems={totalItems}
+                             listOfItems={items}
+                             isLoading={loading}
+                             searchBarText={filter?.categoryName ?? ""}
+                             onItemClicked={handleItemClick}
+                             onItemEditClicked={handleEditButtonClick}
+                             onPaginationItemClicked={handlePageChange}
+                             onSearchTextChanged={handleSearchChange}
+            />
 
             <Fab color="success" aria-label="add" sx={fabStyle} onClick={handleAddButtonClick}>
                 <AddIcon/>
