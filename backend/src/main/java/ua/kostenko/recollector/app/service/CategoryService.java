@@ -175,13 +175,21 @@ public class CategoryService {
                                          Sort.by(categoryFilter.getDirection(), "categoryName"));
 
         var spec = CategorySpecification.builder()
-                                        .userId(user.getUserId()).categoryName(categoryFilter.getCategoryName())
+                                        .userId(user.getUserId())
+                                        .categoryName(categoryFilter.getCategoryName())
                                         .build();
 
         Page<Category> resultFromDb = categoryRepository.findAll(spec, pageable);
 
+        Page<CategoryDto> page = resultFromDb.map(CategoryUtils::mapToDto);
+        page.stream().forEach(categoryDto -> {
+            var category = getCategory(userEmail, categoryDto.getCategoryId());
+            categoryDto.setTodoItems(category.getTodoItems());
+            categoryDto.setInProgressItems(category.getInProgressItems());
+            categoryDto.setFinishedItems(category.getFinishedItems());
+        }); // TODO: Check test coverage. Think about optimizations
         log.info("Retrieved {} categories with filters for user: {}", resultFromDb.getTotalElements(), userEmail);
-        return resultFromDb.map(CategoryUtils::mapToDto);
+        return page;
     }
 
     /**

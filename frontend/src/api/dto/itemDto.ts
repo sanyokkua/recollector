@@ -9,9 +9,10 @@ export interface ItemDto {
 }
 
 export enum ItemDtoItemStatusEnum {
-    FINISHED = 'FINISHED',
-    IN_PROGRESS = 'IN_PROGRESS',
-    TODO_LATER = 'TODO_LATER'
+    ALL = "",
+    FINISHED = "FINISHED",
+    IN_PROGRESS = "IN_PROGRESS",
+    TODO_LATER = "TODO_LATER"
 }
 
 export interface ItemFilter {

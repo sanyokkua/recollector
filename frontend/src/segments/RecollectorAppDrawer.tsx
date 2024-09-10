@@ -1,16 +1,16 @@
 import React, {JSX} from "react";
 import {Box, Divider, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText} from "@mui/material";
-import WavingHandIcon from '@mui/icons-material/WavingHand';
-import LoginIcon from '@mui/icons-material/Login';
-import AppRegistrationIcon from '@mui/icons-material/AppRegistration';
-import RestoreIcon from '@mui/icons-material/Restore';
-import ClassIcon from '@mui/icons-material/Class';
-import ChecklistRtlIcon from '@mui/icons-material/ChecklistRtl';
-import AccountBoxIcon from '@mui/icons-material/AccountBox';
-import SettingsIcon from '@mui/icons-material/Settings';
+import WavingHandIcon from "@mui/icons-material/WavingHand";
+import LoginIcon from "@mui/icons-material/Login";
+import AppRegistrationIcon from "@mui/icons-material/AppRegistration";
+import RestoreIcon from "@mui/icons-material/Restore";
+import ClassIcon from "@mui/icons-material/Class";
+import ChecklistRtlIcon from "@mui/icons-material/ChecklistRtl";
+import AccountBoxIcon from "@mui/icons-material/AccountBox";
+import SettingsIcon from "@mui/icons-material/Settings";
 import {drawerSwitchOff} from "../store/features/drawer/drawerSlice.ts";
 import {useAppDispatch, useAppSelector} from "../store/hooks.ts";
-import {Link} from 'react-router-dom';
+import {Link} from "react-router-dom";
 
 type DrawerItem = {
     path: string;
@@ -18,56 +18,62 @@ type DrawerItem = {
     icon: JSX.Element
 }
 
-const drawerItems: DrawerItem[] = [
-    {
-        path: "/",
-        text: "Welcome",
-        icon: <WavingHandIcon/>,
-    },
-    {
-        path: "/login",
-        text: "Login",
-        icon: <LoginIcon/>,
-    },
-    {
-        path: "/register",
-        text: "Register",
-        icon: <AppRegistrationIcon/>,
-    },
-    {
-        path: "/restore",
-        text: "Restore Password",
-        icon: <RestoreIcon/>,
-    },
-    {
-        path: "/dashboard",
-        text: "Categories",
-        icon: <ClassIcon/>,
-    },
-    {
-        path: "/dashboard/items",
-        text: "Items",
-        icon: <ChecklistRtlIcon/>,
-    },
-];
-
-const drawerItemsSettings: DrawerItem[] = [
-    {
-        path: "/profile",
-        text: "Profile",
-        icon: <AccountBoxIcon/>,
-    },
-    {
-        path: "/settings",
-        text: "Settings",
-        icon: <SettingsIcon/>,
-    }
-]
-
 
 const RecollectorAppDrawer: React.FC = () => {
-    const drawerToggled = useAppSelector(state => state.drawerToggled.value)
+    const drawerToggled = useAppSelector(state => state.drawerToggled.value);
     const dispatch = useAppDispatch();
+
+    const {
+        userIsLoggedIn,
+        userDateTimeExp
+    } = useAppSelector((state) => state.globals);
+
+    const drawerItems: DrawerItem[] = [];
+    const drawerItemsSettings: DrawerItem[] = [];
+
+    drawerItems.push({path: "/", text: "Welcome", icon: <WavingHandIcon/>});
+
+    let milliseconds = userDateTimeExp?.getMilliseconds() ?? 0;
+
+    if (userIsLoggedIn && milliseconds < new Date().getMilliseconds()) {
+        drawerItems.push({
+            path: "/dashboard",
+            text: "Categories",
+            icon: <ClassIcon/>
+        });
+        drawerItems.push({
+            path: "/dashboard/${id}/items",
+            text: "Items",
+            icon: <ChecklistRtlIcon/>
+        });
+
+        drawerItemsSettings.push({
+            path: "/profile",
+            text: "Profile",
+            icon: <AccountBoxIcon/>
+        });
+        drawerItemsSettings.push({
+            path: "/settings",
+            text: "Settings",
+            icon: <SettingsIcon/>
+        });
+    } else {
+        drawerItems.push({
+            path: "/login",
+            text: "Login",
+            icon: <LoginIcon/>
+        });
+        drawerItems.push({
+            path: "/register",
+            text: "Register",
+            icon: <AppRegistrationIcon/>
+        });
+        drawerItems.push({
+            path: "/restore",
+            text: "Restore Password",
+            icon: <RestoreIcon/>
+        });
+    }
 
     const items = drawerItems.map(item => <ListItem key={item.path} disablePadding>
         <ListItemButton component={Link} to={item.path}>
@@ -101,7 +107,7 @@ const RecollectorAppDrawer: React.FC = () => {
 
     return <Drawer open={drawerToggled} onClose={() => dispatch(drawerSwitchOff())}>
         {DrawerList}
-    </Drawer>
-}
+    </Drawer>;
+};
 
 export default RecollectorAppDrawer;

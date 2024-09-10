@@ -1,8 +1,8 @@
 import {createAsyncThunk, createSlice, PayloadAction} from "@reduxjs/toolkit";
-import {CategoryDto, CategoryFilter} from "../../../api/dto/categoryDto.ts";
-import {FilterDirectionEnum, Response} from "../../../api/dto/common.ts";
+import {CategoryDto, CategoryFilter} from "../../../api/dto/categoryDto";
+import {FilterDirectionEnum, Response} from "../../../api/dto/common";
 import {categoryApiClient} from "../../../api";
-import {logger} from "../../../config/appConfig.ts";
+import {logger} from "../../../config/appConfig";
 
 const log = logger.getLogger("categorySlice");
 
@@ -35,71 +35,81 @@ const initialState: CategoryState = {
     loading: false,
     error: null
 };
-
-export const createCategory = createAsyncThunk("categories/create",
+export const createCategory = createAsyncThunk(
+    "categories/create",
     async (newCategory: Omit<CategoryDto, "categoryId">, {rejectWithValue}) => {
         log.info("createAsyncThunk will try to call createCategory API");
         log.debug(`createAsyncThunk, incoming parameters: newCategory -> ${JSON.stringify(newCategory)}`);
         try {
             return await categoryApiClient.createCategory(newCategory);
-        } catch (error) {
+        } catch (error: any) {
+            const errorMessage = error?.message || "Failed to create category";
             log.warn("createAsyncThunk failed to call createCategory API", error);
-            return rejectWithValue("Failed to create category");
+            return rejectWithValue(errorMessage);
         }
     }
 );
 
-export const getAllCategories = createAsyncThunk("categories/fetchAll",
+export const getAllCategories = createAsyncThunk(
+    "categories/fetchAll",
     async (filter: CategoryFilter, {rejectWithValue}) => {
         log.info("getAllCategories will try to fetch categories");
         log.debug(`getAllCategories, incoming filter: ${JSON.stringify(filter)}`);
         try {
             return await categoryApiClient.getAllCategories(filter);
-        } catch (error) {
+        } catch (error: any) {
+            const errorMessage = error?.message || "Failed to get categories";
             log.warn("Failed to fetch categories", error);
-            return rejectWithValue("Failed to get categories");
+            return rejectWithValue(errorMessage);
         }
     }
 );
 
-export const getCategory = createAsyncThunk("categories/fetchById",
+export const getCategory = createAsyncThunk(
+    "categories/fetchById",
     async (id: number, {rejectWithValue}) => {
         log.info(`getCategory will try to fetch category with id ${id}`);
         log.debug(`getCategory, incoming id: ${id}`);
         try {
             return await categoryApiClient.getCategory(id);
-        } catch (error) {
+        } catch (error: any) {
+            const errorMessage = error?.message || `Failed to get category`;
             log.warn(`Failed to fetch category with id ${id}`, error);
-            return rejectWithValue("Failed to get category");
+            return rejectWithValue(errorMessage);
         }
     }
 );
 
-export const updateCategory = createAsyncThunk("categories/update",
+export const updateCategory = createAsyncThunk(
+    "categories/update",
     async ({id, categoryDto}: { id: number; categoryDto: CategoryDto }, {rejectWithValue}) => {
         log.info(`updateCategory will try to update category with id ${id}`);
         log.debug(`updateCategory, incoming parameters: id -> ${id}, categoryDto -> ${JSON.stringify(categoryDto)}`);
         try {
             return await categoryApiClient.updateCategory(id, categoryDto);
-        } catch (error) {
+        } catch (error: any) {
+            const errorMessage = error?.message || "Failed to update category";
             log.warn(`Failed to update category with id ${id}`, error);
-            return rejectWithValue("Failed to update category");
+            return rejectWithValue(errorMessage);
         }
     }
 );
 
-export const deleteCategory = createAsyncThunk("categories/delete",
+export const deleteCategory = createAsyncThunk(
+    "categories/delete",
     async (id: number, {rejectWithValue}) => {
         log.info(`deleteCategory will try to delete category with id ${id}`);
         log.debug(`deleteCategory, incoming id: ${id}`);
         try {
             return await categoryApiClient.deleteCategory(id);
-        } catch (error) {
+        } catch (error: any) {
+            const errorMessage = error?.message || "Failed to delete category";
             log.warn(`Failed to delete category with id ${id}`, error);
-            return rejectWithValue("Failed to delete category");
+            return rejectWithValue(errorMessage);
         }
     }
 );
+
 
 export const categoriesSlice = createSlice({
     name: "categories",

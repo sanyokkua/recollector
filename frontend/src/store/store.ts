@@ -1,7 +1,9 @@
-import {configureStore} from '@reduxjs/toolkit';
-import drawerToggledReducer from './features/drawer/drawerSlice';
-import appBarSliceReducer from './features/appBar/appBarSlice';
-import categoriesSliceReducer from './features/categories/categoriesSlice';
+import {configureStore} from "@reduxjs/toolkit";
+import drawerToggledReducer from "./features/drawer/drawerSlice";
+import appBarSliceReducer from "./features/appBar/appBarSlice";
+import categoriesSliceReducer from "./features/categories/categoriesSlice";
+import itemsSliceReducer from "./features/items/itemsSlice";
+import globalsSliceReducer from "./features/global/globalSlice";
 
 /**
  * Configures and creates the Redux store with the specified reducers.
@@ -16,7 +18,11 @@ const store = configureStore({
         appBarHeader: appBarSliceReducer,
 
         categories: categoriesSliceReducer,
-    },
+
+        items: itemsSliceReducer,
+
+        globals: globalsSliceReducer
+    }
 });
 
 /**

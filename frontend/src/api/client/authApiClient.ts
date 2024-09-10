@@ -11,13 +11,13 @@ import {
 import {Response} from "../dto/common.ts";
 import {handleError, handleResponse} from "./utils.ts";
 import {logger} from "../../config/appConfig.ts";
-import {TokenExtractor, TokenSaver} from "../types/types.ts";
+import {TokenExtractor} from "../types/types.ts";
 
 const BASE_URL: string = "/v1/auth";
 const log = logger.getLogger("AuthApiClient");
 
 class AuthApiClient {
-    constructor(private apiClient: AxiosInstance, private extractor: TokenExtractor, private saver: TokenSaver) {
+    constructor(private apiClient: AxiosInstance, private extractor: TokenExtractor) {
         log.debug("Initialized AuthApiClient");
     }
 
@@ -40,9 +40,7 @@ class AuthApiClient {
         try {
             const response = await this.apiClient.post<Response<UserDto>>(`${BASE_URL}/login`, request);
             log.info("loginUser successful");
-            const data = handleResponse(response);
-            this.saver(data.data?.jwtToken ?? "");
-            return data;
+            return handleResponse(response);
         } catch (error) {
             log.warn(`loginUser failed with error: ${error}`);
             return handleError(error);
