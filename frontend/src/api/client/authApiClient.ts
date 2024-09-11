@@ -11,13 +11,12 @@ import {
 import {Response} from "../dto/common.ts";
 import {handleError, handleResponse} from "./utils.ts";
 import {logger} from "../../config/appConfig.ts";
-import {TokenExtractor} from "../types/types.ts";
 
 const BASE_URL: string = "/v1/auth";
 const log = logger.getLogger("AuthApiClient");
 
 class AuthApiClient {
-    constructor(private apiClient: AxiosInstance, private extractor: TokenExtractor) {
+    constructor(private apiClient: AxiosInstance, private jwtToken: string = "") {
         log.debug("Initialized AuthApiClient");
     }
 
@@ -64,11 +63,10 @@ class AuthApiClient {
         log.info("resetPassword called");
         log.debug(`Request: ${JSON.stringify(request)}`);
         try {
-            const jwt = this.extractor();
             const response = await this.apiClient.post<Response<UserDto>>(`${BASE_URL}/reset-password`, request,
                 {
                     headers: {
-                        "Authorization": `Bearer ${jwt}`
+                        "Authorization": `Bearer ${this.jwtToken}`
                     }
                 });
             log.info("resetPassword successful");
@@ -83,11 +81,10 @@ class AuthApiClient {
         log.info("changePassword called");
         log.debug(`Request: ${JSON.stringify(request)}`);
         try {
-            const jwt = this.extractor();
             const response = await this.apiClient.post<Response<UserDto>>(`${BASE_URL}/change-password`, request,
                 {
                     headers: {
-                        "Authorization": `Bearer ${jwt}`
+                        "Authorization": `Bearer ${this.jwtToken}`
                     }
                 });
             log.info("changePassword successful");
@@ -102,11 +99,10 @@ class AuthApiClient {
         log.info("deleteAccount called");
         log.debug(`Request: ${JSON.stringify(request)}`);
         try {
-            const jwt = this.extractor();
             const response = await this.apiClient.post<Response<string>>(`${BASE_URL}/delete-account`, request,
                 {
                     headers: {
-                        "Authorization": `Bearer ${jwt}`
+                        "Authorization": `Bearer ${this.jwtToken}`
                     }
                 });
             log.info("deleteAccount successful");

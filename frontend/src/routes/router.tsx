@@ -9,6 +9,7 @@ import DashboardCategories from "../pages/DashboardCategories.tsx";
 import DashboardItems from "../pages/DashboardItems.tsx";
 import Profile from "../pages/Profile.tsx";
 import Settings from "../pages/Settings.tsx";
+import PrivateRoute from "./PrivateRoute.tsx";
 
 const router = createBrowserRouter([
     {
@@ -38,23 +39,41 @@ const router = createBrowserRouter([
             },
             {
                 path: "/dashboard",
-                element: <DashboardCategories/>,
-                errorElement: <ErrorPage/>
-            },
-            {
-                path: "/dashboard/:id/items",
-                element: <DashboardItems/>,
-                errorElement: <ErrorPage/>
+                element: <PrivateRoute/>,
+                children: [
+                    {
+                        index: true,
+                        element: <DashboardCategories/>,
+                        errorElement: <ErrorPage/>
+                    },
+                    {
+                        path: "/dashboard/items",
+                        element: <DashboardItems/>,
+                        errorElement: <ErrorPage/>
+                    }
+                ]
             },
             {
                 path: "/profile",
-                element: <Profile/>,
-                errorElement: <ErrorPage/>
+                element: <PrivateRoute/>,
+                children: [
+                    {
+                        index: true,
+                        element: <Profile/>,
+                        errorElement: <ErrorPage/>
+                    }
+                ]
             },
             {
                 path: "/settings",
-                element: <Settings/>,
-                errorElement: <ErrorPage/>
+                element: <PrivateRoute/>,
+                children: [
+                    {
+                        index: true,
+                        element: <Settings/>,
+                        errorElement: <ErrorPage/>
+                    }
+                ]
             }
         ]
     }

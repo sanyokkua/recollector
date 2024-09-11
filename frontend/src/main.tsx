@@ -1,21 +1,22 @@
 // Import necessary libraries and components from React, ReactDOM, React Router, and Redux
-import {StrictMode} from 'react';
-import {createRoot} from 'react-dom/client';
-import {RouterProvider} from 'react-router-dom';
-import {Provider} from 'react-redux';
+import {StrictMode} from "react";
+import {createRoot} from "react-dom/client";
+import {RouterProvider} from "react-router-dom";
+import {Provider} from "react-redux";
 
 // Import the application's router and Redux store
-import router from './routes/router';
-import store from './store/store';
+import router from "./routes/router";
+import store from "./store/store";
+import {logger} from "./config/appConfig.ts";
 
-import {logger} from "./config/appConfig.ts"
+const log = logger.getLogger("AppRoot");
 
 // Get the root element from the DOM where the React app will be mounted
-const rootElement = document.getElementById('root');
+const rootElement = document.getElementById("root");
 
 if (!rootElement) {
-    logger.warn("Failed to load root element");
-    throw new Error('Root element not found. Please ensure there is an element with id "root" in your HTML.');
+    log.warn("Failed to load root element");
+    throw new Error("Root element not found. Please ensure there is an element with id \"root\" in your HTML.");
 }
 
 // Create the React root and render the app

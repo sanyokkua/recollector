@@ -6,9 +6,9 @@ import {appBarSetCustomState} from "../store/features/appBar/appBarSlice.ts";
 const Settings: FC = () => {
     const dispatch = useAppDispatch();
     useEffect(() => {
-        dispatch(appBarSetCustomState("Settings"))
+        dispatch(appBarSetCustomState("Settings"));
     });
     return <p>Settings page</p>;
-}
+};
 
 export default Settings;

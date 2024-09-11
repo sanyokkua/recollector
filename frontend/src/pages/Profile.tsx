@@ -6,9 +6,9 @@ import {appBarSetCustomState} from "../store/features/appBar/appBarSlice.ts";
 const Profile: FC = () => {
     const dispatch = useAppDispatch();
     useEffect(() => {
-        dispatch(appBarSetCustomState("Profile"))
+        dispatch(appBarSetCustomState("Profile"));
     });
     return <p>Profile Page</p>;
-}
+};
 
 export default Profile;

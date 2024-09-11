@@ -1,24 +1,26 @@
-import {FC, useEffect, useState} from 'react';
-import {Box, Button, FormControl, Snackbar, TextField, Typography} from '@mui/material';
-import {useAppDispatch} from '../store/hooks';
-import {appBarSetCustomState} from '../store/features/appBar/appBarSlice';
-import {Controller, useForm} from 'react-hook-form';
-import * as yup from 'yup';
-import {yupResolver} from '@hookform/resolvers/yup';
-import {authApiClient} from '../api/index.ts';
-import {Link, useNavigate} from 'react-router-dom';
-import Alert from '@mui/material/Alert';
+import {FC, useEffect, useState} from "react";
+import {Box, Button, FormControl, Snackbar, TextField, Typography} from "@mui/material";
+import {useAppDispatch} from "../store/hooks";
+import {appBarSetCustomState} from "../store/features/appBar/appBarSlice";
+import {Controller, useForm} from "react-hook-form";
+import * as yup from "yup";
+import {yupResolver} from "@hookform/resolvers/yup";
+import {Link, useNavigate} from "react-router-dom";
+import Alert from "@mui/material/Alert";
+import {registerUser} from "../store/features/global/globalSlice.ts";
+import {logger} from "../config/appConfig.ts";
 
+const log = logger.getLogger("Registration");
 // Define validation schema with Yup
 const schema = yup.object({
-    email: yup.string().email('Invalid email address').required('Email is required'),
+    email: yup.string().email("Invalid email address").required("Email is required"),
     password: yup.string()
-        .min(6, 'Password must be at least 6 characters')
-        .max(24, 'Password must be up to 24 characters')
-        .required('Password is required'),
+        .min(6, "Password must be at least 6 characters")
+        .max(24, "Password must be up to 24 characters")
+        .required("Password is required"),
     confirmPassword: yup.string()
-        .oneOf([yup.ref('password')], 'Passwords must match')
-        .required('Confirm password is required'),
+        .oneOf([yup.ref("password")], "Passwords must match")
+        .required("Confirm password is required")
 });
 
 interface FormValues {
@@ -36,9 +38,9 @@ const Registration: FC = () => {
     const {
         control,
         handleSubmit,
-        formState: {errors},
+        formState: {errors}
     } = useForm<FormValues>({
-        resolver: yupResolver(schema),
+        resolver: yupResolver(schema)
     });
 
     useEffect(() => {
@@ -47,17 +49,18 @@ const Registration: FC = () => {
 
     const onSubmit = async (data: FormValues) => {
         try {
-            await authApiClient.registerUser({
+            await dispatch(registerUser({
                 email: data.email,
                 password: data.password,
-                passwordConfirm: data.confirmPassword,
-            });
-            setSuccessMessage('Registration successful! Redirecting to login...');
+                passwordConfirm: data.confirmPassword
+            })).unwrap();
+            log.info("Successfully registered user");
+            setSuccessMessage("Registration successful! Redirecting to login...");
             setTimeout(() => {
-                navigate('/login');
+                navigate("/login");
             }, 2000); // 2 seconds delay before redirect
         } catch (error: any) {
-            setErrorMessage(error.response?.data?.message || 'Registration failed. Please try again.');
+            setErrorMessage(error.response?.data?.message || "Registration failed. Please try again.");
         }
     };
 
@@ -147,7 +150,7 @@ const Registration: FC = () => {
                 </Button>
 
                 <Button component={Link} to={"/login"} variant="text" color="secondary" fullWidth
-                        style={{marginTop: '16px'}}>
+                        style={{marginTop: "16px"}}>
                     Already has an account?
                 </Button>
             </Box>

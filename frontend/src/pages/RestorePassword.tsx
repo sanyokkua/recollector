@@ -1,7 +1,7 @@
-import {FC, useEffect} from 'react';
-import {Box, Button, FormControl, TextField, Typography} from '@mui/material';
-import {useAppDispatch} from '../store/hooks';
-import {appBarSetCustomState} from '../store/features/appBar/appBarSlice';
+import {FC, useEffect} from "react";
+import {Box, Button, FormControl, TextField, Typography} from "@mui/material";
+import {useAppDispatch} from "../store/hooks";
+import {appBarSetCustomState} from "../store/features/appBar/appBarSlice";
 
 const RestorePassword: FC = () => {
     const dispatch = useAppDispatch();

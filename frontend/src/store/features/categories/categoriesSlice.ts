@@ -1,8 +1,8 @@
 import {createAsyncThunk, createSlice, PayloadAction} from "@reduxjs/toolkit";
 import {CategoryDto, CategoryFilter} from "../../../api/dto/categoryDto";
-import {FilterDirectionEnum, Response} from "../../../api/dto/common";
-import {categoryApiClient} from "../../../api";
-import {logger} from "../../../config/appConfig";
+import {FilterDirectionEnum} from "../../../api/dto/common";
+import axiosClient, {logger} from "../../../config/appConfig";
+import CategoryApiClient from "../../../api/client/categoryApiClient.ts";
 
 const log = logger.getLogger("categorySlice");
 
@@ -11,7 +11,6 @@ export interface CategoryState {
     itemsPerPage: number;
     totalItems: number;
     totalPages: number;
-
     filter: CategoryFilter;
     selectedCategory?: CategoryDto | null;
     allCategories: CategoryDto[];
@@ -35,206 +34,204 @@ const initialState: CategoryState = {
     loading: false,
     error: null
 };
-export const createCategory = createAsyncThunk(
-    "categories/create",
-    async (newCategory: Omit<CategoryDto, "categoryId">, {rejectWithValue}) => {
-        log.info("createAsyncThunk will try to call createCategory API");
-        log.debug(`createAsyncThunk, incoming parameters: newCategory -> ${JSON.stringify(newCategory)}`);
+
+type CategoryRequest = {
+    jwtToken: string;
+    id?: number;
+    categoryDto?: CategoryDto;
+    filter?: CategoryFilter;
+};
+
+// Helper function to handle errors consistently
+const handleError = (error: any, message: string) => {
+    const errorMessage = error?.message || message;
+    log.warn(errorMessage, error);
+    return errorMessage;
+};
+
+export const createCategory = createAsyncThunk("categories/create",
+    async ({jwtToken, categoryDto}: CategoryRequest, {rejectWithValue}) => {
+        log.info("Attempting to create category");
         try {
-            return await categoryApiClient.createCategory(newCategory);
+            const client = new CategoryApiClient(axiosClient, jwtToken);
+            return await client.createCategory(categoryDto!);
         } catch (error: any) {
-            const errorMessage = error?.message || "Failed to create category";
-            log.warn("createAsyncThunk failed to call createCategory API", error);
-            return rejectWithValue(errorMessage);
+            return rejectWithValue(handleError(error, "Failed to create category"));
         }
     }
 );
 
-export const getAllCategories = createAsyncThunk(
-    "categories/fetchAll",
-    async (filter: CategoryFilter, {rejectWithValue}) => {
-        log.info("getAllCategories will try to fetch categories");
-        log.debug(`getAllCategories, incoming filter: ${JSON.stringify(filter)}`);
+export const getAllCategories = createAsyncThunk("categories/fetchAll",
+    async ({jwtToken, filter}: CategoryRequest, {rejectWithValue}) => {
+        log.info("Fetching all categories");
         try {
-            return await categoryApiClient.getAllCategories(filter);
+            const client = new CategoryApiClient(axiosClient, jwtToken);
+            return await client.getAllCategories(filter!);
         } catch (error: any) {
-            const errorMessage = error?.message || "Failed to get categories";
-            log.warn("Failed to fetch categories", error);
-            return rejectWithValue(errorMessage);
+            return rejectWithValue(handleError(error, "Failed to fetch categories"));
         }
     }
 );
 
-export const getCategory = createAsyncThunk(
-    "categories/fetchById",
-    async (id: number, {rejectWithValue}) => {
-        log.info(`getCategory will try to fetch category with id ${id}`);
-        log.debug(`getCategory, incoming id: ${id}`);
+export const getCategory = createAsyncThunk("categories/fetchById",
+    async ({jwtToken, id}: CategoryRequest, {rejectWithValue}) => {
+        log.info(`Fetching category with id ${id}`);
         try {
-            return await categoryApiClient.getCategory(id);
+            const client = new CategoryApiClient(axiosClient, jwtToken);
+            return await client.getCategory(id!);
         } catch (error: any) {
-            const errorMessage = error?.message || `Failed to get category`;
-            log.warn(`Failed to fetch category with id ${id}`, error);
-            return rejectWithValue(errorMessage);
+            return rejectWithValue(handleError(error, `Failed to fetch category with id ${id}`));
         }
     }
 );
 
-export const updateCategory = createAsyncThunk(
-    "categories/update",
-    async ({id, categoryDto}: { id: number; categoryDto: CategoryDto }, {rejectWithValue}) => {
-        log.info(`updateCategory will try to update category with id ${id}`);
-        log.debug(`updateCategory, incoming parameters: id -> ${id}, categoryDto -> ${JSON.stringify(categoryDto)}`);
+export const updateCategory = createAsyncThunk("categories/update",
+    async ({jwtToken, id, categoryDto}: CategoryRequest, {rejectWithValue}) => {
+        log.info(`Updating category with id ${id}`);
         try {
-            return await categoryApiClient.updateCategory(id, categoryDto);
+            const client = new CategoryApiClient(axiosClient, jwtToken);
+            return await client.updateCategory(id!, categoryDto!);
         } catch (error: any) {
-            const errorMessage = error?.message || "Failed to update category";
-            log.warn(`Failed to update category with id ${id}`, error);
-            return rejectWithValue(errorMessage);
+            return rejectWithValue(handleError(error, `Failed to update category with id ${id}`));
         }
     }
 );
 
-export const deleteCategory = createAsyncThunk(
-    "categories/delete",
-    async (id: number, {rejectWithValue}) => {
-        log.info(`deleteCategory will try to delete category with id ${id}`);
-        log.debug(`deleteCategory, incoming id: ${id}`);
+export const deleteCategory = createAsyncThunk("categories/delete",
+    async ({jwtToken, id}: CategoryRequest, {rejectWithValue}) => {
+        log.info(`Deleting category with id ${id}`);
         try {
-            return await categoryApiClient.deleteCategory(id);
+            const client = new CategoryApiClient(axiosClient, jwtToken);
+            return await client.deleteCategory(id!);
         } catch (error: any) {
-            const errorMessage = error?.message || "Failed to delete category";
-            log.warn(`Failed to delete category with id ${id}`, error);
-            return rejectWithValue(errorMessage);
+            return rejectWithValue(handleError(error, `Failed to delete category with id ${id}`));
         }
     }
 );
-
 
 export const categoriesSlice = createSlice({
     name: "categories",
     initialState,
     reducers: {
-        setFilterPage: (state, action: PayloadAction<number>) => {
-            log.debug(`categoriesSlice.reducers.setFilterPage. current state: ${JSON.stringify(state)}, action: ${JSON.stringify(action.payload)}`);
+        setCategoryFilterPage: (state, action: PayloadAction<number>) => {
             state.filter.page = action.payload;
+            state.error = null;
+            log.debug(`Set filter page to ${action.payload}`);
         },
-        setFilterSize: (state, action: PayloadAction<number>) => {
-            log.debug(`categoriesSlice.reducers.setFilterSize. current state: ${JSON.stringify(state)}, action: ${JSON.stringify(action.payload)}`);
+        setCategoryFilterSize: (state, action: PayloadAction<number>) => {
             state.filter.size = action.payload;
             state.itemsPerPage = action.payload;
+            state.error = null;
+            log.debug(`Set filter size to ${action.payload}`);
         },
-        setFilterCategoryName: (state, action: PayloadAction<string>) => {
-            log.debug(`categoriesSlice.reducers.setFilterCategoryName. current state: ${JSON.stringify(state)}, action: ${JSON.stringify(action.payload)}`);
+        setCategoryFilterCategoryName: (state, action: PayloadAction<string>) => {
             state.filter.categoryName = action.payload;
+            state.error = null;
+            log.debug(`Set filter category name to ${action.payload}`);
         },
-        setFilterDirection: (state, action: PayloadAction<FilterDirectionEnum>) => {
-            log.debug(`categoriesSlice.reducers.setFilterDirection. current state: ${JSON.stringify(state)}, action: ${JSON.stringify(action.payload)}`);
+        setCategoryFilterDirection: (state, action: PayloadAction<FilterDirectionEnum>) => {
             state.filter.direction = action.payload;
+            state.error = null;
+            log.debug(`Set filter direction to ${action.payload}`);
         },
-        setSelectedCategory: (state, action: PayloadAction<CategoryDto | null>) => {
-            log.debug(`categoriesSlice.reducers.setSelectedCategory. current state: ${JSON.stringify(state)}, action: ${JSON.stringify(action.payload)}`);
+        setCategorySelectedCategory: (state, action: PayloadAction<CategoryDto | null>) => {
             state.selectedCategory = action.payload;
+            state.error = null;
+            log.debug(`Selected category set to ${JSON.stringify(action.payload)}`);
         }
     },
     extraReducers: (builder) => {
         builder
-            .addCase(createCategory.pending, (state: CategoryState) => {
-                log.debug("createCategory.pending: Creating category...");
-                state.loading = true;
-            })
-            .addCase(createCategory.fulfilled, (state: CategoryState, action: PayloadAction<Response<CategoryDto>>) => {
-                log.info("createCategory.fulfilled: Category created successfully");
-                state.loading = false;
-                state.error = action.payload.error ?? null;
-                log.debug(`createCategory.fulfilled. Created category: ${JSON.stringify(action.payload)}`);
-            })
-            .addCase(createCategory.rejected, (state: CategoryState, action) => {
-                log.error("createCategory.rejected: Failed to create category", action.payload);
-                state.loading = false;
-                state.error = action.payload as string;
-            })
-
-            .addCase(getAllCategories.pending, (state: CategoryState) => {
-                log.debug("getAllCategories.pending: Fetching all categories...");
+            .addCase(createCategory.pending, (state) => {
                 state.loading = true;
                 state.error = null;
+                log.debug("Creating category...");
             })
-            .addCase(getAllCategories.fulfilled, (state: CategoryState, action: PayloadAction<Response<CategoryDto[]>>) => {
-                log.info("getAllCategories.fulfilled: Categories fetched successfully");
+            .addCase(createCategory.fulfilled, (state, action) => {
+                state.loading = false;
+                log.info("Category created successfully");
+                state.error = action.payload.error ?? null;
+            })
+            .addCase(createCategory.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload as string;
+                log.error("Failed to create category", action.payload);
+            })
+            .addCase(getAllCategories.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+                log.debug("Fetching all categories...");
+            })
+            .addCase(getAllCategories.fulfilled, (state, action) => {
                 state.allCategories = action.payload.data ?? [];
                 state.currentPage = action.payload.meta?.pagination?.currentPage ?? 0;
                 state.totalPages = action.payload.meta?.pagination?.totalPages ?? 0;
                 state.totalItems = action.payload.meta?.pagination?.totalItems ?? 0;
-
                 state.loading = false;
+                log.info("Categories fetched successfully");
                 state.error = action.payload.error ?? null;
-                log.debug(`getAllCategories.fulfilled. Categories: ${JSON.stringify(action.payload.data)}`);
             })
-            .addCase(getAllCategories.rejected, (state: CategoryState, action) => {
-                log.error("getAllCategories.rejected: Failed to fetch categories", action.payload);
+            .addCase(getAllCategories.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
+                log.error("Failed to fetch categories", action.payload);
             })
-
-            .addCase(getCategory.pending, (state: CategoryState) => {
-                log.debug("getCategory.pending: Fetching category...");
+            .addCase(getCategory.pending, (state) => {
                 state.loading = true;
+                state.error = null;
+                log.debug("Fetching category...");
             })
-            .addCase(getCategory.fulfilled, (state: CategoryState, action: PayloadAction<Response<CategoryDto>>) => {
-                log.info("getCategory.fulfilled: Category fetched successfully");
-                log.debug(`getCategory.fulfilled. Action: ${JSON.stringify(action)}`);
+            .addCase(getCategory.fulfilled, (state, action) => {
                 state.selectedCategory = action.payload.data ?? null;
                 state.loading = false;
+                log.info("Category fetched successfully");
                 state.error = action.payload.error ?? null;
             })
-            .addCase(getCategory.rejected, (state: CategoryState, action) => {
-                log.error("getCategory.rejected: Failed to fetch category", action.payload);
+            .addCase(getCategory.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
+                log.error("Failed to fetch category", action.payload);
             })
-
-            .addCase(updateCategory.pending, (state: CategoryState) => {
-                log.debug("updateCategory.pending: Updating category...");
+            .addCase(updateCategory.pending, (state) => {
                 state.loading = true;
+                state.error = null;
+                log.debug("Updating category...");
             })
-            .addCase(updateCategory.fulfilled, (state: CategoryState, action: PayloadAction<Response<CategoryDto>>) => {
-                log.info("updateCategory.fulfilled: Category updated successfully");
-                log.debug(`updateCategory.fulfilled. Updated category: ${JSON.stringify(action.payload)}`);
+            .addCase(updateCategory.fulfilled, (state, action) => {
                 state.loading = false;
+                log.info("Category updated successfully");
                 state.error = action.payload.error ?? null;
             })
-            .addCase(updateCategory.rejected, (state: CategoryState, action) => {
-                log.error("updateCategory.rejected: Failed to update category", action.payload);
+            .addCase(updateCategory.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
+                log.error("Failed to update category", action.payload);
             })
-
-            .addCase(deleteCategory.pending, (state: CategoryState) => {
-                log.debug("deleteCategory.pending: Deleting category...");
+            .addCase(deleteCategory.pending, (state) => {
                 state.loading = true;
+                state.error = null;
+                log.debug("Deleting category...");
             })
-            .addCase(deleteCategory.fulfilled, (state: CategoryState, action: PayloadAction<Response<string>>) => {
-                log.info("deleteCategory.fulfilled: Category deleted successfully");
+            .addCase(deleteCategory.fulfilled, (state, action) => {
                 state.loading = false;
+                log.info("Category deleted successfully");
                 state.error = action.payload.error ?? null;
-                log.debug(`deleteCategory.fulfilled. Action: ${JSON.stringify(action)}`);
             })
-            .addCase(deleteCategory.rejected, (state: CategoryState, action) => {
-                log.error("deleteCategory.rejected: Failed to delete category", action.payload);
+            .addCase(deleteCategory.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload as string;
+                log.error("Failed to delete category", action.payload);
             });
     }
 });
 
 // Export the actions generated by createSlice
 export const {
-    setFilterPage,
-    setFilterSize,
-    setFilterCategoryName,
-    setFilterDirection,
-    setSelectedCategory
+    setCategoryFilterPage,
+    setCategoryFilterSize,
+    setCategoryFilterCategoryName,
+    setCategoryFilterDirection,
+    setCategorySelectedCategory
 } = categoriesSlice.actions;
 
 // Export the reducer to be used in the store

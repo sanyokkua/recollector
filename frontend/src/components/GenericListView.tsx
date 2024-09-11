@@ -1,5 +1,5 @@
 import React, {FC, useCallback} from "react";
-import {Box, SxProps, TextField, Typography} from "@mui/material";
+import {Box, SxProps, TextField} from "@mui/material";
 import {logger} from "../config/appConfig";
 import GenericListOfItems, {GenericListViewProps} from "./GenericListOfItems.tsx";
 
@@ -14,14 +14,12 @@ const boxStyle: SxProps = {
 };
 
 export interface GenericItemListViewProps extends GenericListViewProps {
-    header: string;
     searchBarText: string;
     itemsBackgroundColor?: string;
     onSearchTextChanged: (searchText?: string | null) => void;
 }
 
 const GenericListView: FC<GenericItemListViewProps> = ({
-                                                           header = "",
                                                            currentPage = 0,
                                                            totalPages = 0,
                                                            totalItems = 0,
@@ -35,7 +33,7 @@ const GenericListView: FC<GenericItemListViewProps> = ({
                                                            backgroundColor = boxStyle.backgroundColor,
                                                            itemsBackgroundColor
                                                        }) => {
-    log.debug(`Header: ${header}, Current Page: ${currentPage}, Total Pages: ${totalPages}, Total Items: ${totalItems}`);
+    log.debug(`Current Page: ${currentPage}, Total Pages: ${totalPages}, Total Items: ${totalItems}`);
     boxStyle.backgroundColor = backgroundColor;
     // Handlers
     const handleSearchChange = useCallback(
@@ -49,8 +47,6 @@ const GenericListView: FC<GenericItemListViewProps> = ({
     return (
 
         <Box sx={boxStyle}>
-            <Typography sx={{mb: 2}} variant="h6" component="div" align="center">{header}</Typography>
-
             <TextField sx={{mb: 2}} id="item-search" label="Search" type="search" variant="outlined"
                        value={searchBarText}
                        onChange={handleSearchChange}/>

@@ -1,8 +1,8 @@
 import {createAsyncThunk, createSlice, PayloadAction} from "@reduxjs/toolkit";
 import {ItemDto, ItemDtoItemStatusEnum, ItemFilter} from "../../../api/dto/itemDto.ts";
-import {logger} from "../../../config/appConfig.ts";
+import axiosClient, {logger} from "../../../config/appConfig.ts";
 import {FilterDirectionEnum, Response} from "../../../api/dto/common.ts";
-import {itemApiClient} from "../../../api";
+import ItemApiClient from "../../../api/client/itemApiClient.ts";
 
 const log = logger.getLogger("itemsSlice");
 
@@ -39,90 +39,95 @@ const initialState: ItemState = {
 
 export type ItemCreateRequest = {
     categoryId: number;
-    itemDto: ItemDto
+    itemDto: ItemDto;
+    jwtToken: string;
 }
 
 export type ItemUpdateRequest = {
     itemId: number;
     categoryId: number;
-    itemDto: ItemDto
+    itemDto: ItemDto;
+    jwtToken: string;
 }
 
 export type ItemGetRequest = {
     itemId: number;
     categoryId: number;
+    jwtToken: string;
 }
 
-export const createItem = createAsyncThunk(
-    "items/create",
+export type GetItemsRequest = {
+    filter: ItemFilter;
+    jwtToken: string;
+}
+
+// Helper function to handle errors consistently
+const handleError = (error: any, message: string) => {
+    const errorMessage = error?.message || message;
+    log.warn(errorMessage, error);
+    return errorMessage;
+};
+
+export const createItem = createAsyncThunk("items/create",
     async (itemRequest: ItemCreateRequest, {rejectWithValue}) => {
         log.info("createAsyncThunk will try to call createItem API");
         log.debug(`createAsyncThunk, incoming parameters: newItem -> ${JSON.stringify(itemRequest)}`);
         try {
-            return await itemApiClient.createItem(itemRequest.categoryId, itemRequest.itemDto);
+            const client = new ItemApiClient(axiosClient, itemRequest.jwtToken);
+            return await client.createItem(itemRequest.categoryId, itemRequest.itemDto);
         } catch (error: any) {
-            const errorMessage = error?.message || "Failed to create item";
-            log.warn("createAsyncThunk failed to call createItem API", error);
-            return rejectWithValue(errorMessage);
+            return rejectWithValue(handleError(error, "Failed to create item"));
         }
     }
 );
 
-export const getAllItems = createAsyncThunk(
-    "items/fetchAll",
-    async (filter: ItemFilter, {rejectWithValue}) => {
+export const getAllItems = createAsyncThunk("items/fetchAll",
+    async (filter: GetItemsRequest, {rejectWithValue}) => {
         log.info("getAllItems will try to fetch items");
         log.debug(`getAllItems, incoming filter: ${JSON.stringify(filter)}`);
         try {
-            return await itemApiClient.getAllItems(filter.categoryId ?? -1, filter);
+            const client = new ItemApiClient(axiosClient, filter.jwtToken);
+            return await client.getAllItems(filter.filter.categoryId ?? -1, filter.filter);
         } catch (error: any) {
-            const errorMessage = error?.message || "Failed to get items";
-            log.warn("Failed to fetch items", error);
-            return rejectWithValue(errorMessage);
+            return rejectWithValue(handleError(error, "Failed to get items"));
         }
     }
 );
 
-export const getItem = createAsyncThunk(
-    "items/fetchById",
+export const getItem = createAsyncThunk("items/fetchById",
     async (itemGetReq: ItemGetRequest, {rejectWithValue}) => {
         log.info(`getItem will try to fetch item with id ${itemGetReq.itemId} for category ${itemGetReq.categoryId}`);
         try {
-            return await itemApiClient.getItem(itemGetReq.categoryId, itemGetReq.itemId);
+            const client = new ItemApiClient(axiosClient, itemGetReq.jwtToken);
+            return await client.getItem(itemGetReq.categoryId, itemGetReq.itemId);
         } catch (error: any) {
-            const errorMessage = error?.message || "Failed to get item";
-            log.warn(`Failed to fetch item with id ${itemGetReq.itemId}`, error);
-            return rejectWithValue(errorMessage);
+            return rejectWithValue(handleError(error, "Failed to get item"));
         }
     }
 );
 
-export const updateItem = createAsyncThunk(
-    "items/update",
+export const updateItem = createAsyncThunk("items/update",
     async (itemUpdateReq: ItemUpdateRequest, {rejectWithValue}) => {
         log.info(`updateItem will try to update item with id ${itemUpdateReq.itemId}`);
         log.debug(`updateItem, incoming parameters: id -> ${itemUpdateReq.itemId}, itemDto -> ${JSON.stringify(itemUpdateReq)}`);
         try {
-            return await itemApiClient.updateItem(itemUpdateReq.categoryId, itemUpdateReq.itemId, itemUpdateReq.itemDto);
+            const client = new ItemApiClient(axiosClient, itemUpdateReq.jwtToken);
+            return await client.updateItem(itemUpdateReq.categoryId, itemUpdateReq.itemId, itemUpdateReq.itemDto);
         } catch (error: any) {
-            const errorMessage = error?.message || "Failed to update item";
-            log.warn(`Failed to update item with id ${itemUpdateReq.itemId}`, error);
-            return rejectWithValue(errorMessage);
+            return rejectWithValue(handleError(error, "Failed to update item"));
         }
     }
 );
 
-export const deleteItem = createAsyncThunk(
-    "items/delete",
+export const deleteItem = createAsyncThunk("items/delete",
     async (itemGetReq: ItemGetRequest, {rejectWithValue}) => {
         log.info(`deleteItem will try to delete item with id ${itemGetReq.itemId} for category: ${itemGetReq.categoryId}`);
         log.debug(`deleteItem, incoming id: ${itemGetReq.itemId}`);
         try {
-            return await itemApiClient.deleteItem(itemGetReq.categoryId, itemGetReq.itemId);
+            const client = new ItemApiClient(axiosClient, itemGetReq.jwtToken);
+            return await client.deleteItem(itemGetReq.categoryId, itemGetReq.itemId);
         } catch (error: any) {
-            const errorMessage = error?.message || "Failed to delete item";
-            log.warn(`Failed to delete item with id ${itemGetReq.itemId}`, error);
-            return rejectWithValue(errorMessage);
+            return rejectWithValue(handleError(error, "Failed to delete item"));
         }
     }
 );
@@ -132,34 +137,41 @@ export const itemsSlice = createSlice({
     name: "items",
     initialState,
     reducers: {
-        setFilterPage: (state: ItemState, action: PayloadAction<number>) => {
+        setItemFilterPage: (state: ItemState, action: PayloadAction<number>) => {
             log.debug(`itemsSlice.reducers.setFilterPage. current state: ${JSON.stringify(state)}, action: ${JSON.stringify(action.payload)}`);
             state.filter.page = action.payload;
+            state.error = "";
         },
-        setFilterSize: (state: ItemState, action: PayloadAction<number>) => {
+        setItemFilterSize: (state: ItemState, action: PayloadAction<number>) => {
             log.debug(`itemsSlice.reducers.setFilterSize. current state: ${JSON.stringify(state)}, action: ${JSON.stringify(action.payload)}`);
             state.filter.size = action.payload;
             state.itemsPerPage = action.payload;
+            state.error = "";
         },
-        setFilterItemName: (state: ItemState, action: PayloadAction<string>) => {
+        setItemFilterItemName: (state: ItemState, action: PayloadAction<string>) => {
             log.debug(`itemsSlice.reducers.setFilterItemName. current state: ${JSON.stringify(state)}, action: ${JSON.stringify(action.payload)}`);
             state.filter.itemName = action.payload;
+            state.error = "";
         },
-        setFilterDirection: (state: ItemState, action: PayloadAction<FilterDirectionEnum>) => {
+        setItemFilterDirection: (state: ItemState, action: PayloadAction<FilterDirectionEnum>) => {
             log.debug(`itemsSlice.reducers.setFilterDirection. current state: ${JSON.stringify(state)}, action: ${JSON.stringify(action.payload)}`);
             state.filter.direction = action.payload;
+            state.error = "";
         },
-        setFilterStatus: (state: ItemState, action: PayloadAction<ItemDtoItemStatusEnum>) => {
+        setItemFilterStatus: (state: ItemState, action: PayloadAction<ItemDtoItemStatusEnum>) => {
             log.debug(`itemsSlice.reducers.setFilterDirection. current state: ${JSON.stringify(state)}, action: ${JSON.stringify(action.payload)}`);
             state.filter.itemStatus = action.payload;
+            state.error = "";
         },
-        setFilterCategoryId: (state: ItemState, action: PayloadAction<number>) => {
+        setItemFilterCategoryId: (state: ItemState, action: PayloadAction<number>) => {
             log.debug(`itemsSlice.reducers.setFilterDirection. current state: ${JSON.stringify(state)}, action: ${JSON.stringify(action.payload)}`);
             state.filter.categoryId = action.payload;
+            state.error = "";
         },
-        setSelectedItem: (state: ItemState, action: PayloadAction<ItemDto | null>) => {
+        setItemSelectedItem: (state: ItemState, action: PayloadAction<ItemDto | null>) => {
             log.debug(`itemsSlice.reducers.setSelectedItem. current state: ${JSON.stringify(state)}, action: ${JSON.stringify(action.payload)}`);
             state.selectedItem = action.payload;
+            state.error = "";
         }
     },
     extraReducers: (builder) => {
@@ -167,6 +179,7 @@ export const itemsSlice = createSlice({
             .addCase(createItem.pending, (state: ItemState) => {
                 log.debug("createItem.pending: Creating item...");
                 state.loading = true;
+                state.error = "";
             })
             .addCase(createItem.fulfilled, (state: ItemState, action: PayloadAction<Response<ItemDto>>) => {
                 log.info("createItem.fulfilled: item created successfully");
@@ -205,6 +218,7 @@ export const itemsSlice = createSlice({
             .addCase(getItem.pending, (state: ItemState) => {
                 log.debug("getItem.pending: Fetching item...");
                 state.loading = true;
+                state.error = "";
             })
             .addCase(getItem.fulfilled, (state: ItemState, action: PayloadAction<Response<ItemDto>>) => {
                 log.info("getItem.fulfilled: item fetched successfully");
@@ -222,6 +236,7 @@ export const itemsSlice = createSlice({
             .addCase(updateItem.pending, (state: ItemState) => {
                 log.debug("updateItem.pending: Updating item...");
                 state.loading = true;
+                state.error = "";
             })
             .addCase(updateItem.fulfilled, (state: ItemState, action: PayloadAction<Response<ItemDto>>) => {
                 log.info("updateItem.fulfilled: item updated successfully");
@@ -238,6 +253,7 @@ export const itemsSlice = createSlice({
             .addCase(deleteItem.pending, (state: ItemState) => {
                 log.debug("deleteItem.pending: Deleting item...");
                 state.loading = true;
+                state.error = "";
             })
             .addCase(deleteItem.fulfilled, (state: ItemState, action: PayloadAction<Response<string>>) => {
                 log.info("deleteItem.fulfilled: item deleted successfully");
@@ -255,12 +271,12 @@ export const itemsSlice = createSlice({
 
 // Export the actions generated by createSlice
 export const {
-    setFilterPage,
-    setFilterSize,
-    setFilterItemName,
-    setFilterDirection,
-    setSelectedItem,
-    setFilterCategoryId
+    setItemFilterPage,
+    setItemFilterSize,
+    setItemFilterItemName,
+    setItemFilterDirection,
+    setItemSelectedItem,
+    setItemFilterCategoryId
 } = itemsSlice.actions;
 
 // Export the reducer to be used in the store

@@ -1,6 +1,6 @@
 export enum FilterDirectionEnum {
-    ASC = 'ASC',
-    DESC = 'DESC'
+    ASC = "ASC",
+    DESC = "DESC"
 }
 
 export interface PaginationInfo {

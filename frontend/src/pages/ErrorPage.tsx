@@ -12,6 +12,6 @@ const ErrorPage: FC = () => {
             <i>{errorAsObj?.statusText ?? errorAsObj?.message}</i>
         </p>
     </>;
-}
+};
 
 export default ErrorPage;

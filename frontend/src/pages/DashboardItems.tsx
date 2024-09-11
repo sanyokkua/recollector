@@ -1,26 +1,22 @@
-import {FC, useCallback, useEffect, useState} from "react";
+import {FC, useEffect, useState} from "react";
 import {Box, Fab, SxProps} from "@mui/material";
 import {useAppDispatch, useAppSelector} from "../store/hooks.ts";
 import {appBarSetCustomState} from "../store/features/appBar/appBarSlice.ts";
 import {GenericListViewItem} from "../components/GenericListOfItems.tsx";
 import {logger} from "../config/appConfig.ts";
 import {ItemDto} from "../api/dto/itemDto.ts";
-import {useParams} from "react-router-dom";
 import {CategoryViewMode} from "../components/CategoryView.tsx";
 import {
     createItem,
     deleteItem,
     getAllItems,
-    ItemCreateRequest,
     ItemGetRequest,
-    ItemUpdateRequest,
-    setFilterCategoryId,
-    setFilterItemName,
-    setFilterPage,
-    setSelectedItem,
+    setItemFilterCategoryId,
+    setItemFilterItemName,
+    setItemFilterPage,
+    setItemSelectedItem,
     updateItem
 } from "../store/features/items/itemsSlice.ts";
-import {setSelectedCategory} from "../store/features/categories/categoriesSlice.ts";
 import GenericListView from "../components/GenericListView.tsx";
 import AddIcon from "@mui/icons-material/Add";
 import Alert from "@mui/material/Alert";
@@ -66,7 +62,6 @@ const mapItemDtoToGenericItem = (item: ItemDto): GenericListViewItem => {
 const DashboardItems: FC = () => {
     const dispatch = useAppDispatch();
 
-    const {id} = useParams();
     const {
         filter,
         allItems,
@@ -77,11 +72,8 @@ const DashboardItems: FC = () => {
         totalItems,
         totalPages
     } = useAppSelector((state) => state.items);
-
-    const {
-        currentCategoryId,
-        currentCategoryName
-    } = useAppSelector((state) => state.globals);
+    const {userJwtToken} = useAppSelector((state) => state.globals);
+    const {currentCategoryId, currentCategoryName} = useAppSelector((state) => state.globals);
 
     if (!currentCategoryId || !currentCategoryName) {
         throw new Error("Category ID and Name are required");
@@ -89,44 +81,43 @@ const DashboardItems: FC = () => {
 
     useEffect(() => {
         log.debug("Component mounted, fetching items");
-        dispatch(setFilterCategoryId(Number(id)));
+        dispatch(setItemFilterCategoryId(currentCategoryId));
         dispatch(appBarSetCustomState(`${currentCategoryName}`));
-        dispatch(getAllItems(filter));
-    }, [dispatch, filter, id]);
+        dispatch(getAllItems({filter: filter, jwtToken: userJwtToken}));
+    }, [dispatch, filter, currentCategoryId, currentCategoryName, error]);
 
     const [open, setOpen] = useState<boolean>(false);
-    const [mode, setMode] = useState<CategoryViewMode>("view"); // 'view' | 'edit' | 'create'
-    const setModeView = useCallback(() => setMode("view"), []);
-    const setModeEdit = useCallback(() => setMode("edit"), []);
-    const setModeCreate = useCallback(() => setMode("create"), []);
-
+    const [mode, setMode] = useState<CategoryViewMode>("view");
     const items: Array<GenericListViewItem> = allItems.map(mapItemDtoToGenericItem);
 
+    const selectItem = (itemId: number | null | undefined) => {
+        const chosenCat = allItems.find((c) => c.itemId === itemId) || null;
+        dispatch(setItemSelectedItem(chosenCat));
+    };
+
     // Handlers
-    const handleOpen = () => setOpen(true);
     const handleViewClose = () => setOpen(false);
     const handleViewSave = async (updatedItem: ItemDto) => {
         log.debug(`Saving item in ${mode} mode`, updatedItem);
-
         try {
             if (mode === "create") {
-                const req: ItemCreateRequest = {
+                await dispatch(createItem({
                     itemDto: updatedItem,
-                    categoryId: Number(id)
-                };
-                await dispatch(createItem(req)).unwrap();
+                    categoryId: currentCategoryId,
+                    jwtToken: userJwtToken
+                })).unwrap();
                 log.info("Item created successfully");
             } else if (mode === "edit") {
-                const itemUpdateReq: ItemUpdateRequest = {
+                await dispatch(updateItem({
                     itemId: updatedItem.itemId ?? -1,
-                    categoryId: Number(id),
-                    itemDto: updatedItem
-                };
-                await dispatch(updateItem(itemUpdateReq)).unwrap();
+                    categoryId: currentCategoryId,
+                    itemDto: updatedItem,
+                    jwtToken: userJwtToken
+                })).unwrap();
                 log.info(`Item ${currentCategoryId} updated successfully`);
             }
             handleViewClose();
-            dispatch(getAllItems(filter));
+            dispatch(getAllItems({filter: filter, jwtToken: userJwtToken}));
         } catch (error) {
             log.error(`Failed to save item in ${mode} mode:`, error);
         }
@@ -135,61 +126,55 @@ const DashboardItems: FC = () => {
         log.debug(`Deleting item in ${mode} mode`, itemDto);
         try {
             const req: ItemGetRequest = {
-                categoryId: Number(id),
-                itemId: itemDto.itemId ?? -1
+                categoryId: Number(currentCategoryId),
+                itemId: itemDto.itemId ?? -1,
+                jwtToken: userJwtToken
             };
             await dispatch(deleteItem(req)).unwrap();
             log.info("Category deleted successfully");
             handleViewClose();
-            dispatch(getAllItems(filter));
+            dispatch(getAllItems({filter: filter, jwtToken: userJwtToken}));
         } catch (error) {
             log.error(`Failed to delete category in ${mode} mode:`, error);
         }
     };
     const handleSearchChange = (searchText?: string | null) => {
         log.debug("Search input changed:", searchText);
-        dispatch(setFilterItemName(searchText ?? ""));
-        dispatch(getAllItems(filter));
+        dispatch(setItemFilterItemName(searchText ?? ""));
     };
     const handlePageChange = (pageNumber: number | null | undefined) => {
         log.debug("Page changed to", pageNumber);
-        dispatch(setFilterPage(pageNumber ?? 0));
-        dispatch(getAllItems({
-            ...filter,
-            page: pageNumber ?? 0
-        }));
+        dispatch(setItemFilterPage(pageNumber ?? 0));
     };
     const handleAddButtonClick = () => {
         log.debug("Add button clicked");
-        dispatch(setSelectedItem(null));
-        setModeCreate();
-        handleOpen();
+        dispatch(setItemSelectedItem(null));
+        setMode("create");
+        setOpen(true);
     };
-    const handleItemClick = (categoryId: number | null | undefined) => {
-        log.debug("Category item clicked:", categoryId);
-        const chosenCat = allItems.find((c) => c.categoryId === categoryId) || null;
-        dispatch(setSelectedItem(chosenCat));
-        setModeView();
-        handleOpen();
+    const handleItemClick = (itemId: number | null | undefined) => {
+        log.debug("Item clicked id:", itemId);
+        selectItem(itemId);
+        setMode("view");
+        setOpen(true);
     };
-    const handleEditButtonClick = (categoryId: number | null | undefined) => {
-        log.debug("Edit button clicked for category:", categoryId);
-        const chosenCat = allItems.find((c) => c.categoryId === categoryId) || null;
-        dispatch(setSelectedCategory(chosenCat));
-        setModeEdit();
-        handleOpen();
+    const handleEditButtonClick = (itemId: number | null | undefined) => {
+        log.debug("Edit button clicked for itemId:", itemId);
+        selectItem(itemId);
+        setMode("edit");
+        setOpen(true);
     };
 
     return <Box sx={{containerStyle}}>
 
-        <ItemView item={selectedItem} categoryId={currentCategoryId} open={open} onClose={handleViewClose}
+        <ItemView mode={mode} open={open} categoryId={currentCategoryId} item={selectedItem}
+                  onClose={handleViewClose}
                   onSave={handleViewSave}
-                  onDelete={handleViewDelete} mode={mode}/>
+                  onDelete={handleViewDelete}/>
 
         {error && <Alert severity="warning">{error}</Alert>}
 
-        <GenericListView header={currentCategoryName}
-                         currentPage={currentPage}
+        <GenericListView currentPage={currentPage}
                          totalPages={totalPages}
                          totalItems={totalItems}
                          listOfItems={items}
@@ -206,7 +191,6 @@ const DashboardItems: FC = () => {
         <Fab color="success" aria-label="add" sx={fabStyle} onClick={handleAddButtonClick}>
             <AddIcon/>
         </Fab>
-
     </Box>;
 };
 

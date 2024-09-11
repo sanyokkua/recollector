@@ -4,6 +4,16 @@ import appBarSliceReducer from "./features/appBar/appBarSlice";
 import categoriesSliceReducer from "./features/categories/categoriesSlice";
 import itemsSliceReducer from "./features/items/itemsSlice";
 import globalsSliceReducer from "./features/global/globalSlice";
+import {
+    currentCategoryIdSaver,
+    currentCategoryNameSaver,
+    userEmailSaver,
+    userJwtRefreshTokenSaver,
+    userJwtTokenSaver
+} from "./browserStore.ts";
+import {logger} from "../config/appConfig.ts";
+
+const log = logger.getLogger("reduxStore");
 
 /**
  * Configures and creates the Redux store with the specified reducers.
@@ -11,17 +21,32 @@ import globalsSliceReducer from "./features/global/globalSlice";
  */
 const store = configureStore({
     reducer: {
-        // Reducer for managing the drawer toggled state
         drawerToggled: drawerToggledReducer,
-
-        // Reducer for managing the AppBar header state
         appBarHeader: appBarSliceReducer,
-
         categories: categoriesSliceReducer,
-
         items: itemsSliceReducer,
-
         globals: globalsSliceReducer
+    }
+});
+
+store.subscribe(() => {
+    try {
+        const state = store.getState();
+
+        const email = state.globals.userEmail;
+        const jwt = state.globals.userJwtToken;
+        const refresh = state.globals.userJwtRefreshToken;
+
+        const currentCategoryId = state.globals.currentCategoryId ?? -1;
+        const currentCategoryName = state.globals.currentCategoryName ?? "";
+
+        currentCategoryIdSaver(currentCategoryId);
+        currentCategoryNameSaver(currentCategoryName);
+        userEmailSaver(email);
+        userJwtTokenSaver(jwt);
+        userJwtRefreshTokenSaver(refresh);
+    } catch (err) {
+        log.error("Could not save partial state", err);
     }
 });
 

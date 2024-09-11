@@ -5,7 +5,6 @@ import LoginIcon from "@mui/icons-material/Login";
 import AppRegistrationIcon from "@mui/icons-material/AppRegistration";
 import RestoreIcon from "@mui/icons-material/Restore";
 import ClassIcon from "@mui/icons-material/Class";
-import ChecklistRtlIcon from "@mui/icons-material/ChecklistRtl";
 import AccountBoxIcon from "@mui/icons-material/AccountBox";
 import SettingsIcon from "@mui/icons-material/Settings";
 import {drawerSwitchOff} from "../store/features/drawer/drawerSlice.ts";
@@ -23,30 +22,19 @@ const RecollectorAppDrawer: React.FC = () => {
     const drawerToggled = useAppSelector(state => state.drawerToggled.value);
     const dispatch = useAppDispatch();
 
-    const {
-        userIsLoggedIn,
-        userDateTimeExp
-    } = useAppSelector((state) => state.globals);
+    const {userIsLoggedIn} = useAppSelector((state) => state.globals);
 
     const drawerItems: DrawerItem[] = [];
     const drawerItemsSettings: DrawerItem[] = [];
 
     drawerItems.push({path: "/", text: "Welcome", icon: <WavingHandIcon/>});
 
-    let milliseconds = userDateTimeExp?.getMilliseconds() ?? 0;
-
-    if (userIsLoggedIn && milliseconds < new Date().getMilliseconds()) {
+    if (userIsLoggedIn) {
         drawerItems.push({
             path: "/dashboard",
             text: "Categories",
             icon: <ClassIcon/>
         });
-        drawerItems.push({
-            path: "/dashboard/${id}/items",
-            text: "Items",
-            icon: <ChecklistRtlIcon/>
-        });
-
         drawerItemsSettings.push({
             path: "/profile",
             text: "Profile",

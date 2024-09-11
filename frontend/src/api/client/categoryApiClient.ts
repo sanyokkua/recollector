@@ -3,13 +3,12 @@ import {CategoryDto, CategoryFilter} from "../dto/categoryDto";
 import {Response} from "../dto/common";
 import {handleError, handleResponse} from "./utils";
 import {logger} from "../../config/appConfig.ts";
-import {TokenExtractor} from "../types/types.ts";
 
 const BASE_URL: string = "/v1/categories";
 const log = logger.getLogger("CategoryApiClient");
 
 class CategoryApiClient {
-    constructor(private apiClient: AxiosInstance, private extractor: TokenExtractor) {
+    constructor(private apiClient: AxiosInstance, private jwtToken: string) {
         log.debug("Initialized CategoryApiClient");
     }
 
@@ -17,11 +16,10 @@ class CategoryApiClient {
         log.info("createCategory called");
         log.debug(`Request: ${JSON.stringify(category)}`);
         try {
-            const jwt = this.extractor();
             const response = await this.apiClient.post<Response<CategoryDto>>(`${BASE_URL}`, category,
                 {
                     headers: {
-                        "Authorization": `Bearer ${jwt}`
+                        "Authorization": `Bearer ${this.jwtToken}`
                     }
                 });
             log.info("createCategory successful");
@@ -36,12 +34,11 @@ class CategoryApiClient {
         log.info("getAllCategories called");
         log.debug(`Request Filter: ${JSON.stringify(categoryFilter)}`);
         try {
-            const jwt = this.extractor();
             const response = await this.apiClient.get<Response<CategoryDto[]>>(`${BASE_URL}`,
                 {
                     params: categoryFilter,
                     headers: {
-                        "Authorization": `Bearer ${jwt}`
+                        "Authorization": `Bearer ${this.jwtToken}`
                     }
                 });
             log.info("getAllCategories successful");
@@ -56,11 +53,10 @@ class CategoryApiClient {
         log.info("getCategory called");
         log.debug(`Category ID: ${categoryId}`);
         try {
-            const jwt = this.extractor();
             const response = await this.apiClient.get<Response<CategoryDto>>(`${BASE_URL}/${categoryId}`,
                 {
                     headers: {
-                        "Authorization": `Bearer ${jwt}`
+                        "Authorization": `Bearer ${this.jwtToken}`
                     }
                 });
             log.info("getCategory successful");
@@ -75,11 +71,10 @@ class CategoryApiClient {
         log.info("updateCategory called");
         log.debug(`Category ID: ${categoryId}, Request: ${JSON.stringify(category)}`);
         try {
-            const jwt = this.extractor();
             const response = await this.apiClient.put<Response<CategoryDto>>(`${BASE_URL}/${categoryId}`, category,
                 {
                     headers: {
-                        "Authorization": `Bearer ${jwt}`
+                        "Authorization": `Bearer ${this.jwtToken}`
                     }
                 });
             log.info("updateCategory successful");
@@ -94,11 +89,10 @@ class CategoryApiClient {
         log.info("deleteCategory called");
         log.debug(`Category ID: ${categoryId}`);
         try {
-            const jwt = this.extractor();
             const response = await this.apiClient.delete<Response<string>>(`${BASE_URL}/${categoryId}`,
                 {
                     headers: {
-                        "Authorization": `Bearer ${jwt}`
+                        "Authorization": `Bearer ${this.jwtToken}`
                     }
                 });
             log.info("deleteCategory successful");

@@ -1,6 +1,6 @@
-import React from 'react';
-import {CssBaseline} from '@mui/material';
-import Layout from './segments/Layout';
+import React from "react";
+import {CssBaseline} from "@mui/material";
+import Layout from "./segments/Layout";
 
 /**
  * App component that serves as the root component of the application.

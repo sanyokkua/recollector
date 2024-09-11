@@ -3,13 +3,12 @@ import {ItemDto, ItemFilter} from "../dto/itemDto";
 import {Response} from "../dto/common";
 import {handleError, handleResponse} from "./utils";
 import {logger} from "../../config/appConfig.ts";
-import {TokenExtractor} from "../types/types.ts";
 
 const BASE_URL = "/v1/categories";
 const log = logger.getLogger("ItemApiClient");
 
 class ItemApiClient {
-    constructor(private apiClient: AxiosInstance, private extractor: TokenExtractor) {
+    constructor(private apiClient: AxiosInstance, private jwtToken: string) {
         log.debug("Initialized ItemApiClient");
     }
 
@@ -17,11 +16,10 @@ class ItemApiClient {
         log.info("createItem called");
         log.debug(`Category ID: ${categoryId}, Request: ${JSON.stringify(itemDto)}`);
         try {
-            const jwt = this.extractor();
             const response = await this.apiClient.post<Response<ItemDto>>(`${BASE_URL}/${categoryId}/items`, itemDto,
                 {
                     headers: {
-                        "Authorization": `Bearer ${jwt}`
+                        "Authorization": `Bearer ${this.jwtToken}`
                     }
                 });
             log.info("createItem successful");
@@ -36,11 +34,10 @@ class ItemApiClient {
         log.info("getAllItems called");
         log.debug(`Category ID: ${categoryId}, Filter: ${JSON.stringify(itemFilter)}`);
         try {
-            const jwt = this.extractor();
             const response = await this.apiClient.get<Response<ItemDto[]>>(`${BASE_URL}/${categoryId}/items`, {
                 params: itemFilter,
                 headers: {
-                    "Authorization": `Bearer ${jwt}`
+                    "Authorization": `Bearer ${this.jwtToken}`
                 }
             });
             log.info("getAllItems successful");
@@ -55,11 +52,10 @@ class ItemApiClient {
         log.info("getItem called");
         log.debug(`Category ID: ${categoryId}, Item ID: ${itemId}`);
         try {
-            const jwt = this.extractor();
             const response = await this.apiClient.get<Response<ItemDto>>(`${BASE_URL}/${categoryId}/items/${itemId}`,
                 {
                     headers: {
-                        "Authorization": `Bearer ${jwt}`
+                        "Authorization": `Bearer ${this.jwtToken}`
                     }
                 });
             log.info("getItem successful");
@@ -74,11 +70,10 @@ class ItemApiClient {
         log.info("updateItem called");
         log.debug(`Category ID: ${categoryId}, Item ID: ${itemId}, Request: ${JSON.stringify(itemDto)}`);
         try {
-            const jwt = this.extractor();
             const response = await this.apiClient.put<Response<ItemDto>>(`${BASE_URL}/${categoryId}/items/${itemId}`, itemDto,
                 {
                     headers: {
-                        "Authorization": `Bearer ${jwt}`
+                        "Authorization": `Bearer ${this.jwtToken}`
                     }
                 });
             log.info("updateItem successful");
@@ -93,11 +88,10 @@ class ItemApiClient {
         log.info("deleteItem called");
         log.debug(`Category ID: ${categoryId}, Item ID: ${itemId}`);
         try {
-            const jwt = this.extractor();
             const response = await this.apiClient.delete<Response<string>>(`${BASE_URL}/${categoryId}/items/${itemId}`,
                 {
                     headers: {
-                        "Authorization": `Bearer ${jwt}`
+                        "Authorization": `Bearer ${this.jwtToken}`
                     }
                 });
             log.info("deleteItem successful");

@@ -1,14 +1,15 @@
 import {Box, Button} from "@mui/material";
 import {FC, useEffect} from "react";
-import {useAppDispatch} from "../store/hooks.ts";
+import {useAppDispatch, useAppSelector} from "../store/hooks.ts";
 import {appBarSetCustomState} from "../store/features/appBar/appBarSlice.ts";
 import {Link} from "react-router-dom";
 
 const Welcome: FC = () => {
     const dispatch = useAppDispatch();
+    const {userIsLoggedIn} = useAppSelector((state) => state.globals);
 
     useEffect(() => {
-        dispatch(appBarSetCustomState("Welcome"))
+        dispatch(appBarSetCustomState("Welcome"));
     }, [dispatch]);
 
     return (
@@ -69,12 +70,12 @@ const Welcome: FC = () => {
 
                 <p>Start using our app today and transform the way you organize your life! 🎬🎮📝</p>
             </Box>
-            <Box mt={2} display="flex" justifyContent="center" gap={1}>
+            {!userIsLoggedIn && <Box mt={2} display="flex" justifyContent="center" gap={1}>
                 <Button component={Link} to={"/register"} variant="text">Register New Account</Button>
                 <Button component={Link} to={"/login"} variant="contained" color="success">Login</Button>
-            </Box>
+            </Box>}
         </Box>
     );
-}
+};
 
 export default Welcome;

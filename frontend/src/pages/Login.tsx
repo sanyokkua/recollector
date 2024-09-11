@@ -5,12 +5,12 @@ import {appBarSetCustomState} from "../store/features/appBar/appBarSlice";
 import {Controller, useForm} from "react-hook-form";
 import * as yup from "yup";
 import {yupResolver} from "@hookform/resolvers/yup";
-import {authApiClient} from "../api/index.ts";
 import {Link, useNavigate} from "react-router-dom";
 import Alert from "@mui/material/Alert";
-import {jwtTokenSaver} from "../store/browserStore.ts";
-import {jwtDecode, JwtPayload} from "jwt-decode";
-import {setUserEmail, setUserIsLoggedIn, setUserTimeExp} from "../store/features/global/globalSlice.ts";
+import {loginUser} from "../store/features/global/globalSlice.ts";
+import {logger} from "../config/appConfig.ts";
+
+const log = logger.getLogger("Login");
 
 // Define validation schema with Yup
 const schema = yup.object({
@@ -24,9 +24,9 @@ interface FormValues {
 }
 
 const Login: FC = () => {
+    const navigate = useNavigate();
     const dispatch = useAppDispatch();
 
-    const navigate = useNavigate();
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const {control, handleSubmit, formState: {errors}} = useForm<FormValues>({
@@ -39,26 +39,13 @@ const Login: FC = () => {
 
     const onSubmit = async (data: FormValues) => {
         try {
-            const result = await authApiClient.loginUser({
+            await dispatch(loginUser({
                 email: data.email,
                 password: data.password
-            });
+            })).unwrap();
 
-            if (!result || !result.data || !result.data.jwtToken) {
-                throw new Error("Token is not found in the response!");
-            }
-
-            const decoded = jwtDecode<JwtPayload>(result.data.jwtToken);
-            if (!decoded || !decoded.sub || !decoded.exp) {
-                throw new Error("Token is not valid!");
-            }
-
-            dispatch(setUserEmail(decoded.sub));
-            dispatch(setUserIsLoggedIn(Boolean(decoded)));
-            dispatch(setUserTimeExp(decoded.exp));
-            jwtTokenSaver(result.data.jwtToken);
-
-            navigate("/dashboard"); // Redirect to a protected route, e.g., dashboard
+            log.info("User logged in successfully");
+            navigate("/dashboard");
         } catch (error: any) {
             setErrorMessage(error.response?.data?.message || "Login failed. Please try again.");
         }

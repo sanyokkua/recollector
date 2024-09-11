@@ -18,8 +18,16 @@ export const handleError = (error: any): never => {
     log.debug(`handleError: ${error}`);
     if (axios.isAxiosError(error) && error.response) {
         log.debug(`handleError: It is an axios Error`);
-        throw new Error(error.response.data.message || "An error occurred");
+        if (error.response.data && error.response.data.error) {
+            throw new Error(error.response.data.error);
+        } else {
+            throw new Error(error.response.data.message || "An error occurred");
+        }
     }
     log.debug(`handleError: It is Not an axios Error`);
     throw new Error("An unexpected error occurred");
+};
+
+export const getDateFromSeconds = (seconds: number): Date => {
+    return new Date(seconds * 1000);
 };

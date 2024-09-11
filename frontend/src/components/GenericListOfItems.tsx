@@ -103,7 +103,11 @@ const GenericListOfItems: FC<GenericListViewProps> = ({
         <Pagination count={totalPages} page={currentPage} color="primary" onChange={handlePageChange}/>
     </Box>;
     const loadingView = <CircularProgress/>;
-    const noContent = <Skeleton animation="wave"/>;
+    const noContent = <Box sx={{width: "100hv"}}>
+        <Skeleton/>
+        <Skeleton animation="wave"/>
+        <Skeleton animation={false}/>
+    </Box>;
     const contentList = <List dense={false}>{listOfItems.map(renderListItem)}</List>;
     const contentView = <>
         {listOfItems && listOfItems.length > 0 ? contentList : noContent}

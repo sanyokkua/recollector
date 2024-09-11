@@ -7,6 +7,6 @@ const ShowItemView: FC = () => {
 
         </>
     );
-}
+};
 
 export default ShowItemView;

@@ -1,4 +1,4 @@
-import {FC, useCallback, useEffect, useState} from "react";
+import {FC, useEffect, useState} from "react";
 import {Alert, Box, Fab, SxProps} from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import {useAppDispatch, useAppSelector} from "../store/hooks";
@@ -9,9 +9,9 @@ import {
     createCategory,
     deleteCategory,
     getAllCategories,
-    setFilterCategoryName,
-    setFilterPage,
-    setSelectedCategory,
+    setCategoryFilterCategoryName,
+    setCategoryFilterPage,
+    setCategorySelectedCategory,
     updateCategory
 } from "../store/features/categories/categoriesSlice";
 import {logger} from "../config/appConfig";
@@ -59,6 +59,7 @@ const mapCategoryDtoToGenericItem = (item: CategoryDto): GenericListViewItem => 
 
 const DashboardCategories: FC = () => {
     const dispatch = useAppDispatch();
+    const navigate = useNavigate();
 
     const {
         filter,
@@ -70,40 +71,48 @@ const DashboardCategories: FC = () => {
         totalItems,
         totalPages
     } = useAppSelector((state) => state.categories);
+    const {userJwtToken} = useAppSelector((state) => state.globals);
 
     useEffect(() => {
         log.debug("Component mounted, fetching categories");
         dispatch(appBarSetCustomState("Categories"));
-        dispatch(getAllCategories(filter));
+        dispatch(getAllCategories({filter: filter, jwtToken: userJwtToken}));
     }, [dispatch, filter]);
-    const navigate = useNavigate();
 
     const [open, setOpen] = useState<boolean>(false);
-    const [mode, setMode] = useState<CategoryViewMode>("view"); // 'view' | 'edit' | 'create'
-    const setModeEdit = useCallback(() => setMode("edit"), []);
-    const setModeCreate = useCallback(() => setMode("create"), []);
+    const [mode, setMode] = useState<CategoryViewMode>("view");
 
     const items: Array<GenericListViewItem> = allCategories.map(mapCategoryDtoToGenericItem);
 
+    const selectItem = (categoryId: number | null | undefined) => {
+        const chosenCat = allCategories.find((c) => c.categoryId === categoryId) || null;
+        if (!chosenCat || !chosenCat.categoryId || !chosenCat.categoryName) {
+            throw new Error("Selected category doesn't have ID or Name");
+        }
+
+        dispatch(setCategorySelectedCategory(chosenCat));
+        dispatch(setCurrentCategoryId(chosenCat.categoryId));
+        dispatch(setCurrentCategoryName(chosenCat.categoryName));
+    };
+
     // Handlers
-    const handleOpen = () => setOpen(true);
-    const handleViewClose = () => setOpen(false);
+    const handleClose = () => setOpen(false);
     const handleViewSave = async (updatedCategory: CategoryDto) => {
         log.debug(`Saving category in ${mode} mode`, updatedCategory);
-
         try {
             if (mode === "create") {
-                await dispatch(createCategory(updatedCategory)).unwrap();
+                await dispatch(createCategory({categoryDto: updatedCategory, jwtToken: userJwtToken})).unwrap();
                 log.info("Category created successfully");
             } else if (mode === "edit" && selectedCategory) {
                 await dispatch(updateCategory({
                     id: selectedCategory.categoryId ?? -1,
-                    categoryDto: updatedCategory
+                    categoryDto: updatedCategory,
+                    jwtToken: userJwtToken
                 })).unwrap();
                 log.info(`Category ${selectedCategory.categoryId} updated successfully`);
             }
-            handleViewClose();
-            dispatch(getAllCategories(filter));
+            handleClose();
+            dispatch(getAllCategories({filter: filter, jwtToken: userJwtToken}));
         } catch (error) {
             log.error(`Failed to save category in ${mode} mode:`, error);
         }
@@ -111,90 +120,68 @@ const DashboardCategories: FC = () => {
     const handleViewDelete = async (categoryDto: CategoryDto) => {
         log.debug(`Deleting category in ${mode} mode`, categoryDto);
         try {
-            await dispatch(deleteCategory(categoryDto?.categoryId ?? -1)).unwrap();
+            await dispatch(deleteCategory({id: categoryDto?.categoryId ?? -1, jwtToken: userJwtToken})).unwrap();
             log.info("Category deleted successfully");
-            handleViewClose();
-            dispatch(getAllCategories(filter));
+            handleClose();
+            dispatch(getAllCategories({filter: filter, jwtToken: userJwtToken}));
         } catch (error) {
             log.error(`Failed to delete category in ${mode} mode:`, error);
         }
     };
+    const handleAddButtonClick = () => {
+        log.debug("Add button clicked");
+        dispatch(setCategorySelectedCategory(null));
+        setMode("create");
+        setOpen(true);
+    };
     const handleSearchChange = (searchText?: string | null) => {
         log.debug("Search input changed:", searchText);
-        dispatch(setFilterCategoryName(searchText ?? ""));
-        dispatch(getAllCategories(filter));
+        dispatch(setCategoryFilterCategoryName(searchText ?? ""));
     };
     const handlePageChange = (pageNumber: number | null | undefined) => {
         log.debug("Page changed to", pageNumber);
-        dispatch(setFilterPage(pageNumber ?? 0));
-        dispatch(getAllCategories({
-            ...filter,
-            page: pageNumber ?? 0
-        }));
+        dispatch(setCategoryFilterPage(pageNumber ?? 0));
     };
-    const handleAddButtonClick = () => {
-        log.debug("Add button clicked");
-        dispatch(setSelectedCategory(null));
-        setModeCreate();
-        handleOpen();
-    };
+
     const handleItemClick = (categoryId: number | null | undefined) => {
         log.debug("Category item clicked:", categoryId);
-        const chosenCat = allCategories.find((c) => c.categoryId === categoryId) || null;
-        if (!chosenCat || !chosenCat.categoryId || !chosenCat.categoryName) {
-            throw new Error("Selected category doesn't have ID or Name");
-        }
-
-        dispatch(setSelectedCategory(chosenCat));
-        dispatch(setCurrentCategoryId(chosenCat.categoryId));
-        dispatch(setCurrentCategoryName(chosenCat.categoryName));
-
-        navigate(`${chosenCat?.categoryId}/items`);
+        selectItem(categoryId);
+        navigate(`/dashboard/items`);
     };
     const handleEditButtonClick = (categoryId: number | null | undefined) => {
         log.debug("Edit button clicked for category:", categoryId);
-        const chosenCat = allCategories.find((c) => c.categoryId === categoryId) || null;
-        if (!chosenCat || !chosenCat.categoryId || !chosenCat.categoryName) {
-            throw new Error("Selected category doesn't have ID or Name");
-        }
-
-        dispatch(setSelectedCategory(chosenCat));
-        dispatch(setCurrentCategoryId(chosenCat.categoryId));
-        dispatch(setCurrentCategoryName(chosenCat.categoryName));
-
-        setModeEdit();
-        handleOpen();
+        selectItem(categoryId);
+        setMode("edit");
+        setOpen(true);
     };
 
-    return (
-        <Box sx={{containerStyle}}>
+    return <Box sx={{containerStyle}}>
 
-            <CategoryView category={selectedCategory} open={open} onClose={handleViewClose} onSave={handleViewSave}
-                          onDelete={handleViewDelete} mode={mode}/>
+        <CategoryView mode={mode} open={open} category={selectedCategory}
+                      onClose={handleClose}
+                      onSave={handleViewSave}
+                      onDelete={handleViewDelete}/>
 
-            {error && <Alert severity="warning">{error}</Alert>}
+        {error && <Alert severity="warning">{error}</Alert>}
 
-            <GenericListView header={"Category"}
-                             currentPage={currentPage}
-                             totalPages={totalPages}
-                             totalItems={totalItems}
-                             listOfItems={items}
-                             isLoading={loading}
-                             searchBarText={filter?.categoryName ?? ""}
-                             onItemClicked={handleItemClick}
-                             onItemEditClicked={handleEditButtonClick}
-                             onPaginationItemClicked={handlePageChange}
-                             onSearchTextChanged={handleSearchChange}
-                             backgroundColor={"#f9fbe7"}
-                             itemsBackgroundColor={"#f0f4c3"}
-            />
+        <GenericListView currentPage={currentPage}
+                         totalPages={totalPages}
+                         totalItems={totalItems}
+                         listOfItems={items}
+                         isLoading={loading}
+                         searchBarText={filter?.categoryName ?? ""}
+                         onItemClicked={handleItemClick}
+                         onItemEditClicked={handleEditButtonClick}
+                         onPaginationItemClicked={handlePageChange}
+                         onSearchTextChanged={handleSearchChange}
+                         backgroundColor={"#f9fbe7"}
+                         itemsBackgroundColor={"#f0f4c3"}
+        />
 
-            <Fab color="success" aria-label="add" sx={fabStyle} onClick={handleAddButtonClick}>
-                <AddIcon/>
-            </Fab>
-
-        </Box>
-    );
+        <Fab color="success" aria-label="add" sx={fabStyle} onClick={handleAddButtonClick}>
+            <AddIcon/>
+        </Fab>
+    </Box>;
 };
 
 export default DashboardCategories;

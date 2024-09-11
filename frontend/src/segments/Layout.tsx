@@ -1,8 +1,8 @@
 import React from "react";
 import RecollectorAppBar from "./RecollectorAppBar";
 import RecollectorAppDrawer from "./RecollectorAppDrawer";
-import {Box, Breadcrumbs, Typography} from "@mui/material";
-import {Link, Outlet, useLocation} from "react-router-dom";
+import {Box} from "@mui/material";
+import {Outlet} from "react-router-dom";
 
 /**
  * Layout component that defines the overall structure of the application.
@@ -11,9 +11,6 @@ import {Link, Outlet, useLocation} from "react-router-dom";
  * @returns {JSX.Element} The rendered Layout component.
  */
 const Layout: React.FC = (): React.JSX.Element => {
-    const location = useLocation();
-    const pathItems = location.pathname.split("/");
-
     return (
         <Box>
             {/* AppBar component for the top section of the app */}
@@ -21,9 +18,6 @@ const Layout: React.FC = (): React.JSX.Element => {
 
             {/* Drawer component for the side navigation */}
             <RecollectorAppDrawer/>
-            <Breadcrumbs aria-label="breadcrumb">
-                {pathItems.map(item => <Typography component={Link} to={item}>{item}</Typography>)}
-            </Breadcrumbs>
 
             {/* Outlet for rendering child routes */}
             <Outlet/>
