@@ -19,6 +19,7 @@ import GenericListView from "../components/GenericListView.tsx";
 import {GenericListViewItem} from "../components/GenericListOfItems.tsx";
 import {useNavigate} from "react-router-dom";
 import {setCurrentCategoryId, setCurrentCategoryName} from "../store/features/global/globalSlice.ts";
+import {setItemFilterCategoryId} from "../store/features/items/itemsSlice.ts";
 
 const log = logger.getLogger("DashboardCategories");
 
@@ -38,13 +39,13 @@ const containerStyle: SxProps = {
     "@media (min-width: 768px)": {
         // For tablets and larger devices
         maxWidth: "80%" // Takes 80% of the width for larger screens
-    },
-    backgroundColor: "#e1f5fe"
+    }
 };
 const fabStyle: SxProps = {
     position: "fixed",
     bottom: 16,
-    right: 16
+    right: 16,
+    backgroundColor: "#ff9800"
 };
 
 // Helper Functions
@@ -75,7 +76,7 @@ const DashboardCategories: FC = () => {
 
     useEffect(() => {
         log.debug("Component mounted, fetching categories");
-        dispatch(appBarSetCustomState("Categories"));
+        dispatch(appBarSetCustomState(""));
         dispatch(getAllCategories({filter: filter, jwtToken: userJwtToken}));
     }, [dispatch, filter]);
 
@@ -86,13 +87,14 @@ const DashboardCategories: FC = () => {
 
     const selectItem = (categoryId: number | null | undefined) => {
         const chosenCat = allCategories.find((c) => c.categoryId === categoryId) || null;
-        if (!chosenCat || !chosenCat.categoryId || !chosenCat.categoryName) {
+        if (!chosenCat?.categoryId || !chosenCat?.categoryName) {
             throw new Error("Selected category doesn't have ID or Name");
         }
 
         dispatch(setCategorySelectedCategory(chosenCat));
         dispatch(setCurrentCategoryId(chosenCat.categoryId));
         dispatch(setCurrentCategoryName(chosenCat.categoryName));
+        dispatch(setItemFilterCategoryId(chosenCat.categoryId));
     };
 
     // Handlers
@@ -174,8 +176,9 @@ const DashboardCategories: FC = () => {
                          onItemEditClicked={handleEditButtonClick}
                          onPaginationItemClicked={handlePageChange}
                          onSearchTextChanged={handleSearchChange}
-                         backgroundColor={"#f9fbe7"}
-                         itemsBackgroundColor={"#f0f4c3"}
+
+                         backgroundColor={"#fff8e1"}
+                         itemColor={"#ffe082"}
         />
 
         <Fab color="success" aria-label="add" sx={fabStyle} onClick={handleAddButtonClick}>

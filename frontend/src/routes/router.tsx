@@ -10,6 +10,7 @@ import DashboardItems from "../pages/DashboardItems.tsx";
 import Profile from "../pages/Profile.tsx";
 import Settings from "../pages/Settings.tsx";
 import PrivateRoute from "./PrivateRoute.tsx";
+import ChangePassword from "../pages/ChangePassword.tsx";
 
 const router = createBrowserRouter([
     {
@@ -71,6 +72,17 @@ const router = createBrowserRouter([
                     {
                         index: true,
                         element: <Settings/>,
+                        errorElement: <ErrorPage/>
+                    }
+                ]
+            },
+            {
+                path: "/change_password",
+                element: <PrivateRoute/>,
+                children: [
+                    {
+                        index: true,
+                        element: <ChangePassword/>,
                         errorElement: <ErrorPage/>
                     }
                 ]

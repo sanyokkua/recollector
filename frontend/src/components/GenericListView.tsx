@@ -9,13 +9,12 @@ const boxStyle: SxProps = {
     display: "flex",
     flexDirection: "column",
     padding: 5,
-    height: "100vh",
-    backgroundColor: "#f9fbe7"
+    height: "100vh"
 };
 
 export interface GenericItemListViewProps extends GenericListViewProps {
     searchBarText: string;
-    itemsBackgroundColor?: string;
+    backgroundColor: string;
     onSearchTextChanged: (searchText?: string | null) => void;
 }
 
@@ -30,42 +29,38 @@ const GenericListView: FC<GenericItemListViewProps> = ({
                                                            onItemEditClicked,
                                                            onPaginationItemClicked,
                                                            onSearchTextChanged,
-                                                           backgroundColor = boxStyle.backgroundColor,
-                                                           itemsBackgroundColor
+                                                           backgroundColor,
+                                                           itemColor
                                                        }) => {
     log.debug(`Current Page: ${currentPage}, Total Pages: ${totalPages}, Total Items: ${totalItems}`);
     boxStyle.backgroundColor = backgroundColor;
+
     // Handlers
-    const handleSearchChange = useCallback(
-        (event: React.ChangeEvent<HTMLInputElement>) => {
-            const searchValue = event.target.value;
-            log.debug(`handleSearchChange, value: ${searchValue}`);
-            onSearchTextChanged(searchValue);
-        }, [onSearchTextChanged]
-    );
+    const handleSearchChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+        const searchValue = event.target.value;
+        log.debug(`handleSearchChange, value: ${searchValue}`);
+        onSearchTextChanged(searchValue);
+    }, [onSearchTextChanged]);
 
-    return (
+    return <Box sx={boxStyle}>
+        <TextField sx={{mb: 2}} id="item-search" label="Search" type="search" variant="outlined"
+                   value={searchBarText}
+                   onChange={handleSearchChange}/>
 
-        <Box sx={boxStyle}>
-            <TextField sx={{mb: 2}} id="item-search" label="Search" type="search" variant="outlined"
-                       value={searchBarText}
-                       onChange={handleSearchChange}/>
+        <GenericListOfItems isLoading={isLoading}
 
-            <GenericListOfItems isLoading={isLoading}
-                                backgroundColor={itemsBackgroundColor}
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            totalItems={totalItems}
+                            listOfItems={listOfItems}
 
-                                currentPage={currentPage}
-                                totalPages={totalPages}
-                                totalItems={totalItems}
-                                listOfItems={listOfItems}
+                            onItemClicked={onItemClicked}
+                            onItemEditClicked={onItemEditClicked}
+                            onPaginationItemClicked={onPaginationItemClicked}
 
-                                onItemClicked={onItemClicked}
-                                onItemEditClicked={onItemEditClicked}
-                                onPaginationItemClicked={onPaginationItemClicked}
-            />
-        </Box>
-
-    );
+                            itemColor={itemColor}
+        />
+    </Box>;
 };
 
 export default GenericListView;

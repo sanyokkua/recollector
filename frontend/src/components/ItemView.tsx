@@ -13,6 +13,8 @@ import {
 } from "@mui/material";
 import {ItemDto, ItemDtoItemStatusEnum} from "../api/dto/itemDto.ts";
 import {logger} from "../config/appConfig.ts";
+import {useAppDispatch, useAppSelector} from "../store/hooks.ts";
+import {getItemStatuses} from "../store/features/helper/helperSlice.ts";
 
 const log = logger.getLogger("ItemView");
 
@@ -68,6 +70,15 @@ interface ItemViewProps {
 const ItemView: FC<ItemViewProps> = React.memo(({item, open, onClose, onSave, onDelete, mode, categoryId}) => {
         log.debug(`View is created in mode: ${mode}`);
         log.debug(`Item received: ${JSON.stringify(item)}`);
+    const dispatch = useAppDispatch();
+
+    const {userJwtToken} = useAppSelector((state) => state.globals);
+    const {statuses} = useAppSelector((state) => state.helper);
+
+    useEffect(() => {
+        log.debug("Component mounted, fetching statuses");
+        dispatch(getItemStatuses(userJwtToken));
+    }, [dispatch]);
 
         // Initial state of item
         const initialItemState: ItemDto = {
@@ -85,15 +96,13 @@ const ItemView: FC<ItemViewProps> = React.memo(({item, open, onClose, onSave, on
 
         useEffect(() => {
             if (mode === "create") {
-                // Reset to initial state when in create mode
                 setItemToProcess(initialItemState);
             } else if (item) {
-                // Update the state with the provided item when not in create mode
                 setItemToProcess({...initialItemState, ...item});
             }
         }, [item, mode]);
 
-        const {dialogTitle, actionButtonLabel, isNameEditable, isStatusEditable} =
+    const {dialogTitle, actionButtonLabel, isNameEditable, isStatusEditable, isNoteEditable} =
             getViewConfig(mode);
 
         const handleNameTextChanged = useCallback(
@@ -149,64 +158,84 @@ const ItemView: FC<ItemViewProps> = React.memo(({item, open, onClose, onSave, on
             setShowDeleteConfirmation(false);
         }, []);
 
-        return (
-            <>
-                <Dialog open={open} onClose={handleOnCloseClicked} maxWidth="sm" fullWidth>
-                    <DialogTitle>{dialogTitle}</DialogTitle>
+    const mappedStatuses = statuses.map(status => {
+        return <MenuItem key={status} value={status}>{status}</MenuItem>;
+    });
 
-                    <DialogContent>
-                        <Box component="form" noValidate autoComplete="off" sx={{mt: 2}}>
-                            <Grid container spacing={2}>
-                                <Grid item xs={12}>
-                                    <TextField
-                                        fullWidth
-                                        variant="outlined"
-                                        label="Item Name"
-                                        value={itemToProcess.itemName ?? ""}
-                                        onChange={handleNameTextChanged}
-                                        InputProps={{readOnly: !isNameEditable}}
-                                    />
-                                </Grid>
-                                <Grid item xs={12}>
-                                    <TextField
-                                        select
-                                        fullWidth
-                                        variant="outlined"
-                                        label="Item Status"
-                                        value={itemToProcess.itemStatus ?? ""}
-                                        onChange={handleStatusChange}
-                                        InputProps={{readOnly: !isStatusEditable}}
-                                    >
-                                        <MenuItem value={ItemDtoItemStatusEnum.TODO_LATER}>To Do Later</MenuItem>
-                                        <MenuItem value={ItemDtoItemStatusEnum.IN_PROGRESS}>In Progress</MenuItem>
-                                        <MenuItem value={ItemDtoItemStatusEnum.FINISHED}>Finished</MenuItem>
-                                    </TextField>
-                                </Grid>
-                                <Grid item xs={12}>
-                                    <TextField
-                                        fullWidth
-                                        variant="outlined"
-                                        label="Item Notes"
-                                        multiline
-                                        rows={4}
-                                        value={itemToProcess.itemNotes ?? ""}
-                                        onChange={handleNotesChange}
-                                        InputProps={{readOnly: !isNameEditable}}
-                                    />
-                                </Grid>
-                            </Grid>
-                        </Box>
-                    </DialogContent>
+    // Render item data depending on mode
+    const renderItemData = () => {
+        if (mode === "view") {
+            // Display item details as plain text for view mode
+            return (
+                <Box sx={{mt: 2}}>
+                    <Typography variant="subtitle1"><strong>Item Name:</strong></Typography>
+                    <Typography>{itemToProcess.itemName ?? "-"}</Typography>
+
+                    <Typography variant="subtitle1" sx={{mt: 2}}><strong>Item Status:</strong></Typography>
+                    <Typography>{itemToProcess.itemStatus}</Typography>
+
+                    <Typography variant="subtitle1" sx={{mt: 2}}><strong>Item Notes:</strong></Typography>
+                    <Typography>{itemToProcess.itemNotes ?? "-"}</Typography>
+                </Box>
+            );
+        }
+
+        // Edit or create mode: show form fields
+        return (
+            <Box component="form" noValidate autoComplete="off" sx={{mt: 2}}>
+                <Grid container spacing={2}>
+                    <Grid item xs={12}>
+                        <TextField
+                            fullWidth
+                            variant="outlined"
+                            label="Item Name"
+                            value={itemToProcess.itemName ?? ""}
+                            onChange={handleNameTextChanged}
+                            InputProps={{readOnly: !isNameEditable}}
+                        />
+                    </Grid>
+                    <Grid item xs={12}>
+                        <TextField
+                            select
+                            fullWidth
+                            variant="outlined"
+                            label="Item Status"
+                            value={itemToProcess.itemStatus ?? ""}
+                            onChange={handleStatusChange}
+                            InputProps={{readOnly: !isStatusEditable}}
+                        >
+                            {mappedStatuses}
+                        </TextField>
+                    </Grid>
+                    <Grid item xs={12}>
+                        <TextField
+                            fullWidth
+                            variant="outlined"
+                            label="Item Notes"
+                            multiline
+                            rows={4}
+                            value={itemToProcess.itemNotes ?? ""}
+                            onChange={handleNotesChange}
+                            InputProps={{readOnly: !isNoteEditable}}
+                        />
+                    </Grid>
+                </Grid>
+            </Box>
+        );
+    };
+
+    return (
+        <>
+            <Dialog open={open} onClose={handleOnCloseClicked} maxWidth="sm" fullWidth>
+                <DialogTitle>{dialogTitle}</DialogTitle>
+
+                <DialogContent>{renderItemData()}</DialogContent>
 
                     <DialogActions>
                         <Grid container justifyContent="space-between" alignItems="center">
                             {mode === "edit" && (
                                 <Grid item>
-                                    <Button
-                                        onClick={handleDeleteClick}
-                                        color="error"
-                                        variant="outlined"
-                                    >
+                                    <Button onClick={handleDeleteClick} color="error" variant="outlined">
                                         Delete
                                     </Button>
                                 </Grid>
@@ -214,20 +243,13 @@ const ItemView: FC<ItemViewProps> = React.memo(({item, open, onClose, onSave, on
                             <Grid item xs>
                                 <Grid container justifyContent={"flex-end"} spacing={1}>
                                     <Grid item>
-                                        <Button
-                                            onClick={handleOnCloseClicked}
-                                            color="secondary"
-                                        >
+                                        <Button onClick={handleOnCloseClicked} color="secondary">
                                             Cancel
                                         </Button>
                                     </Grid>
                                     {mode !== "view" && (
                                         <Grid item>
-                                            <Button
-                                                onClick={handleOnSaveClicked}
-                                                color="primary"
-                                                variant="contained"
-                                            >
+                                            <Button onClick={handleOnSaveClicked} color="primary" variant="contained">
                                                 {actionButtonLabel}
                                             </Button>
                                         </Grid>
@@ -242,20 +264,14 @@ const ItemView: FC<ItemViewProps> = React.memo(({item, open, onClose, onSave, on
                     <DialogTitle>Confirm Delete</DialogTitle>
 
                     <DialogContent>
-                        <Typography>
-                            Are you sure you want to delete this item?
-                        </Typography>
+                        <Typography>Are you sure you want to delete this item?</Typography>
                     </DialogContent>
 
                     <DialogActions>
                         <Button onClick={handleCancelDelete} color="secondary">
                             Cancel
                         </Button>
-                        <Button
-                            onClick={handleConfirmDelete}
-                            color="error"
-                            variant="contained"
-                        >
+                        <Button onClick={handleConfirmDelete} color="error" variant="contained">
                             Delete
                         </Button>
                     </DialogActions>

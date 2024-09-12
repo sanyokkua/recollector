@@ -9,7 +9,12 @@ import {
 } from "../../browserStore.ts";
 import {jwtDecode, JwtPayload} from "jwt-decode";
 import {getDateFromSeconds} from "../../../api/client/utils.ts";
-import {LoginRequestDto, RegisterRequestDto, UserDto} from "../../../api/dto/authenticationDto.ts";
+import {
+    ChangePasswordRequestDto,
+    LoginRequestDto,
+    RegisterRequestDto,
+    UserDto
+} from "../../../api/dto/authenticationDto.ts";
 import AuthApiClient from "../../../api/client/authApiClient.ts";
 import {Response} from "../../../api/dto/common.ts";
 
@@ -39,7 +44,7 @@ const initializeState = (): GlobalState => {
     if (jwt) {
         try {
             const decoded = jwtDecode<JwtPayload>(jwt);
-            if (decoded && decoded.sub && decoded.exp) {
+            if (decoded?.sub && decoded?.exp) {
                 email = email || decoded.sub;
                 userTimeExp = decoded.exp;
                 userIsLoggedIn = new Date().getTime() < getDateFromSeconds(userTimeExp).getTime();
@@ -98,6 +103,26 @@ export const registerUser = createAsyncThunk(
     }
 );
 
+type ChangePasswordRequest = {
+    changePasswordDto: ChangePasswordRequestDto,
+    jwtToken: string;
+}
+
+export const changePassword = createAsyncThunk("globals/change_password",
+    async (changePassReq: ChangePasswordRequest, {rejectWithValue}) => {
+        log.info("Attempting to login");
+        log.debug(`Register request parameters: ${JSON.stringify(changePassReq)}`);
+        try {
+            const client = new AuthApiClient(axiosClient, changePassReq.jwtToken);
+            return await client.changePassword(changePassReq.changePasswordDto);
+        } catch (error: any) {
+            const errorMessage = error?.message || "Failed to Change Password";
+            log.error("Change Password API call failed", error);
+            return rejectWithValue(errorMessage);
+        }
+    }
+);
+
 const resetUserState = (state: GlobalState, errorMessage: string = "") => {
     state.userJwtToken = "";
     state.userJwtRefreshToken = "";
@@ -149,7 +174,7 @@ export const globalSlice = createSlice({
             .addCase(loginUser.fulfilled, (state: GlobalState, action: PayloadAction<Response<UserDto>>) => {
                 log.info("Login request fulfilled successfully");
                 const payload = action.payload?.data;
-                if (!payload || !payload.jwtToken) {
+                if (!payload?.jwtToken) {
                     resetUserState(state, "Response doesn't contain required fields");
                     return;
                 }
@@ -190,7 +215,22 @@ export const globalSlice = createSlice({
             .addCase(registerUser.rejected, (state: GlobalState, action) => {
                 log.error("Register request was rejected", action.payload);
                 state.error = "Registration was rejected";
-            });
+            })
+
+            .addCase(changePassword.pending, (state: GlobalState) => {
+                log.debug("Change Password request pending");
+                state.error = "";
+            })
+            .addCase(changePassword.fulfilled, (state: GlobalState, action: PayloadAction<Response<UserDto>>) => {
+                log.info("Change Password request fulfilled successfully");
+                log.debug(`Response: ${JSON.stringify(action.payload)}`);
+                state.error = "";
+            })
+            .addCase(changePassword.rejected, (state: GlobalState, action) => {
+                log.error("Change Password request was rejected", action.payload);
+                state.error = "Change Password was rejected";
+            })
+        ;
     }
 });
 

@@ -4,6 +4,7 @@ import appBarSliceReducer from "./features/appBar/appBarSlice";
 import categoriesSliceReducer from "./features/categories/categoriesSlice";
 import itemsSliceReducer from "./features/items/itemsSlice";
 import globalsSliceReducer from "./features/global/globalSlice";
+import helperSliceReducer from "./features/helper/helperSlice.ts";
 import {
     currentCategoryIdSaver,
     currentCategoryNameSaver,
@@ -25,7 +26,8 @@ const store = configureStore({
         appBarHeader: appBarSliceReducer,
         categories: categoriesSliceReducer,
         items: itemsSliceReducer,
-        globals: globalsSliceReducer
+        globals: globalsSliceReducer,
+        helper: helperSliceReducer
     }
 });
 

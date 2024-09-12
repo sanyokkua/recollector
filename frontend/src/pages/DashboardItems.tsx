@@ -11,7 +11,6 @@ import {
     deleteItem,
     getAllItems,
     ItemGetRequest,
-    setItemFilterCategoryId,
     setItemFilterItemName,
     setItemFilterPage,
     setItemSelectedItem,
@@ -40,13 +39,13 @@ const containerStyle: SxProps = {
     "@media (min-width: 768px)": {
         // For tablets and larger devices
         maxWidth: "80%" // Takes 80% of the width for larger screens
-    },
-    backgroundColor: "#e1f5fe"
+    }
 };
 const fabStyle: SxProps = {
     position: "fixed",
     bottom: 16,
-    right: 16
+    right: 16,
+    background: "#e91e63"
 };
 
 // Helper Functions
@@ -81,7 +80,6 @@ const DashboardItems: FC = () => {
 
     useEffect(() => {
         log.debug("Component mounted, fetching items");
-        dispatch(setItemFilterCategoryId(currentCategoryId));
         dispatch(appBarSetCustomState(`${currentCategoryName}`));
         dispatch(getAllItems({filter: filter, jwtToken: userJwtToken}));
     }, [dispatch, filter, currentCategoryId, currentCategoryName, error]);
@@ -179,13 +177,14 @@ const DashboardItems: FC = () => {
                          totalItems={totalItems}
                          listOfItems={items}
                          isLoading={loading}
-                         backgroundColor={"#ede7f6"}
-                         itemsBackgroundColor={""}
                          searchBarText={filter?.itemName ?? "#d1c4e9"}
                          onItemClicked={handleItemClick}
                          onItemEditClicked={handleEditButtonClick}
                          onPaginationItemClicked={handlePageChange}
                          onSearchTextChanged={handleSearchChange}
+
+                         backgroundColor={"#fce4ec"}
+                         itemColor={"#e1bee7"}
         />
 
         <Fab color="success" aria-label="add" sx={fabStyle} onClick={handleAddButtonClick}>

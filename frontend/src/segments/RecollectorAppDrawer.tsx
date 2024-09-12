@@ -45,6 +45,11 @@ const RecollectorAppDrawer: React.FC = () => {
             text: "Settings",
             icon: <SettingsIcon/>
         });
+        drawerItems.push({
+            path: "/change_password",
+            text: "Change Password",
+            icon: <RestoreIcon/>
+        });
     } else {
         drawerItems.push({
             path: "/login",

@@ -9,6 +9,7 @@ import {
     ListItemButton,
     ListItemText,
     Pagination,
+    Paper,
     Skeleton,
     SxProps
 } from "@mui/material";
@@ -18,8 +19,8 @@ import {logger} from "../config/appConfig";
 const log = logger.getLogger("GenericListView");
 
 const boxStyle: SxProps = {
-    padding: 1,
-    backgroundColor: "#f0f4c3"
+    padding: 1
+
 };
 
 export interface GenericListViewItem {
@@ -34,7 +35,8 @@ export interface GenericListViewProps {
     totalItems?: number;
     listOfItems?: Array<GenericListViewItem>;
     isLoading?: boolean;
-    backgroundColor?: string;
+
+    itemColor: string;
 
     onItemClicked: (itemId: number | null | undefined) => void;
     onItemEditClicked: (itemId: number | null | undefined) => void;
@@ -50,35 +52,32 @@ const GenericListOfItems: FC<GenericListViewProps> = ({
                                                           onItemClicked,
                                                           onItemEditClicked,
                                                           onPaginationItemClicked,
-                                                          backgroundColor = boxStyle.backgroundColor
+                                                          itemColor
                                                       }) => {
     log.debug(`Current Page: ${currentPage}, Total Pages: ${totalPages}, Total Items: ${totalItems}`);
     const showPagination = totalPages > 1;
-    boxStyle.backgroundColor = backgroundColor;
 
     // Handlers
-    const handleItemClick = useCallback(
-        (itemId?: number) => (event: React.MouseEvent) => {
+    const handleItemClick = useCallback((itemId?: number) => (event: React.MouseEvent) => {
             event.stopPropagation();
             log.debug(`handleItemClick, itemId: ${itemId}`);
             onItemClicked(itemId);
         },
         [onItemClicked]
     );
-    const handleItemEditClick = useCallback(
-        (itemId?: number) => (event: React.MouseEvent) => {
+    const handleItemEditClick = useCallback((itemId?: number) => (event: React.MouseEvent) => {
             event.stopPropagation();
             log.debug(`Edit clicked, itemId: ${itemId}`);
             onItemEditClicked(itemId);
         },
         [onItemEditClicked]
     );
-    const handlePageChange = useCallback(
-        (event: React.ChangeEvent<unknown>, value: number) => {
+    const handlePageChange = useCallback((event: React.ChangeEvent<unknown>, value: number) => {
             event.stopPropagation();
             log.debug(`Page changed, value: ${value}`);
             onPaginationItemClicked(value);
-        }, [onPaginationItemClicked]
+        },
+        [onPaginationItemClicked]
     );
 
     // UI components
@@ -89,13 +88,15 @@ const GenericListOfItems: FC<GenericListViewProps> = ({
     };
     const renderListItem = (item: GenericListViewItem) => {
         return <>
-            <ListItem key={item.itemId} disablePadding onClick={handleItemClick(item.itemId)}
-                      secondaryAction={renderIconButton(item)}>
-                <ListItemButton>
-                    <ListItemText primary={item?.itemName ?? ""} secondary={item?.itemAdditionalText ?? ""}/>
-                </ListItemButton>
-            </ListItem>
-            <Divider component="li"/>
+            <Paper elevation={3} sx={{backgroundColor: itemColor}}>
+                <ListItem key={item.itemId} disablePadding onClick={handleItemClick(item.itemId)}
+                          secondaryAction={renderIconButton(item)}>
+                    <ListItemButton>
+                        <ListItemText primary={item?.itemName ?? ""} secondary={item?.itemAdditionalText ?? ""}/>
+                    </ListItemButton>
+                </ListItem>
+            </Paper>
+            <Divider sx={{padding: 0.3}}/>
         </>;
     };
 
