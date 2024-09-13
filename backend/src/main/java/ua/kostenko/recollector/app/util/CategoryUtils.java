@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import ua.kostenko.recollector.app.dto.CategoryDto;
 import ua.kostenko.recollector.app.entity.Category;
+import ua.kostenko.recollector.app.entity.CategoryItemCount;
 import ua.kostenko.recollector.app.exception.CategoryValidationException;
 
 import java.util.Objects;
@@ -53,6 +54,23 @@ public class CategoryUtils {
         CategoryDto categoryDto = CategoryDto.builder()
                                              .categoryId(category.getCategoryId())
                                              .categoryName(category.getCategoryName())
+                                             .build();
+        log.debug("Mapped Category to CategoryDto: {}", categoryDto);
+        return categoryDto;
+    }
+
+    public static CategoryDto mapCategoryItemCountToCategoryDto(CategoryItemCount category) {
+        if (Objects.isNull(category)) {
+            log.warn("Attempted to map a null CategoryItemCount to CategoryDto.");
+            return null;
+        }
+
+        CategoryDto categoryDto = CategoryDto.builder()
+                                             .categoryId(category.getCategoryId())
+                                             .categoryName(category.getCategoryName())
+                                             .todoItems(category.getCountTodoLater())
+                                             .inProgressItems(category.getCountInProgress())
+                                             .finishedItems(category.getCountFinished())
                                              .build();
         log.debug("Mapped Category to CategoryDto: {}", categoryDto);
         return categoryDto;

@@ -19,8 +19,8 @@ import ua.kostenko.recollector.app.entity.User;
 import ua.kostenko.recollector.app.exception.CategoryAlreadyExistsException;
 import ua.kostenko.recollector.app.exception.CategoryNotFoundException;
 import ua.kostenko.recollector.app.exception.CategoryValidationException;
+import ua.kostenko.recollector.app.repository.CategoryItemCountRepository;
 import ua.kostenko.recollector.app.repository.CategoryRepository;
-import ua.kostenko.recollector.app.repository.ItemRepository;
 import ua.kostenko.recollector.app.security.AuthService;
 
 import java.time.LocalDateTime;
@@ -41,7 +41,7 @@ class CategoryServiceTest {
     @Mock
     private CategoryRepository categoryRepository;
     @Mock
-    private ItemRepository itemRepository;
+    private CategoryItemCountRepository categoryItemCountRepository;
     private CategoryService categoryService;
 
     private User user;
@@ -53,7 +53,7 @@ class CategoryServiceTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         Mockito.reset(categoryRepository);
-        categoryService = new CategoryService(authService, categoryRepository, itemRepository);
+        categoryService = new CategoryService(authService, categoryRepository, categoryItemCountRepository);
 
         user = User.builder().userId(1L).build();
         categoryDto = CategoryDto.builder().categoryId(categoryId).categoryName("Work").build();
