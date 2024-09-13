@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "category_item_counts", schema = "recollector")
 // Allows mapping the entity to a view or custom query without triggering validation errors.
-@Subselect("SELECT * FROM "recollector"."category_item_counts"")
+@Subselect("SELECT * FROM \"recollector\".\"category_item_counts\"")
 @Data
 @Builder
 @NoArgsConstructor
