@@ -15,6 +15,7 @@ import org.springframework.data.jpa.domain.Specification;
 import ua.kostenko.recollector.app.dto.CategoryDto;
 import ua.kostenko.recollector.app.dto.CategoryFilter;
 import ua.kostenko.recollector.app.entity.Category;
+import ua.kostenko.recollector.app.entity.CategoryItemCount;
 import ua.kostenko.recollector.app.entity.User;
 import ua.kostenko.recollector.app.exception.CategoryAlreadyExistsException;
 import ua.kostenko.recollector.app.exception.CategoryNotFoundException;
@@ -47,6 +48,7 @@ class CategoryServiceTest {
     private User user;
     private CategoryDto categoryDto;
     private Category category;
+    private CategoryItemCount categoryItemCount;
     private Category updatedCategory;
 
     @BeforeEach
@@ -64,6 +66,15 @@ class CategoryServiceTest {
                            .createdAt(LocalDateTime.now())
                            .updatedAt(LocalDateTime.now())
                            .build();
+        categoryItemCount = CategoryItemCount.builder()
+                                             .userId(user.getUserId())
+                                             .categoryId(categoryId)
+                                             .categoryName("Work")
+                                             .countInProgress(1L)
+                                             .countTodoLater(2L)
+                                             .countFinished(3L)
+                                             .build();
+
         updatedCategory = Category.builder()
                                   .categoryId(categoryId)
                                   .categoryName("Updated Work")
@@ -104,14 +115,12 @@ class CategoryServiceTest {
         // Arrange
         CategoryDto expectedDto = CategoryDto.builder()
                                              .categoryId(categoryId)
-                                             .categoryName("Work")
-                                             .todoItems(0L)
-                                             .inProgressItems(0L)
-                                             .finishedItems(0L)
+                                             .categoryName("Work").todoItems(1L).inProgressItems(2L).finishedItems(3L)
                                              .build();
         when(authService.findUserByEmail(userEmail)).thenReturn(user);
-        when(categoryRepository.findByCategoryIdAndUser_UserId(categoryId, user.getUserId())).thenReturn(Optional.of(
-                category));
+        when(categoryItemCountRepository.findByCategoryIdAndUserId(categoryId,
+                                                                   user.getUserId())).thenReturn(Optional.of(
+                categoryItemCount));
         // Act
         CategoryDto result = categoryService.getCategory(userEmail, categoryId);
 
@@ -125,7 +134,7 @@ class CategoryServiceTest {
     void getCategory_whenCategoryDoesNotExist_throwsException() {
         // Arrange
         when(authService.findUserByEmail(userEmail)).thenReturn(user);
-        when(categoryRepository.findByCategoryIdAndUser_UserId(categoryId,
+        when(categoryItemCountRepository.findByCategoryIdAndUserId(categoryId,
                                                                user.getUserId())).thenReturn(Optional.empty());
 
         // Act & Assert
@@ -201,9 +210,10 @@ class CategoryServiceTest {
                                               .size(10)
                                               .direction(Sort.Direction.ASC)
                                               .build();
-        Page<Category> categoryPage = new PageImpl<>(List.of(category));
+        Page<CategoryItemCount> categoryPage = new PageImpl<>(List.of(categoryItemCount));
         when(authService.findUserByEmail(userEmail)).thenReturn(user);
-        when(categoryRepository.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(categoryPage);
+        when(categoryItemCountRepository.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(
+                categoryPage);
 
         // Act
         Page<CategoryDto> result = categoryService.getCategoriesByFilters(userEmail, filter);

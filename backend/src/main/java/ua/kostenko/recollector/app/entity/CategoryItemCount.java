@@ -8,11 +8,14 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Subselect;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "category_item_counts", schema = "recollector")
+// Allows mapping the entity to a view or custom query without triggering validation errors.
+@Subselect("SELECT * FROM "recollector"."category_item_counts"")
 @Data
 @Builder
 @NoArgsConstructor
