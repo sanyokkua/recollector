@@ -1,13 +1,14 @@
 // Import necessary libraries and components from React, ReactDOM, React Router, and Redux
-import {StrictMode} from "react";
-import {createRoot} from "react-dom/client";
-import {RouterProvider} from "react-router-dom";
-import {Provider} from "react-redux";
+import { StrictMode }     from "react";
+import { createRoot }     from "react-dom/client";
+import { Provider }       from "react-redux";
+import { RouterProvider } from "react-router-dom";
+import { logger }         from "./config/appConfig.ts";
 
 // Import the application's router and Redux store
 import router from "./routes/router";
-import store from "./store/store";
-import {logger} from "./config/appConfig.ts";
+import store  from "./store/store";
+
 
 const log = logger.getLogger("AppRoot");
 
@@ -23,10 +24,10 @@ if (!rootElement) {
 logger.debug("Will be rendered React App");
 createRoot(rootElement).render(
     <StrictMode>
-        {/* Redux Provider to supply the store to the entire app */}
-        <Provider store={store}>
-            {/* React Router Provider to manage navigation and routing */}
-            <RouterProvider router={router}/>
+        {/* Redux Provider to supply the store to the entire app */ }
+        <Provider store={ store }>
+            {/* React Router Provider to manage navigation and routing */ }
+            <RouterProvider router={ router }/>
         </Provider>
     </StrictMode>
 );

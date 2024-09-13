@@ -19,8 +19,6 @@ import ua.kostenko.recollector.app.repository.ItemRepository;
 import ua.kostenko.recollector.app.security.AuthService;
 import ua.kostenko.recollector.app.util.ItemUtils;
 
-import java.time.LocalDateTime;
-
 import static ua.kostenko.recollector.app.util.PageRequestUtils.createPageRequest;
 
 /**
@@ -241,14 +239,11 @@ public class ItemService {
      */
     private Item buildNewItem(ItemDto itemDto, Category category) {
         var status = itemDto.getItemStatus();
-        var creationTime = LocalDateTime.now();
         return Item.builder()
                    .category(category)
                    .itemName(itemDto.getItemName())
                    .itemStatus(status.name())
                    .itemNotes(itemDto.getItemNotes())
-                   .createdAt(creationTime)
-                   .updatedAt(creationTime)
                    .build();
     }
 
@@ -263,6 +258,5 @@ public class ItemService {
         item.setItemName(itemDto.getItemName());
         item.setItemStatus(status.name());
         item.setItemNotes(itemDto.getItemNotes());
-        item.setUpdatedAt(LocalDateTime.now());
     }
 }

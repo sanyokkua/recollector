@@ -18,8 +18,6 @@ import ua.kostenko.recollector.app.repository.CategoryRepository;
 import ua.kostenko.recollector.app.security.AuthService;
 import ua.kostenko.recollector.app.util.CategoryUtils;
 
-import java.time.LocalDateTime;
-
 import static ua.kostenko.recollector.app.util.PageRequestUtils.createPageRequest;
 
 /**
@@ -150,6 +148,7 @@ public class CategoryService {
         log.info("Retrieving categories with filters for user: {}", userEmail);
 
         User user = getUser(userEmail);
+
         var pageable = createPageRequest(categoryFilter.getPage(),
                                          categoryFilter.getSize(),
                                          Sort.by(categoryFilter.getDirection(), "categoryName"));
@@ -205,10 +204,7 @@ public class CategoryService {
      * @return a new Category entity
      */
     private Category buildNewCategory(CategoryDto categoryDto, User user) {
-        LocalDateTime now = LocalDateTime.now();
-        return Category.builder().user(user).createdAt(now).updatedAt(now)
-                       .categoryName(categoryDto.getCategoryName())
-                       .build();
+        return Category.builder().user(user).categoryName(categoryDto.getCategoryName()).build();
     }
 
     /**
@@ -219,6 +215,5 @@ public class CategoryService {
      */
     private void updateCategoryDetails(Category category, CategoryDto categoryDto) {
         category.setCategoryName(categoryDto.getCategoryName());
-        category.setUpdatedAt(LocalDateTime.now());
     }
 }

@@ -1,15 +1,15 @@
 package ua.kostenko.recollector.app.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import ua.kostenko.recollector.app.dto.StatisticDto;
+import ua.kostenko.recollector.app.dto.UserSettingsDto;
 import ua.kostenko.recollector.app.dto.response.Response;
 import ua.kostenko.recollector.app.security.AuthService;
 import ua.kostenko.recollector.app.service.HelperService;
@@ -56,5 +56,34 @@ public class HelperController {
         log.info("Fetching statistics for user with email: {}", email);
         var statistics = helperService.getStatistics(email);
         return ResponseHelper.buildDtoResponse(statistics, HttpStatus.OK);
+    }
+
+    /**
+     * Retrieves user-specific settings based on the authenticated user's email.
+     *
+     * @return a {@link ResponseEntity} with the user's settings and HTTP status {@code 200 OK}.
+     */
+    @Operation(summary = "Retrieve user settings", description = "Retrieves settings for the authenticated user based on their email.")
+    @GetMapping("/settings")
+    public ResponseEntity<Response<UserSettingsDto>> getUserSettings() {
+        var email = authService.getUserEmailFromAuthContext();
+        log.info("Fetching settings for user with email: {}", email);
+        var settings = helperService.getUserSettings(email);
+        return ResponseHelper.buildDtoResponse(settings, HttpStatus.OK);
+    }
+
+    /**
+     * Retrieves user-specific settings based on the authenticated user's email.
+     *
+     * @return a {@link ResponseEntity} with the user's settings and HTTP status {@code 200 OK}.
+     */
+    @Operation(summary = "Update user settings", description = "Updates settings for the authenticated user based on their email.")
+    @PutMapping("/settings")
+    public ResponseEntity<Response<UserSettingsDto>> updateUserSettings(
+            @RequestBody @Parameter(description = "Updated userSettings details") UserSettingsDto userSettingsDto) {
+        var email = authService.getUserEmailFromAuthContext();
+        log.info("Updating settings for user with email: {}", email);
+        var settings = helperService.saveUserSettings(email, userSettingsDto);
+        return ResponseHelper.buildDtoResponse(settings, HttpStatus.OK);
     }
 }

@@ -97,6 +97,7 @@ class AuthServiceTest {
 
         RegisterRequestDto requestDto = new RegisterRequestDto("test@example.com", "validPassword", "validPassword");
         when(userRepository.existsByEmail(requestDto.getEmail())).thenReturn(false);
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
         when(userRepository.save(any(User.class))).thenReturn(user);
 
         UserDto result = authService.registerUser(requestDto);

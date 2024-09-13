@@ -3,3 +3,5 @@ databaseChangeLog:
       file: classpath:/db/changelog/00001-create-db-initial-schema.sql
   - include:
       file: classpath:/db/changelog/00002-add-db-view.sql
+  - include:
+      file: classpath:/db/changelog/00003-add-db-table-user-settings.sql

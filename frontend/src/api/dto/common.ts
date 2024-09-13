@@ -12,7 +12,6 @@ export interface PaginationInfo {
     sortDirection?: string;
 }
 
-
 export interface MetaInfo {
     pagination?: PaginationInfo;
 }

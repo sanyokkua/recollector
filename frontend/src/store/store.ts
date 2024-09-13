@@ -1,18 +1,19 @@
-import {configureStore} from "@reduxjs/toolkit";
-import drawerToggledReducer from "./features/drawer/drawerSlice";
-import appBarSliceReducer from "./features/appBar/appBarSlice";
-import categoriesSliceReducer from "./features/categories/categoriesSlice";
-import itemsSliceReducer from "./features/items/itemsSlice";
-import globalsSliceReducer from "./features/global/globalSlice";
-import helperSliceReducer from "./features/helper/helperSlice.ts";
+import { configureStore }     from "@reduxjs/toolkit";
+import { logger }             from "../config/appConfig.ts";
 import {
     currentCategoryIdSaver,
     currentCategoryNameSaver,
     userEmailSaver,
     userJwtRefreshTokenSaver,
     userJwtTokenSaver
-} from "./browserStore.ts";
-import {logger} from "../config/appConfig.ts";
+}                             from "./browserStore.ts";
+import appBarSliceReducer     from "./features/appBar/appBarSlice";
+import categoriesSliceReducer from "./features/categories/categoriesSlice";
+import drawerToggledReducer   from "./features/drawer/drawerSlice";
+import globalsSliceReducer    from "./features/global/globalSlice";
+import helperSliceReducer     from "./features/helper/helperSlice.ts";
+import itemsSliceReducer      from "./features/items/itemsSlice";
+
 
 const log = logger.getLogger("reduxStore");
 
@@ -21,15 +22,15 @@ const log = logger.getLogger("reduxStore");
  * The store manages the global state of the application.
  */
 const store = configureStore({
-    reducer: {
-        drawerToggled: drawerToggledReducer,
-        appBarHeader: appBarSliceReducer,
-        categories: categoriesSliceReducer,
-        items: itemsSliceReducer,
-        globals: globalsSliceReducer,
-        helper: helperSliceReducer
-    }
-});
+                                 reducer: {
+                                     drawerToggled: drawerToggledReducer,
+                                     appBarHeader: appBarSliceReducer,
+                                     categories: categoriesSliceReducer,
+                                     items: itemsSliceReducer,
+                                     globals: globalsSliceReducer,
+                                     helper: helperSliceReducer
+                                 }
+                             });
 
 store.subscribe(() => {
     try {

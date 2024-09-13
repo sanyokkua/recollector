@@ -38,7 +38,8 @@ public class CategoryItemCountSpecification implements Specification<CategoryIte
 
         // Filter by categoryName if it is not blank
         if (StringUtils.isNotBlank(categoryName)) {
-            predicate = cb.and(predicate, cb.like(root.get("categoryName"), "%" + categoryName + "%"));
+            predicate = cb.and(predicate,
+                               cb.like(cb.lower(root.get("categoryName")), "%" + categoryName.toLowerCase() + "%"));
         }
 
         return predicate;

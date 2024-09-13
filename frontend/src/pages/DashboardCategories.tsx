@@ -1,10 +1,13 @@
-import {FC, useEffect, useState} from "react";
-import {Alert, Box, Fab, SxProps} from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
-import {useAppDispatch, useAppSelector} from "../store/hooks";
-import {appBarSetCustomState} from "../store/features/appBar/appBarSlice";
-import CategoryView, {CategoryViewMode} from "../components/CategoryView";
-import {CategoryDto} from "../api/dto/categoryDto";
+import AddIcon                                          from "@mui/icons-material/Add";
+import { Alert, Box, Fab, SxProps }                     from "@mui/material";
+import { FC, useEffect, useState }                      from "react";
+import { useNavigate }                                  from "react-router-dom";
+import { CategoryDto }                                  from "../api/dto/categoryDto";
+import CategoryView, { CategoryViewMode }               from "../components/CategoryView";
+import { GenericListViewItem }                          from "../components/GenericListOfItems.tsx";
+import GenericListView                                  from "../components/GenericListView.tsx";
+import { logger }                                       from "../config/appConfig";
+import { appBarSetCustomState }                         from "../store/features/appBar/appBarSlice";
 import {
     createCategory,
     deleteCategory,
@@ -13,16 +16,13 @@ import {
     setCategoryFilterPage,
     setCategorySelectedCategory,
     updateCategory
-} from "../store/features/categories/categoriesSlice";
-import {logger} from "../config/appConfig";
-import GenericListView from "../components/GenericListView.tsx";
-import {GenericListViewItem} from "../components/GenericListOfItems.tsx";
-import {useNavigate} from "react-router-dom";
-import {setCurrentCategoryId, setCurrentCategoryName} from "../store/features/global/globalSlice.ts";
-import {setItemFilterCategoryId} from "../store/features/items/itemsSlice.ts";
+}                                                       from "../store/features/categories/categoriesSlice";
+import { setCurrentCategoryId, setCurrentCategoryName } from "../store/features/global/globalSlice.ts";
+import { setItemFilterCategoryId }                      from "../store/features/items/itemsSlice.ts";
+import { useAppDispatch, useAppSelector }               from "../store/hooks";
+
 
 const log = logger.getLogger("DashboardCategories");
-
 
 // Styles
 const containerStyle: SxProps = {
@@ -31,26 +31,17 @@ const containerStyle: SxProps = {
     alignItems: "center",
     justifyContent: "flex-start",
     height: "100vh",
-    padding: 1,
-    // Centering and adjusting the width based on the screen size
-    width: "100%", // Full width on small screens
-    maxWidth: "800px", // Set a max width for larger screens
-    margin: "0 auto", // Center it horizontally on larger screens
-    "@media (min-width: 768px)": {
-        // For tablets and larger devices
-        maxWidth: "80%" // Takes 80% of the width for larger screens
-    }
+    padding: 1
 };
 const fabStyle: SxProps = {
     position: "fixed",
     bottom: 16,
-    right: 16,
-    backgroundColor: "#ff9800"
+    right: 16
 };
 
 // Helper Functions
 const mapCategoryDtoToGenericItem = (item: CategoryDto): GenericListViewItem => {
-    const addText = `Todo: ${item.todoItems ?? 0}. In Progress: ${(item.inProgressItems ?? 0)}. Finished: ${(item.finishedItems ?? 0)}`;
+    const addText = `Todo: ${ item.todoItems ?? 0 }. In Progress: ${ (item.inProgressItems ?? 0) }. Finished: ${ (item.finishedItems ?? 0) }`;
     return {
         itemId: item.categoryId,
         itemName: item.categoryName,
@@ -72,16 +63,19 @@ const DashboardCategories: FC = () => {
         totalItems,
         totalPages
     } = useAppSelector((state) => state.categories);
-    const {userJwtToken} = useAppSelector((state) => state.globals);
+    const { userJwtToken } = useAppSelector((state) => state.globals);
+    const { settings } = useAppSelector((state) => state.helper);
 
     useEffect(() => {
         log.debug("Component mounted, fetching categories");
         dispatch(appBarSetCustomState(""));
-        dispatch(getAllCategories({filter: filter, jwtToken: userJwtToken}));
+        dispatch(getAllCategories({ filter: filter, jwtToken: userJwtToken }));
     }, [dispatch, filter]);
 
     const [open, setOpen] = useState<boolean>(false);
     const [mode, setMode] = useState<CategoryViewMode>("view");
+
+    fabStyle.backgroundColor = settings.categoryFabColor;
 
     const items: Array<GenericListViewItem> = allCategories.map(mapCategoryDtoToGenericItem);
 
@@ -100,34 +94,34 @@ const DashboardCategories: FC = () => {
     // Handlers
     const handleClose = () => setOpen(false);
     const handleViewSave = async (updatedCategory: CategoryDto) => {
-        log.debug(`Saving category in ${mode} mode`, updatedCategory);
+        log.debug(`Saving category in ${ mode } mode`, updatedCategory);
         try {
             if (mode === "create") {
-                await dispatch(createCategory({categoryDto: updatedCategory, jwtToken: userJwtToken})).unwrap();
+                await dispatch(createCategory({ categoryDto: updatedCategory, jwtToken: userJwtToken })).unwrap();
                 log.info("Category created successfully");
             } else if (mode === "edit" && selectedCategory) {
                 await dispatch(updateCategory({
-                    id: selectedCategory.categoryId ?? -1,
-                    categoryDto: updatedCategory,
-                    jwtToken: userJwtToken
-                })).unwrap();
-                log.info(`Category ${selectedCategory.categoryId} updated successfully`);
+                                                  id: selectedCategory.categoryId ?? -1,
+                                                  categoryDto: updatedCategory,
+                                                  jwtToken: userJwtToken
+                                              })).unwrap();
+                log.info(`Category ${ selectedCategory.categoryId } updated successfully`);
             }
             handleClose();
-            dispatch(getAllCategories({filter: filter, jwtToken: userJwtToken}));
+            dispatch(getAllCategories({ filter: filter, jwtToken: userJwtToken }));
         } catch (error) {
-            log.error(`Failed to save category in ${mode} mode:`, error);
+            log.error(`Failed to save category in ${ mode } mode:`, error);
         }
     };
     const handleViewDelete = async (categoryDto: CategoryDto) => {
-        log.debug(`Deleting category in ${mode} mode`, categoryDto);
+        log.debug(`Deleting category in ${ mode } mode`, categoryDto);
         try {
-            await dispatch(deleteCategory({id: categoryDto?.categoryId ?? -1, jwtToken: userJwtToken})).unwrap();
+            await dispatch(deleteCategory({ id: categoryDto?.categoryId ?? -1, jwtToken: userJwtToken })).unwrap();
             log.info("Category deleted successfully");
             handleClose();
-            dispatch(getAllCategories({filter: filter, jwtToken: userJwtToken}));
+            dispatch(getAllCategories({ filter: filter, jwtToken: userJwtToken }));
         } catch (error) {
-            log.error(`Failed to delete category in ${mode} mode:`, error);
+            log.error(`Failed to delete category in ${ mode } mode:`, error);
         }
     };
     const handleAddButtonClick = () => {
@@ -157,31 +151,31 @@ const DashboardCategories: FC = () => {
         setOpen(true);
     };
 
-    return <Box sx={{containerStyle}}>
+    return <Box sx={ { containerStyle } }>
 
-        <CategoryView mode={mode} open={open} category={selectedCategory}
-                      onClose={handleClose}
-                      onSave={handleViewSave}
-                      onDelete={handleViewDelete}/>
+        <CategoryView mode={ mode } open={ open } category={ selectedCategory }
+                      onClose={ handleClose }
+                      onSave={ handleViewSave }
+                      onDelete={ handleViewDelete }/>
 
-        {error && <Alert severity="warning">{error}</Alert>}
+        { error && <Alert severity="warning">{ error }</Alert> }
 
-        <GenericListView currentPage={currentPage}
-                         totalPages={totalPages}
-                         totalItems={totalItems}
-                         listOfItems={items}
-                         isLoading={loading}
-                         searchBarText={filter?.categoryName ?? ""}
-                         onItemClicked={handleItemClick}
-                         onItemEditClicked={handleEditButtonClick}
-                         onPaginationItemClicked={handlePageChange}
-                         onSearchTextChanged={handleSearchChange}
+        <GenericListView currentPage={ currentPage }
+                         totalPages={ totalPages }
+                         totalItems={ totalItems }
+                         listOfItems={ items }
+                         isLoading={ loading }
+                         searchBarText={ filter?.categoryName ?? "" }
+                         onItemClicked={ handleItemClick }
+                         onItemEditClicked={ handleEditButtonClick }
+                         onPaginationItemClicked={ handlePageChange }
+                         onSearchTextChanged={ handleSearchChange }
 
-                         backgroundColor={"#fff8e1"}
-                         itemColor={"#ffe082"}
+                         backgroundColor={ settings.categoryBackgroundColor }
+                         itemColor={ settings.categoryItemColor }
         />
 
-        <Fab color="success" aria-label="add" sx={fabStyle} onClick={handleAddButtonClick}>
+        <Fab aria-label="add" sx={ fabStyle } onClick={ handleAddButtonClick }>
             <AddIcon/>
         </Fab>
     </Box>;

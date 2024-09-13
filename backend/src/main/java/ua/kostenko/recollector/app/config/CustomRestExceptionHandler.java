@@ -24,6 +24,7 @@ public class CustomRestExceptionHandler {
                        CategoryAlreadyExistsException.class,
                        ItemAlreadyExistsException.class,
                        ItemValidationException.class,
+                       UserSettingsValidationException.class,
                        UserChangePasswordException.class,
                        UserAccountDeleteException.class,
                        IllegalSpecificationParamException.class,

@@ -1,5 +1,6 @@
-import {TypedUseSelectorHook, useDispatch, useSelector} from "react-redux";
-import type {AppDispatch, RootState} from "./store";
+import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState }                    from "./store";
+
 
 /**
  * A custom hook to return the app's dispatch function with the correct typing.

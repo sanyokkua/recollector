@@ -1,7 +1,7 @@
-import {logger} from "../config/appConfig.ts";
+import { logger } from "../config/appConfig.ts";
+
 
 const log = logger.getLogger("BrowserStore");
-
 
 export enum ItemType {
     JWT_TOKEN = "JWT_USER_TOKEN",
@@ -13,22 +13,22 @@ export enum ItemType {
 
 class BrowserStore {
     getData(itemType: ItemType): string | null {
-        log.info(`Getting ${itemType} from storage`);
+        log.info(`Getting ${ itemType } from storage`);
         const value: string | null = localStorage.getItem(itemType);
-        log.debug(`Retrieved ${itemType}: ${value}`);
+        log.debug(`Retrieved ${ itemType }: ${ value }`);
         return value;
     }
 
     saveData(itemType: ItemType, dataValue: string): void {
-        log.info(`Saving ${itemType} to storage`);
+        log.info(`Saving ${ itemType } to storage`);
         localStorage.setItem(itemType, dataValue);
-        log.debug(`Saved ${itemType}: ${dataValue}`);
+        log.debug(`Saved ${ itemType }: ${ dataValue }`);
     }
 
     deleteData(itemType: ItemType): void {
-        log.info(`Removing ${itemType} from storage`);
+        log.info(`Removing ${ itemType } from storage`);
         localStorage.removeItem(itemType);
-        log.debug(`Removed ${itemType} from storage`);
+        log.debug(`Removed ${ itemType } from storage`);
     }
 }
 

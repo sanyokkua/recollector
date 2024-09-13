@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import ua.kostenko.recollector.app.dto.UserDto;
 import ua.kostenko.recollector.app.dto.auth.*;
 import ua.kostenko.recollector.app.entity.User;
+import ua.kostenko.recollector.app.entity.UserSettings;
 import ua.kostenko.recollector.app.exception.*;
 import ua.kostenko.recollector.app.repository.UserRepository;
 import ua.kostenko.recollector.app.util.UserUtils;
@@ -79,7 +80,26 @@ public class AuthService implements AuthenticationManager {
         }
 
         User newUser = createNewUser(requestDto);
-        return saveUserAndReturnDto(newUser, "registered");
+        saveUserAndReturnDto(newUser, "registered");
+
+        var userFromDb = userRepository.findByEmail(requestDto.getEmail());
+        if (userFromDb.isEmpty()) {
+            throw new UserRegistrationException("User with email '" + requestDto.getEmail() + "' was not found after registration");
+        }
+        var currentUser = userFromDb.get();
+        UserSettings settings = UserSettings.builder()
+                                            .user(currentUser)
+                                            .categoryBackgroundColor(UserSettings.DEFAULT_CATEGORY_BACKGROUND_COLOR)
+                                            .categoryItemColor(UserSettings.DEFAULT_CATEGORY_ITEM_COLOR)
+                                            .categoryFabColor(UserSettings.DEFAULT_CATEGORY_FAB_COLOR)
+                                            .categoryPageSize(UserSettings.DEFAULT_CATEGORY_PAGE_SIZE)
+                                            .itemBackgroundColor(UserSettings.DEFAULT_ITEM_BACKGROUND_COLOR)
+                                            .itemItemColor(UserSettings.DEFAULT_ITEM_ITEM_COLOR)
+                                            .itemFabColor(UserSettings.DEFAULT_ITEM_FAB_COLOR)
+                                            .itemPageSize(UserSettings.DEFAULT_ITEM_PAGE_SIZE)
+                                            .build();
+        currentUser.setSettings(settings);
+        return saveUserAndReturnDto(newUser, "SettingsCreated");
     }
 
     /**
@@ -307,8 +327,6 @@ public class AuthService implements AuthenticationManager {
         return User.builder()
                    .email(requestDto.getEmail())
                    .passwordHash(passwordEncoder.encode(requestDto.getPassword()))
-                   .updatedAt(creationTime)
-                   .createdAt(creationTime)
                    .lastLogin(creationTime)
                    .resetToken(null)
                    .resetTokenExpiry(null)

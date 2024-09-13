@@ -1,7 +1,8 @@
-import {FC, useEffect} from "react";
-import {Box, Button, FormControl, TextField, Typography} from "@mui/material";
-import {useAppDispatch} from "../store/hooks";
-import {appBarSetCustomState} from "../store/features/appBar/appBarSlice";
+import { Box, Button, FormControl, TextField, Typography } from "@mui/material";
+import { FC, useEffect }                                   from "react";
+import { appBarSetCustomState }                            from "../store/features/appBar/appBarSlice";
+import { useAppDispatch }                                  from "../store/hooks";
+
 
 const RestorePassword: FC = () => {
     const dispatch = useAppDispatch();
@@ -11,14 +12,8 @@ const RestorePassword: FC = () => {
     }, [dispatch]);
 
     return (
-        <Box
-            display="flex"
-            flexDirection="column"
-            alignItems="center"
-            justifyContent="center"
-            minHeight="100vh"
-            p={2}
-        >
+        <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" minHeight="100vh"
+             p={ 2 }>
             <Typography variant="h4" gutterBottom>
                 Forgot your password?
             </Typography>
@@ -27,20 +22,9 @@ const RestorePassword: FC = () => {
                 Enter your email below and request password restoration.
             </Typography>
 
-            <Box
-                display="flex"
-                flexDirection="column"
-                alignItems="center"
-                width="100%"
-                maxWidth="400px"
-            >
+            <Box display="flex" flexDirection="column" alignItems="center" width="100%" maxWidth="400px">
                 <FormControl fullWidth margin="normal">
-                    <TextField
-                        id="email-input"
-                        label="Email"
-                        variant="outlined"
-                        autoComplete="email"
-                    />
+                    <TextField id="email-input" label="Email" variant="outlined" autoComplete="email"/>
                 </FormControl>
 
                 <Button variant="contained" color="primary" fullWidth>

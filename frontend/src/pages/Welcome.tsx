@@ -1,12 +1,13 @@
-import {Box, Button} from "@mui/material";
-import {FC, useEffect} from "react";
-import {useAppDispatch, useAppSelector} from "../store/hooks.ts";
-import {appBarSetCustomState} from "../store/features/appBar/appBarSlice.ts";
-import {Link} from "react-router-dom";
+import { Box, Button }                    from "@mui/material";
+import { FC, useEffect }                  from "react";
+import { Link }                           from "react-router-dom";
+import { appBarSetCustomState }           from "../store/features/appBar/appBarSlice.ts";
+import { useAppDispatch, useAppSelector } from "../store/hooks.ts";
+
 
 const Welcome: FC = () => {
     const dispatch = useAppDispatch();
-    const {userIsLoggedIn} = useAppSelector((state) => state.globals);
+    const { userIsLoggedIn } = useAppSelector((state) => state.globals);
 
     useEffect(() => {
         dispatch(appBarSetCustomState("Welcome"));
@@ -19,7 +20,7 @@ const Welcome: FC = () => {
             alignItems="center"
             justifyContent="center"
             minHeight="100vh"
-            p={2}
+            p={ 2 }
             textAlign="left">
             <Box maxWidth="800px" width="100%">
                 <h1>Welcome to Your Ultimate Organizer App!</h1>
@@ -70,10 +71,10 @@ const Welcome: FC = () => {
 
                 <p>Start using our app today and transform the way you organize your life! 🎬🎮📝</p>
             </Box>
-            {!userIsLoggedIn && <Box mt={2} display="flex" justifyContent="center" gap={1}>
-                <Button component={Link} to={"/register"} variant="text">Register New Account</Button>
-                <Button component={Link} to={"/login"} variant="contained" color="success">Login</Button>
-            </Box>}
+            { !userIsLoggedIn && <Box mt={ 2 } display="flex" justifyContent="center" gap={ 1 }>
+                <Button component={ Link } to={ "/register" } variant="text">Register New Account</Button>
+                <Button component={ Link } to={ "/login" } variant="contained" color="success">Login</Button>
+            </Box> }
         </Box>
     );
 };

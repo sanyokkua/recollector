@@ -18,12 +18,14 @@ import org.springframework.test.web.servlet.MockMvc;
 import ua.kostenko.recollector.app.dto.CategoryDto;
 import ua.kostenko.recollector.app.dto.ItemDto;
 import ua.kostenko.recollector.app.dto.UserDto;
+import ua.kostenko.recollector.app.dto.UserSettingsDto;
 import ua.kostenko.recollector.app.dto.auth.AccountDeleteRequestDto;
 import ua.kostenko.recollector.app.dto.auth.ChangePasswordRequestDto;
 import ua.kostenko.recollector.app.dto.auth.LoginRequestDto;
 import ua.kostenko.recollector.app.dto.auth.RegisterRequestDto;
 import ua.kostenko.recollector.app.dto.response.Response;
 import ua.kostenko.recollector.app.entity.ItemStatus;
+import ua.kostenko.recollector.app.entity.UserSettings;
 
 import java.util.List;
 
@@ -57,6 +59,16 @@ class UserCommonFlowITTest {
     private static final String TEST_USER_2_EMAIL = "testUser2@email.com";
     private static final String TEST_USER_2_PASSWORD = "testUser2Password";
     private static final String TEST_USER_2_NEW_PASSWORD = "NewPassword";
+
+    private static final String CATEGORY_BACKGROUND_COLOR = "#673ab7";
+    private static final String CATEGORY_ITEM_COLOR = "#8561c5";
+    private static final String CATEGORY_FAB_COLOR = "#482880";
+    private static final Integer CATEGORY_PAGE_SIZE = 5;
+
+    private static final String ITEM_BACKGROUND_COLOR = "#1de9b6";
+    private static final String ITEM_ITEM_COLOR = "#4aedc4";
+    private static final String ITEM_FAB_COLOR = "#14a37f";
+    private static final Integer ITEM_PAGE_SIZE = 7;
 
     private static String user1Token = "";
     private static String user2Token = "";
@@ -346,7 +358,7 @@ class UserCommonFlowITTest {
         var res6 = performGetCategoriesWithFilter(user1Token, 4, 1, "", "ASC");
         assertEquals(0, res6.getData().size());
         var res7 = performGetCategoriesWithFilter(user1Token, 1, 10, "A", "ASC");
-        assertEquals(1, res7.getData().size());
+        assertEquals(2, res7.getData().size());
         var res8 = performGetCategoriesWithFilter(user1Token, 1, 10, "Fo", "ASC");
         assertEquals(2, res8.getData().size());
         var res9 = performGetCategoriesWithFilter(user1Token, 1, 10, "For", "ASC");
@@ -391,7 +403,8 @@ class UserCommonFlowITTest {
         ItemDto itemDto = ItemDto.builder()
                                  .categoryId(categoryId)
                                  .itemId(itemId)
-                                 .itemName(newName).itemStatus(ItemStatus.valueOf(status))
+                                 .itemName(newName)
+                                 .itemStatus(ItemStatus.valueOf(status))
                                  .build();
         var result = mockMvc.perform(put(BASE_ITEM_URL + "/" + ITEM_ID, categoryId, itemId).header(AUTH_HEADER,
                                                                                                    BEARER_TOKEN + token)
@@ -426,7 +439,7 @@ class UserCommonFlowITTest {
         var res6 = performGetItemsWithFilter(user1Token, user1Category1Id, 4, 1, "", "", "ASC");
         assertEquals(0, res6.getData().size());
         var res7 = performGetItemsWithFilter(user1Token, user1Category1Id, 1, 10, "A", "", "ASC");
-        assertEquals(1, res7.getData().size());
+        assertEquals(2, res7.getData().size());
         var res8 = performGetItemsWithFilter(user1Token, user1Category1Id, 1, 10, "Fo", "", "ASC");
         assertEquals(2, res8.getData().size());
         var res9 = performGetItemsWithFilter(user1Token, user1Category1Id, 1, 10, "For", "", "ASC");
@@ -607,6 +620,86 @@ class UserCommonFlowITTest {
                .andExpect(jsonPath("$.statusMessage").value("OK"))
                .andExpect(jsonPath("$.data").isArray())
                .andExpect(jsonPath("$.data").value(containsInAnyOrder("FINISHED", "IN_PROGRESS", "TODO_LATER")))
+               .andExpect(jsonPath("$.meta").doesNotExist())
+               .andExpect(jsonPath("$.error").doesNotExist())
+               .andDo(print());
+    }
+
+    @Order(30)
+    @Test
+    void getUserSettings_UserOne_Get() throws Exception {
+        mockMvc.perform(get(BASE_HELPER_URL + "/settings").header(AUTH_HEADER, BEARER_TOKEN + user1Token))
+               .andExpect(status().isOk())
+               .andExpect(jsonPath("$.statusCode").value(200))
+               .andExpect(jsonPath("$.statusMessage").value("OK"))
+               .andExpect(jsonPath("$.data").isMap())
+               .andExpect(jsonPath("$.data.userEmail").value(TEST_USER_1_EMAIL))
+               .andExpect(jsonPath("$.data.categoryBackgroundColor").value(UserSettings.DEFAULT_CATEGORY_BACKGROUND_COLOR))
+               .andExpect(jsonPath("$.data.categoryItemColor").value(UserSettings.DEFAULT_CATEGORY_ITEM_COLOR))
+               .andExpect(jsonPath("$.data.categoryFabColor").value(UserSettings.DEFAULT_CATEGORY_FAB_COLOR))
+               .andExpect(jsonPath("$.data.categoryPageSize").value(UserSettings.DEFAULT_CATEGORY_PAGE_SIZE))
+               .andExpect(jsonPath("$.data.itemBackgroundColor").value(UserSettings.DEFAULT_ITEM_BACKGROUND_COLOR))
+               .andExpect(jsonPath("$.data.itemItemColor").value(UserSettings.DEFAULT_ITEM_ITEM_COLOR))
+               .andExpect(jsonPath("$.data.itemFabColor").value(UserSettings.DEFAULT_ITEM_FAB_COLOR))
+               .andExpect(jsonPath("$.data.itemPageSize").value(UserSettings.DEFAULT_ITEM_PAGE_SIZE))
+               .andExpect(jsonPath("$.meta").doesNotExist())
+               .andExpect(jsonPath("$.error").doesNotExist())
+               .andDo(print());
+    }
+
+    @Order(31)
+    @Test
+    void updateUserSettings_UserOne_Put() throws Exception {
+        var settings = UserSettingsDto.builder()
+                                      .userEmail(TEST_USER_1_EMAIL)
+                                      .categoryFabColor(CATEGORY_FAB_COLOR)
+                                      .categoryItemColor(CATEGORY_ITEM_COLOR)
+                                      .categoryBackgroundColor(CATEGORY_BACKGROUND_COLOR)
+                                      .categoryPageSize(CATEGORY_PAGE_SIZE)
+                                      .itemFabColor(ITEM_FAB_COLOR)
+                                      .itemItemColor(ITEM_ITEM_COLOR)
+                                      .itemBackgroundColor(ITEM_BACKGROUND_COLOR)
+                                      .itemPageSize(ITEM_PAGE_SIZE)
+                                      .build();
+
+        mockMvc.perform(put(BASE_HELPER_URL + "/settings").header(AUTH_HEADER, BEARER_TOKEN + user1Token)
+                                                          .contentType(MediaType.APPLICATION_JSON)
+                                                          .content(objectMapper.writeValueAsString(settings)))
+               .andExpect(status().isOk())
+               .andExpect(jsonPath("$.statusCode").value(200))
+               .andExpect(jsonPath("$.statusMessage").value("OK"))
+               .andExpect(jsonPath("$.data").isMap())
+               .andExpect(jsonPath("$.data.userEmail").value(TEST_USER_1_EMAIL))
+               .andExpect(jsonPath("$.data.categoryBackgroundColor").value(CATEGORY_BACKGROUND_COLOR))
+               .andExpect(jsonPath("$.data.categoryItemColor").value(CATEGORY_ITEM_COLOR))
+               .andExpect(jsonPath("$.data.categoryFabColor").value(CATEGORY_FAB_COLOR))
+               .andExpect(jsonPath("$.data.categoryPageSize").value(CATEGORY_PAGE_SIZE))
+               .andExpect(jsonPath("$.data.itemBackgroundColor").value(ITEM_BACKGROUND_COLOR))
+               .andExpect(jsonPath("$.data.itemItemColor").value(ITEM_ITEM_COLOR))
+               .andExpect(jsonPath("$.data.itemFabColor").value(ITEM_FAB_COLOR))
+               .andExpect(jsonPath("$.data.itemPageSize").value(ITEM_PAGE_SIZE))
+               .andExpect(jsonPath("$.meta").doesNotExist())
+               .andExpect(jsonPath("$.error").doesNotExist())
+               .andDo(print());
+    }
+
+    @Order(32)
+    @Test
+    void getUserSettingsAfterUpdate_UserOne_Put() throws Exception {
+        mockMvc.perform(get(BASE_HELPER_URL + "/settings").header(AUTH_HEADER, BEARER_TOKEN + user1Token))
+               .andExpect(status().isOk())
+               .andExpect(jsonPath("$.statusCode").value(200))
+               .andExpect(jsonPath("$.statusMessage").value("OK"))
+               .andExpect(jsonPath("$.data").isMap())
+               .andExpect(jsonPath("$.data.userEmail").value(TEST_USER_1_EMAIL))
+               .andExpect(jsonPath("$.data.categoryBackgroundColor").value(CATEGORY_BACKGROUND_COLOR))
+               .andExpect(jsonPath("$.data.categoryItemColor").value(CATEGORY_ITEM_COLOR))
+               .andExpect(jsonPath("$.data.categoryFabColor").value(CATEGORY_FAB_COLOR))
+               .andExpect(jsonPath("$.data.categoryPageSize").value(CATEGORY_PAGE_SIZE))
+               .andExpect(jsonPath("$.data.itemBackgroundColor").value(ITEM_BACKGROUND_COLOR))
+               .andExpect(jsonPath("$.data.itemItemColor").value(ITEM_ITEM_COLOR))
+               .andExpect(jsonPath("$.data.itemFabColor").value(ITEM_FAB_COLOR))
+               .andExpect(jsonPath("$.data.itemPageSize").value(ITEM_PAGE_SIZE))
                .andExpect(jsonPath("$.meta").doesNotExist())
                .andExpect(jsonPath("$.error").doesNotExist())
                .andDo(print());

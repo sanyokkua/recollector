@@ -17,6 +17,7 @@ import java.util.Objects;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Deprecated
 public class CategorySpecification implements Specification<Category> {
 
     private Long userId;

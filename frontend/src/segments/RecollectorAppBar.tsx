@@ -1,12 +1,11 @@
-import React, {FC, useEffect, useState} from "react";
-import {AppBar, IconButton, Menu, MenuItem, Toolbar, Typography} from "@mui/material";
-import MenuIcon from "@mui/icons-material/Menu";
-import {AccountCircle} from "@mui/icons-material";
-import {Link, useNavigate} from "react-router-dom";
-import {useAppDispatch, useAppSelector} from "../store/hooks";
-import {drawerSwitchOn} from "../store/features/drawer/drawerSlice";
-import {getDateFromSeconds} from "../api/client/utils";
-import log from "loglevel";
+import { AccountCircle }                                           from "@mui/icons-material";
+import MenuIcon                                                    from "@mui/icons-material/Menu";
+import { AppBar, IconButton, Menu, MenuItem, Toolbar, Typography } from "@mui/material";
+import log                                                         from "loglevel";
+import React, { FC, useEffect, useState }                          from "react";
+import { Link, useNavigate }                                       from "react-router-dom";
+import { getDateFromSeconds }                                      from "../api/client/utils";
+import { drawerSwitchOn }                                          from "../store/features/drawer/drawerSlice";
 import {
     setCurrentCategoryId,
     setCurrentCategoryName,
@@ -15,7 +14,10 @@ import {
     setUserJwtRefreshToken,
     setUserJwtToken,
     setUserTimeExp
-} from "../store/features/global/globalSlice";
+}                                                                  from "../store/features/global/globalSlice";
+import { getSettings }                                             from "../store/features/helper/helperSlice.ts";
+import { useAppDispatch, useAppSelector }                          from "../store/hooks";
+
 
 const RecollectorAppBar: FC = () => {
     // Hooks
@@ -27,13 +29,15 @@ const RecollectorAppBar: FC = () => {
 
     // Global state selectors
     const header = useAppSelector((state) => state.appBarHeader.value);
-    const {userIsLoggedIn, userEmail, userTimeExp} = useAppSelector(
+    const { userIsLoggedIn, userEmail, userTimeExp, userJwtToken } = useAppSelector(
         (state) => state.globals
     );
-
     // Effect hook for logging when the component mounts
     useEffect(() => {
         log.debug("RecollectorAppBar component mounted");
+        if (userIsLoggedIn) {
+            dispatch(getSettings(userJwtToken));
+        }
     }, [dispatch, userIsLoggedIn]);
 
     // Handle drawer toggle button click
@@ -76,49 +80,49 @@ const RecollectorAppBar: FC = () => {
                 <>
                     <IconButton size="large" aria-label="account of current user" aria-controls="menu-appbar"
                                 aria-haspopup="true" color="inherit"
-                                onClick={handleMenu}>
+                                onClick={ handleMenu }>
                         <AccountCircle/>
                     </IconButton>
-                    <Menu id="menu-appbar" anchorEl={anchorEl}
-                          anchorOrigin={{
+                    <Menu id="menu-appbar" anchorEl={ anchorEl }
+                          anchorOrigin={ {
                               vertical: "top",
                               horizontal: "right"
-                          }}
-                          transformOrigin={{
+                          } }
+                          transformOrigin={ {
                               vertical: "top",
                               horizontal: "right"
-                          }}
-                          open={Boolean(anchorEl)}
-                          onClose={handleClose}>
-                        <MenuItem>{userEmail}</MenuItem>
-                        <MenuItem>{`Session Ends: ${sessionEndTime}`}</MenuItem>
-                        <MenuItem onClick={handleLogoutClose}>Logout</MenuItem>
+                          } }
+                          open={ Boolean(anchorEl) }
+                          onClose={ handleClose }>
+                        <MenuItem>{ userEmail }</MenuItem>
+                        <MenuItem>{ `Session Ends: ${ sessionEndTime }` }</MenuItem>
+                        <MenuItem onClick={ handleLogoutClose }>Logout</MenuItem>
                     </Menu>
                 </>
             );
         }
-        return <Link to={"/login"}>Login</Link>;
+        return <Link to={ "/login" }>Login</Link>;
     };
 
     return (
         <AppBar position="sticky">
             <Toolbar>
-                <IconButton size="large" edge="start" color="inherit" aria-label="menu" sx={{mr: 2}}
-                            onClick={handleMenuClick}>
+                <IconButton size="large" edge="start" color="inherit" aria-label="menu" sx={ { mr: 2 } }
+                            onClick={ handleMenuClick }>
                     <MenuIcon/>
                 </IconButton>
 
-                {userIsLoggedIn && (
-                    <MenuItem onClick={handleClickOnCategories}>
-                        <Typography sx={{textAlign: "center"}}>Categories</Typography>
+                { userIsLoggedIn && (
+                    <MenuItem onClick={ handleClickOnCategories }>
+                        <Typography sx={ { textAlign: "center" } }>Categories</Typography>
                     </MenuItem>
-                )}
+                ) }
 
-                <Typography variant="h6" component="div" sx={{flexGrow: 1}}>
-                    {header}
+                <Typography variant="h6" component="div" sx={ { flexGrow: 1 } }>
+                    { header }
                 </Typography>
 
-                {renderRightInfo()}
+                { renderRightInfo() }
             </Toolbar>
         </AppBar>
     );

@@ -13,6 +13,8 @@ import ua.kostenko.recollector.app.entity.User;
 import ua.kostenko.recollector.app.exception.UserNotFoundException;
 import ua.kostenko.recollector.app.repository.CategoryRepository;
 import ua.kostenko.recollector.app.repository.ItemRepository;
+import ua.kostenko.recollector.app.repository.UserRepository;
+import ua.kostenko.recollector.app.repository.UserSettingsRepository;
 import ua.kostenko.recollector.app.security.AuthService;
 
 import java.util.List;
@@ -28,6 +30,10 @@ class HelperServiceTest {
 
     @Mock
     private CategoryRepository categoryRepository;
+    @Mock
+    private UserSettingsRepository userSettingsRepository;
+    @Mock
+    private UserRepository userRepository;
 
     @Mock
     private ItemRepository itemRepository;
@@ -38,7 +44,11 @@ class HelperServiceTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
         Mockito.reset(authService, categoryRepository, itemRepository);
-        helperService = new HelperService(authService, categoryRepository, itemRepository);
+        helperService = new HelperService(authService,
+                                          categoryRepository,
+                                          itemRepository,
+                                          userRepository,
+                                          userSettingsRepository);
     }
 
     @Test

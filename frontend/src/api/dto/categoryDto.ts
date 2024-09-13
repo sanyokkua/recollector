@@ -1,4 +1,5 @@
-import {FilterDirectionEnum} from "./common.ts";
+import { FilterDirectionEnum } from "./common.ts";
+
 
 export interface CategoryDto {
     categoryId?: number;
