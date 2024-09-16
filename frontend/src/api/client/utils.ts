@@ -56,3 +56,27 @@ export const getDateFromSeconds = (seconds: number): Date => {
     log.debug("getDateFromSeconds called", { seconds });
     return new Date(seconds * 1000);
 };
+
+export const parseErrorMessage = (error: any, defaultMsg: string = "An unknown error occurred"): string => {
+    if (!error) {
+        return defaultMsg;
+    }
+
+    if (typeof error === "string") {
+        return error || defaultMsg;
+    } else if (axios.isAxiosError(error) && error.response) {
+        // Axios error
+        return error.response.data?.error || error.response.data?.message || error.message;
+    } else if (error instanceof Error) {
+        // General JavaScript/Node.js error
+        return error.message;
+    } else if (error.request) {
+        // Axios error with no response
+        return "No response received from server";
+    } else if (error.message) {
+        // Fetch error or other errors with message property
+        return error.message;
+    }
+
+    return defaultMsg;
+};

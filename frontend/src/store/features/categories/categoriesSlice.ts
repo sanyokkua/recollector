@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
-import CategoryApiClient                                from "../../../api/client/categoryApiClient.ts";
+import CategoryApiClient                                from "../../../api/client/categoryApiClient";
+import { parseErrorMessage }                            from "../../../api/client/utils";
 import { CategoryDto, CategoryFilter }                  from "../../../api/dto/categoryDto";
 import { FilterDirectionEnum }                          from "../../../api/dto/common";
 import axiosClient, { logger }                          from "../../../config/appConfig";
@@ -45,9 +46,9 @@ type CategoryRequest = {
 
 // Helper function to handle errors consistently
 const handleError = (error: any, message: string) => {
-    const errorMessage = error?.message || message;
-    log.warn(errorMessage, error);
-    return errorMessage;
+    const msg = parseErrorMessage(error, message);
+    log.warn(msg, error);
+    return msg;
 };
 
 export const createCategory = createAsyncThunk("categories/create",

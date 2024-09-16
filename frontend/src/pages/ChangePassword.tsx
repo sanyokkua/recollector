@@ -4,6 +4,7 @@ import Alert                                                         from "@mui/
 import { FC, useEffect, useState }                                   from "react";
 import { Controller, useForm }                                       from "react-hook-form";
 import * as yup                                                      from "yup";
+import { parseErrorMessage }                                         from "../api/client/utils";
 import { logger }                                                    from "../config/appConfig";
 import { appBarSetCustomState }                                      from "../store/features/appBar/appBarSlice";
 import { changePassword }                                            from "../store/features/global/globalSlice"; // Assuming there's a changePassword action in your slice
@@ -68,7 +69,8 @@ const ChangePassword: FC = () => {
             log.info("Password changed successfully");
             setSuccessMessage("Password changed successfully!");
         } catch (error: any) {
-            setErrorMessage(error.response?.data?.message || "Failed to change password. Please try again.");
+            const errorMessage = parseErrorMessage(error, "Failed to change password. Please try again.");
+            setErrorMessage(errorMessage);
         }
     };
 

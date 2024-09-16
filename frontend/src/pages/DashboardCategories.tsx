@@ -1,5 +1,5 @@
 import AddIcon                                          from "@mui/icons-material/Add";
-import { Alert, Box, Fab, SxProps }                     from "@mui/material";
+import { Alert, Box, Fab, Snackbar, SxProps }           from "@mui/material";
 import { FC, useEffect, useState }                      from "react";
 import { useNavigate }                                  from "react-router-dom";
 import { CategoryDto }                                  from "../api/dto/categoryDto";
@@ -73,7 +73,14 @@ const DashboardCategories: FC = () => {
     }, [dispatch, filter]);
 
     const [open, setOpen] = useState<boolean>(false);
+    const [openErr, setOpenErr] = useState<boolean>(false);
     const [mode, setMode] = useState<CategoryViewMode>("view");
+
+    useEffect(() => {
+        if (error && error.trim().length > 0) {
+            setOpenErr(true);
+        }
+    }, [error]);
 
     fabStyle.backgroundColor = settings.categoryFabColor;
 
@@ -93,6 +100,7 @@ const DashboardCategories: FC = () => {
 
     // Handlers
     const handleClose = () => setOpen(false);
+    const handleCloseErr = () => setOpenErr(false);
     const handleViewSave = async (updatedCategory: CategoryDto) => {
         log.debug(`Saving category in ${ mode } mode`, updatedCategory);
         try {
@@ -158,7 +166,10 @@ const DashboardCategories: FC = () => {
                       onSave={ handleViewSave }
                       onDelete={ handleViewDelete }/>
 
-        { error && <Alert severity="warning">{ error }</Alert> }
+        { error && <Snackbar open={ openErr } autoHideDuration={ 6000 } onClose={ handleClose }>
+            <Alert severity="warning" variant="filled" sx={ { width: "100%" } }
+                   onClose={ handleCloseErr }>{ error }</Alert>
+        </Snackbar> }
 
         <GenericListView currentPage={ currentPage }
                          totalPages={ totalPages }

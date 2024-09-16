@@ -1,7 +1,7 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { jwtDecode, JwtPayload }                        from "jwt-decode";
 import AuthApiClient                                    from "../../../api/client/authApiClient.ts";
-import { getDateFromSeconds }                           from "../../../api/client/utils.ts";
+import { getDateFromSeconds, parseErrorMessage }        from "../../../api/client/utils.ts";
 import {
     ChangePasswordRequestDto,
     LoginRequestDto,
@@ -81,7 +81,7 @@ export const loginUser = createAsyncThunk(
             const client = new AuthApiClient(axiosClient);
             return await client.loginUser(loginRequest);
         } catch (error: any) {
-            const errorMessage = error?.message || "Failed to login";
+            const errorMessage = parseErrorMessage(error, "Failed to login");
             log.error("Login API call failed", error);
             return rejectWithValue(errorMessage);
         }
@@ -97,7 +97,7 @@ export const registerUser = createAsyncThunk(
             const client = new AuthApiClient(axiosClient);
             return await client.registerUser(registerRequest);
         } catch (error: any) {
-            const errorMessage = error?.message || "Failed to Register";
+            const errorMessage = parseErrorMessage(error, "Failed to Register");
             log.error("Register API call failed", error);
             return rejectWithValue(errorMessage);
         }
@@ -117,7 +117,7 @@ export const changePassword = createAsyncThunk("globals/change_password",
                                                        const client = new AuthApiClient(axiosClient, changePassReq.jwtToken);
                                                        return await client.changePassword(changePassReq.changePasswordDto);
                                                    } catch (error: any) {
-                                                       const errorMessage = error?.message || "Failed to Change Password";
+                                                       const errorMessage = parseErrorMessage(error, "Failed to Change Password");
                                                        log.error("Change Password API call failed", error);
                                                        return rejectWithValue(errorMessage);
                                                    }

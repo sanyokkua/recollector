@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import ItemApiClient                                    from "../../../api/client/itemApiClient.ts";
+import { parseErrorMessage }                            from "../../../api/client/utils";
 import { FilterDirectionEnum, Response }                from "../../../api/dto/common.ts";
 import { ItemDto, ItemDtoItemStatusEnum, ItemFilter }   from "../../../api/dto/itemDto.ts";
 import axiosClient, { logger }                          from "../../../config/appConfig.ts";
@@ -64,7 +65,7 @@ export type GetItemsRequest = {
 
 // Helper function to handle errors consistently
 const handleError = (error: any, message: string) => {
-    const errorMessage = error?.message || message;
+    const errorMessage = parseErrorMessage(error, message);
     log.warn(errorMessage, error);
     return errorMessage;
 };

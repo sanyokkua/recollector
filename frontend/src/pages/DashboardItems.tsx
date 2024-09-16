@@ -32,14 +32,6 @@ const containerStyle: SxProps = {
     justifyContent: "flex-start",
     height: "100vh",
     padding: 1
-    // Centering and adjusting the width based on the screen size
-    // width: "100%", // Full width on small screens
-    // maxWidth: "800px", // Set a max width for larger screens
-    // margin: "0 auto", // Center it horizontally on larger screens
-    // "@media (min-width: 768px)": {
-    // For tablets and larger devices
-    // maxWidth: "80%" // Takes 80% of the width for larger screens
-    // }
 };
 const fabStyle: SxProps = {
     position: "fixed",

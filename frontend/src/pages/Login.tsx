@@ -5,6 +5,7 @@ import { FC, useEffect, useState }                                   from "react
 import { Controller, useForm }                                       from "react-hook-form";
 import { Link, useNavigate }                                         from "react-router-dom";
 import * as yup                                                      from "yup";
+import { parseErrorMessage }                                         from "../api/client/utils";
 import { logger }                                                    from "../config/appConfig.ts";
 import { appBarSetCustomState }                                      from "../store/features/appBar/appBarSlice";
 import { loginUser }                                                 from "../store/features/global/globalSlice.ts";
@@ -48,7 +49,8 @@ const Login: FC = () => {
             log.info("User logged in successfully");
             navigate("/dashboard");
         } catch (error: any) {
-            setErrorMessage(error.response?.data?.message || "Login failed. Please try again.");
+            const errorMessage = parseErrorMessage(error, "Login failed. Please try again.");
+            setErrorMessage(errorMessage);
         }
     };
 

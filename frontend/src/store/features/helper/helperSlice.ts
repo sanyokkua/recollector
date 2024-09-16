@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import HelperApiClient                                  from "../../../api/client/helperApiClient.ts";
+import { parseErrorMessage }                            from "../../../api/client/utils";
 import { Response }                                     from "../../../api/dto/common.ts";
 import { SettingsDto, StatisticDto }                    from "../../../api/dto/helperDto.ts";
 import axiosClient, { logger }                          from "../../../config/appConfig";
@@ -46,7 +47,7 @@ export const getItemStatuses = createAsyncThunk("helper/statuses",
                                                         const client = new HelperApiClient(axiosClient, jwtToken);
                                                         return await client.getItemStatuses();
                                                     } catch (error: any) {
-                                                        const errorMessage = error?.message || "Failed to get statuses";
+                                                        const errorMessage = parseErrorMessage(error, "Failed to get statuses");
                                                         log.error("ItemStatuses API call failed", error);
                                                         return rejectWithValue(errorMessage);
                                                     }
@@ -60,7 +61,7 @@ export const getStatistics = createAsyncThunk("helper/statistics",
                                                       const client = new HelperApiClient(axiosClient, jwtToken);
                                                       return await client.getStatistics();
                                                   } catch (error: any) {
-                                                      const errorMessage = error?.message || "Failed to get statistics";
+                                                      const errorMessage = parseErrorMessage(error, "Failed to get statistics");
                                                       log.error("Statistics API call failed", error);
                                                       return rejectWithValue(errorMessage);
                                                   }
@@ -74,7 +75,7 @@ export const getSettings = createAsyncThunk("helper/getSettings",
                                                     const client = new HelperApiClient(axiosClient, jwtToken);
                                                     return await client.getSettings();
                                                 } catch (error: any) {
-                                                    const errorMessage = error?.message || "Failed to get settings";
+                                                    const errorMessage = parseErrorMessage(error, "Failed to get settings");
                                                     log.error("settings API call failed", error);
                                                     return rejectWithValue(errorMessage);
                                                 }
@@ -91,7 +92,7 @@ export const updateSettings = createAsyncThunk("helper/updateSettings",
                                                        const client = new HelperApiClient(axiosClient, settingsReq.jwtToken);
                                                        return await client.updateSettings(settingsReq.settings);
                                                    } catch (error: any) {
-                                                       const errorMessage = error?.message || "Failed to update Settings";
+                                                       const errorMessage = parseErrorMessage(error, "Failed to update Settings");
                                                        log.error("Update settings API call failed", error);
                                                        return rejectWithValue(errorMessage);
                                                    }

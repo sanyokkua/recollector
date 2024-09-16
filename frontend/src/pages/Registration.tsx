@@ -5,6 +5,7 @@ import { FC, useEffect, useState }                                   from "react
 import { Controller, useForm }                                       from "react-hook-form";
 import { Link, useNavigate }                                         from "react-router-dom";
 import * as yup                                                      from "yup";
+import { parseErrorMessage }                                         from "../api/client/utils";
 import { logger }                                                    from "../config/appConfig.ts";
 import { appBarSetCustomState }                                      from "../store/features/appBar/appBarSlice";
 import { registerUser }                                              from "../store/features/global/globalSlice.ts";
@@ -61,7 +62,8 @@ const Registration: FC = () => {
                 navigate("/login");
             }, 2000); // 2 seconds delay before redirect
         } catch (error: any) {
-            setErrorMessage(error.response?.data?.message || "Registration failed. Please try again.");
+            const errorMessage = parseErrorMessage(error, "Registration failed. Please try again.");
+            setErrorMessage(errorMessage);
         }
     };
 
