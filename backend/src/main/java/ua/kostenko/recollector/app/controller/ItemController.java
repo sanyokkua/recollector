@@ -12,7 +12,7 @@ import ua.kostenko.recollector.app.dto.ItemDto;
 import ua.kostenko.recollector.app.dto.ItemFilter;
 import ua.kostenko.recollector.app.dto.response.Response;
 import ua.kostenko.recollector.app.exception.ItemValidationException;
-import ua.kostenko.recollector.app.security.AuthService;
+import ua.kostenko.recollector.app.security.AuthenticationService;
 import ua.kostenko.recollector.app.service.ItemService;
 import ua.kostenko.recollector.app.util.ResponseHelper;
 
@@ -30,7 +30,7 @@ import java.util.Objects;
 @Tag(name = "Item Management", description = "Endpoints for managing items within categories, including creation, retrieval, updating, and deletion.")
 public class ItemController {
 
-    private final AuthService authService;
+    private final AuthenticationService authService;
     private final ItemService itemService;
 
     /**
@@ -51,9 +51,9 @@ public class ItemController {
             throw new ItemValidationException("Category id cannot be empty or different in path and body");
         }
 
-        var email = authService.getUserEmailFromAuthContext();
+        var email = authService.getUserFromAuthContext();
         log.info("Creating item for category ID {} by user {}", categoryId, email);
-        var dto = itemService.createItem(email, itemDto);
+        var dto = itemService.createItem(email.getEmail(), itemDto);
         return ResponseHelper.buildDtoResponse(dto, HttpStatus.CREATED);
     }
 
@@ -70,9 +70,9 @@ public class ItemController {
     public ResponseEntity<Response<List<ItemDto>>> getAllItems(
             @PathVariable("categoryId") @Parameter(description = "ID of the category") Long categoryId,
             @Parameter(description = "Filter criteria for items") ItemFilter itemFilter) {
-        var email = authService.getUserEmailFromAuthContext();
+        var email = authService.getUserFromAuthContext();
         log.info("Fetching items for category ID {} with filters by user {}", categoryId, email);
-        var dto = itemService.getItemsByFilters(email, categoryId, itemFilter);
+        var dto = itemService.getItemsByFilters(email.getEmail(), categoryId, itemFilter);
         return ResponseHelper.buildPageDtoResponse(dto, HttpStatus.OK);
     }
 
@@ -89,9 +89,9 @@ public class ItemController {
     public ResponseEntity<Response<ItemDto>> getItem(
             @PathVariable("categoryId") @Parameter(description = "ID of the category") Long categoryId,
             @PathVariable("itemId") @Parameter(description = "ID of the item to retrieve") Long itemId) {
-        var email = authService.getUserEmailFromAuthContext();
+        var email = authService.getUserFromAuthContext();
         log.info("Fetching item ID {} for category ID {} by user {}", itemId, categoryId, email);
-        var dto = itemService.getItem(email, categoryId, itemId);
+        var dto = itemService.getItem(email.getEmail(), categoryId, itemId);
         return ResponseHelper.buildDtoResponse(dto, HttpStatus.OK);
     }
 
@@ -116,9 +116,9 @@ public class ItemController {
                     "Path categoryId and Path itemId should be equal to values in item payload");
         }
 
-        var email = authService.getUserEmailFromAuthContext();
+        var email = authService.getUserFromAuthContext();
         log.info("Updating item ID {} for category ID {} by user {}", itemId, categoryId, email);
-        var dto = itemService.updateItem(email, itemDto);
+        var dto = itemService.updateItem(email.getEmail(), itemDto);
         return ResponseHelper.buildDtoResponse(dto, HttpStatus.ACCEPTED);
     }
 
@@ -135,9 +135,9 @@ public class ItemController {
     public ResponseEntity<Response<String>> deleteItem(
             @PathVariable("categoryId") @Parameter(description = "ID of the category") Long categoryId,
             @PathVariable("itemId") @Parameter(description = "ID of the item to delete") Long itemId) {
-        var email = authService.getUserEmailFromAuthContext();
+        var email = authService.getUserFromAuthContext();
         log.info("Deleting item ID {} for category ID {} by user {}", itemId, categoryId, email);
-        var dto = itemService.deleteItem(email, categoryId, itemId);
+        var dto = itemService.deleteItem(email.getEmail(), categoryId, itemId);
         return ResponseHelper.buildDtoResponse(dto, HttpStatus.OK);
     }
 }

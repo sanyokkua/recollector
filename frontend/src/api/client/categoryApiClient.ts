@@ -13,11 +13,9 @@ const log = logger.getLogger("CategoryApiClient");
  */
 class CategoryApiClient {
     private readonly apiClient: AxiosInstance;
-    private readonly jwtToken: string;
 
-    constructor(apiClient: AxiosInstance, jwtToken: string) {
+    constructor(apiClient: AxiosInstance) {
         this.apiClient = apiClient;
-        this.jwtToken = jwtToken;
         log.info("CategoryApiClient initialized");
     }
 
@@ -32,12 +30,7 @@ class CategoryApiClient {
         try {
             const response = await this.apiClient.post<Response<CategoryDto>>(
                 `${ BASE_URL }`,
-                category,
-                {
-                    headers: {
-                        Authorization: `Bearer ${ this.jwtToken }`
-                    }
-                }
+                category
             );
             log.info("Category creation successful");
             return handleResponse(response);
@@ -61,10 +54,7 @@ class CategoryApiClient {
             const response = await this.apiClient.get<Response<CategoryDto[]>>(
                 `${ BASE_URL }`,
                 {
-                    params: categoryFilter,
-                    headers: {
-                        Authorization: `Bearer ${ this.jwtToken }`
-                    }
+                    params: categoryFilter
                 }
             );
             log.info("Retrieved all categories successfully");
@@ -85,12 +75,7 @@ class CategoryApiClient {
 
         try {
             const response = await this.apiClient.get<Response<CategoryDto>>(
-                `${ BASE_URL }/${ categoryId }`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${ this.jwtToken }`
-                    }
-                }
+                `${ BASE_URL }/${ categoryId }`
             );
             log.info("Retrieved category successfully");
             return handleResponse(response);
@@ -115,12 +100,7 @@ class CategoryApiClient {
         try {
             const response = await this.apiClient.put<Response<CategoryDto>>(
                 `${ BASE_URL }/${ categoryId }`,
-                category,
-                {
-                    headers: {
-                        Authorization: `Bearer ${ this.jwtToken }`
-                    }
-                }
+                category
             );
             log.info("Category update successful");
             return handleResponse(response);
@@ -140,12 +120,7 @@ class CategoryApiClient {
 
         try {
             const response = await this.apiClient.delete<Response<string>>(
-                `${ BASE_URL }/${ categoryId }`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${ this.jwtToken }`
-                    }
-                }
+                `${ BASE_URL }/${ categoryId }`
             );
             log.info("Category deletion successful");
             return handleResponse(response);

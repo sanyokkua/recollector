@@ -22,7 +22,7 @@ import ua.kostenko.recollector.app.exception.CategoryNotFoundException;
 import ua.kostenko.recollector.app.exception.CategoryValidationException;
 import ua.kostenko.recollector.app.repository.CategoryItemCountRepository;
 import ua.kostenko.recollector.app.repository.CategoryRepository;
-import ua.kostenko.recollector.app.security.AuthService;
+import ua.kostenko.recollector.app.security.AuthenticationService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -38,7 +38,7 @@ class CategoryServiceTest {
     private final Long categoryId = 1L;
 
     @Mock
-    private AuthService authService;
+    private AuthenticationService authService;
     @Mock
     private CategoryRepository categoryRepository;
     @Mock
@@ -115,7 +115,10 @@ class CategoryServiceTest {
         // Arrange
         CategoryDto expectedDto = CategoryDto.builder()
                                              .categoryId(categoryId)
-                                             .categoryName("Work").todoItems(1L).inProgressItems(2L).finishedItems(3L)
+                                             .categoryName("Work")
+                                             .todoItems(1L)
+                                             .inProgressItems(2L)
+                                             .finishedItems(3L)
                                              .build();
         when(authService.findUserByEmail(userEmail)).thenReturn(user);
         when(categoryItemCountRepository.findByCategoryIdAndUserId(categoryId,
@@ -135,7 +138,7 @@ class CategoryServiceTest {
         // Arrange
         when(authService.findUserByEmail(userEmail)).thenReturn(user);
         when(categoryItemCountRepository.findByCategoryIdAndUserId(categoryId,
-                                                               user.getUserId())).thenReturn(Optional.empty());
+                                                                   user.getUserId())).thenReturn(Optional.empty());
 
         // Act & Assert
         assertThrows(CategoryNotFoundException.class,

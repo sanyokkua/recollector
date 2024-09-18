@@ -11,12 +11,12 @@ import { useAppDispatch, useAppSelector }                                       
 
 const Profile: FC = () => {
     const dispatch = useAppDispatch();
-    const { userEmail, userJwtToken } = useAppSelector((state) => state.globals);
+    const { userEmail } = useAppSelector((state) => state.globals);
     const { statistics } = useAppSelector((state) => state.helper);
 
     useEffect(() => {
         dispatch(appBarSetCustomState("Profile"));
-        dispatch(getStatistics(userJwtToken));
+        dispatch(getStatistics());
     }, [userEmail]);
 
     return <Box sx={ { p: 3 } }>

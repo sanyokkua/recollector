@@ -62,7 +62,7 @@ const DashboardItems: FC = () => {
         totalItems,
         totalPages
     } = useAppSelector((state) => state.items);
-    const { userJwtToken } = useAppSelector((state) => state.globals);
+
     const { currentCategoryId, currentCategoryName } = useAppSelector((state) => state.globals);
     const { settings } = useAppSelector((state) => state.helper);
 
@@ -75,7 +75,7 @@ const DashboardItems: FC = () => {
     useEffect(() => {
         log.debug("Component mounted, fetching items");
         dispatch(appBarSetCustomState(`${ currentCategoryName }`));
-        dispatch(getAllItems({ filter: filter, jwtToken: userJwtToken }));
+        dispatch(getAllItems({ filter: filter }));
     }, [dispatch, filter, currentCategoryId, currentCategoryName, error]);
 
     const [open, setOpen] = useState<boolean>(false);
@@ -95,21 +95,19 @@ const DashboardItems: FC = () => {
             if (mode === "create") {
                 await dispatch(createItem({
                                               itemDto: updatedItem,
-                                              categoryId: currentCategoryId,
-                                              jwtToken: userJwtToken
+                                              categoryId: currentCategoryId
                                           })).unwrap();
                 log.info("Item created successfully");
             } else if (mode === "edit") {
                 await dispatch(updateItem({
                                               itemId: updatedItem.itemId ?? -1,
                                               categoryId: currentCategoryId,
-                                              itemDto: updatedItem,
-                                              jwtToken: userJwtToken
+                                              itemDto: updatedItem
                                           })).unwrap();
                 log.info(`Item ${ currentCategoryId } updated successfully`);
             }
             handleViewClose();
-            dispatch(getAllItems({ filter: filter, jwtToken: userJwtToken }));
+            dispatch(getAllItems({ filter: filter }));
         } catch (error) {
             log.error(`Failed to save item in ${ mode } mode:`, error);
         }
@@ -119,13 +117,12 @@ const DashboardItems: FC = () => {
         try {
             const req: ItemGetRequest = {
                 categoryId: Number(currentCategoryId),
-                itemId: itemDto.itemId ?? -1,
-                jwtToken: userJwtToken
+                itemId: itemDto.itemId ?? -1
             };
             await dispatch(deleteItem(req)).unwrap();
             log.info("Category deleted successfully");
             handleViewClose();
-            dispatch(getAllItems({ filter: filter, jwtToken: userJwtToken }));
+            dispatch(getAllItems({ filter: filter }));
         } catch (error) {
             log.error(`Failed to delete category in ${ mode } mode:`, error);
         }

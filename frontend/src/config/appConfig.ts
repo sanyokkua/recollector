@@ -1,4 +1,3 @@
-import axios  from "axios";
 import log    from "loglevel";
 import prefix from "loglevel-plugin-prefix";
 
@@ -22,31 +21,5 @@ prefix.apply(log, {
 
 log.info("Initialized logger");
 
-// Create and configure Axios client
-const axiosClient = axios.create({
-                                     baseURL: "http://localhost:8081/api",
-                                     headers: {
-                                         "Content-Type": "application/json"
-                                     }
-                                 });
-
-// Request interceptor
-axiosClient.interceptors.request.use(request => {
-    log.debug("Starting Request:", JSON.stringify(request, null, 2));
-    return request;
-}, error => {
-    log.error("Request Error:", JSON.stringify(error, null, 2));
-    return Promise.reject(error);
-});
-
-// Response interceptor
-axiosClient.interceptors.response.use(response => {
-    log.debug("Response:", JSON.stringify(response, null, 2));
-    return response;
-}, error => {
-    log.error("Response Error:", JSON.stringify(error, null, 2));
-    return Promise.reject(error);
-});
-
 export const logger = log;
-export default axiosClient;
+

@@ -10,6 +10,7 @@ import org.junit.platform.commons.util.StringUtils;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 import ua.kostenko.recollector.app.exception.JwtTokenException;
 import ua.kostenko.recollector.app.service.DateService;
 
@@ -17,18 +18,19 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class JwtUtilTest {
+class JwtHelperUtilTest {
 
     @Mock
     private DateService dateService;
     private SecretKey secretKey;
-    private JwtUtil jwtUtil;
+    private JwtHelperUtil jwtUtil;
 
     @BeforeEach
     void setUp() {
@@ -36,7 +38,9 @@ class JwtUtilTest {
 
         String testKey = "dewedwd32det723vd772dg17dvtwy2ugdsu23y81gsd1u23dgy2";
         secretKey = Keys.hmacShaKeyFor(testKey.getBytes(StandardCharsets.UTF_8));
-        jwtUtil = new JwtUtil(secretKey, dateService);
+        jwtUtil = new JwtHelperUtil(secretKey, secretKey, dateService);
+        ReflectionTestUtils.setField(jwtUtil, "jwtExpMinutes", 1);
+        ReflectionTestUtils.setField(jwtUtil, "jwtRefreshExpHours", 1);
     }
 
     @Test
@@ -45,19 +49,17 @@ class JwtUtilTest {
         String username = "testUser";
         Date currentDate = new Date();
         Date expirationDate = new Date(currentDate.getTime() + 3600000); // 1 hour later
-        when(dateService.getCurrentDate()).thenReturn(currentDate);
         when(dateService.getAdjustedDateByHours(any(Date.class),
                                                 any(Long.class),
                                                 any(DateService.Adjuster.class))).thenReturn(expirationDate);
 
         // Act
-        String token = jwtUtil.generateToken(username);
+        String token = jwtUtil.generateMainJwt(username, currentDate);
 
         // Assert
         assertNotNull(token);
         assertTrue(StringUtils.isNotBlank(token));
-        verify(dateService).getCurrentDate();
-        verify(dateService).getAdjustedDateByHours(currentDate, 1, DateService.Adjuster.HOURS);
+        verify(dateService).getAdjustedDateByHours(currentDate, 1, DateService.Adjuster.MINUTES);
     }
 
     @Test
@@ -74,7 +76,7 @@ class JwtUtilTest {
                            .compact();
 
         // Act
-        Claims extractedClaims = jwtUtil.extractClaims(token);
+        Claims extractedClaims = jwtUtil.extractClaimsFromMainJwtToken(token);
 
         // Assert
         assertNotNull(extractedClaims);
@@ -87,7 +89,7 @@ class JwtUtilTest {
         String invalidToken = "invalid.token.value";
 
         // Act & Assert
-        assertThrows(JwtTokenException.class, () -> jwtUtil.extractClaims(invalidToken));
+        assertThrows(JwtTokenException.class, () -> jwtUtil.extractClaimsFromMainJwtToken(invalidToken));
     }
 
     @Test
@@ -106,7 +108,7 @@ class JwtUtilTest {
                            .compact();
 
         // Act
-        boolean isValid = jwtUtil.validateToken(token, username);
+        boolean isValid = jwtUtil.validateMainJwtToken(token, username);
 
         // Assert
         assertTrue(isValid);
@@ -129,7 +131,7 @@ class JwtUtilTest {
                            .compact();
 
         // Act
-        boolean isValid = jwtUtil.validateToken(token, wrongUsername);
+        boolean isValid = jwtUtil.validateMainJwtToken(token, wrongUsername);
 
         // Assert
         assertFalse(isValid);
@@ -151,7 +153,7 @@ class JwtUtilTest {
         Thread.sleep(1100);
 
         // Act
-        boolean isValid = jwtUtil.validateToken(token, username);
+        boolean isValid = jwtUtil.validateMainJwtToken(token, username);
 
         // Assert
         assertFalse(isValid);

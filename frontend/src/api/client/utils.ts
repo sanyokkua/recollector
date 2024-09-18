@@ -1,6 +1,7 @@
-import axios, { AxiosResponse } from "axios";
-import { logger }               from "../../config/appConfig.ts";
-import { Response }             from "../dto/common.ts";
+import axios, { AxiosResponse }  from "axios";
+import { jwtDecode, JwtPayload } from "jwt-decode";
+import { logger }                from "../../config/appConfig.ts";
+import { Response }              from "../dto/common.ts";
 
 
 const log = logger.getLogger("API_Utils");
@@ -79,4 +80,40 @@ export const parseErrorMessage = (error: any, defaultMsg: string = "An unknown e
     }
 
     return defaultMsg;
+};
+
+export const decodeTokenInfo = (token: string) => {
+    try {
+        const decoded = jwtDecode<JwtPayload>(token);
+        if (!decoded?.sub || !decoded.exp) {
+            return {
+                userJwtToken: "",
+                userIsLoggedIn: false,
+                userEmail: "",
+                userTimeExp: 0,
+                error: "Failed to decode token"
+            };
+        }
+
+        const timeNow: number = new Date().getTime();
+        const expTime: number = getDateFromSeconds(decoded.exp).getTime();
+        const userIsLoggedIn: boolean = timeNow < expTime;
+        return {
+            userJwtToken: token,
+            userIsLoggedIn: userIsLoggedIn,
+            userEmail: decoded.sub,
+            userTimeExp: decoded.exp,
+            error: userIsLoggedIn ? "" : "Token is expired"
+        };
+
+    } catch (e) {
+        log.error("Failed to decode token", e);
+        return {
+            userJwtToken: "",
+            userIsLoggedIn: false,
+            userEmail: "",
+            userTimeExp: 0,
+            error: (e as any)?.message || "Failed to decode token"
+        };
+    }
 };

@@ -15,7 +15,7 @@ import ua.kostenko.recollector.app.exception.CategoryAlreadyExistsException;
 import ua.kostenko.recollector.app.exception.CategoryNotFoundException;
 import ua.kostenko.recollector.app.repository.CategoryItemCountRepository;
 import ua.kostenko.recollector.app.repository.CategoryRepository;
-import ua.kostenko.recollector.app.security.AuthService;
+import ua.kostenko.recollector.app.security.AuthenticationService;
 import ua.kostenko.recollector.app.util.CategoryUtils;
 
 import static ua.kostenko.recollector.app.util.PageRequestUtils.createPageRequest;
@@ -29,7 +29,7 @@ import static ua.kostenko.recollector.app.util.PageRequestUtils.createPageReques
 @RequiredArgsConstructor
 public class CategoryService {
 
-    private final AuthService authService;
+    private final AuthenticationService authService;
     private final CategoryRepository categoryRepository;
     private final CategoryItemCountRepository categoryItemCountRepository;
 

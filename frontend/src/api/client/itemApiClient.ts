@@ -13,11 +13,9 @@ const log = logger.getLogger("ItemApiClient");
  */
 class ItemApiClient {
     private readonly apiClient: AxiosInstance;
-    private readonly jwtToken: string;
 
-    constructor(apiClient: AxiosInstance, jwtToken: string) {
+    constructor(apiClient: AxiosInstance) {
         this.apiClient = apiClient;
-        this.jwtToken = jwtToken;
         log.info("ItemApiClient initialized");
     }
 
@@ -33,12 +31,7 @@ class ItemApiClient {
         try {
             const response = await this.apiClient.post<Response<ItemDto>>(
                 `${ BASE_URL }/${ categoryId }/items`,
-                itemDto,
-                {
-                    headers: {
-                        Authorization: `Bearer ${ this.jwtToken }`
-                    }
-                }
+                itemDto
             );
             log.info("createItem successful");
             return handleResponse(response);
@@ -61,10 +54,7 @@ class ItemApiClient {
             const response = await this.apiClient.get<Response<ItemDto[]>>(
                 `${ BASE_URL }/${ categoryId }/items`,
                 {
-                    params: itemFilter,
-                    headers: {
-                        Authorization: `Bearer ${ this.jwtToken }`
-                    }
+                    params: itemFilter
                 }
             );
             log.info("getAllItems successful");
@@ -86,12 +76,7 @@ class ItemApiClient {
 
         try {
             const response = await this.apiClient.get<Response<ItemDto>>(
-                `${ BASE_URL }/${ categoryId }/items/${ itemId }`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${ this.jwtToken }`
-                    }
-                }
+                `${ BASE_URL }/${ categoryId }/items/${ itemId }`
             );
             log.info("getItem successful");
             return handleResponse(response);
@@ -114,12 +99,7 @@ class ItemApiClient {
         try {
             const response = await this.apiClient.put<Response<ItemDto>>(
                 `${ BASE_URL }/${ categoryId }/items/${ itemId }`,
-                itemDto,
-                {
-                    headers: {
-                        Authorization: `Bearer ${ this.jwtToken }`
-                    }
-                }
+                itemDto
             );
             log.info("updateItem successful");
             return handleResponse(response);
@@ -140,12 +120,7 @@ class ItemApiClient {
 
         try {
             const response = await this.apiClient.delete<Response<string>>(
-                `${ BASE_URL }/${ categoryId }/items/${ itemId }`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${ this.jwtToken }`
-                    }
-                }
+                `${ BASE_URL }/${ categoryId }/items/${ itemId }`
             );
             log.info("deleteItem successful");
             return handleResponse(response);

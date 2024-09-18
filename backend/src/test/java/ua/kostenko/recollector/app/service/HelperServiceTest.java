@@ -15,7 +15,7 @@ import ua.kostenko.recollector.app.repository.CategoryRepository;
 import ua.kostenko.recollector.app.repository.ItemRepository;
 import ua.kostenko.recollector.app.repository.UserRepository;
 import ua.kostenko.recollector.app.repository.UserSettingsRepository;
-import ua.kostenko.recollector.app.security.AuthService;
+import ua.kostenko.recollector.app.security.AuthenticationService;
 
 import java.util.List;
 
@@ -26,7 +26,7 @@ import static org.mockito.Mockito.*;
 class HelperServiceTest {
 
     @Mock
-    private AuthService authService;
+    private AuthenticationService authService;
 
     @Mock
     private CategoryRepository categoryRepository;

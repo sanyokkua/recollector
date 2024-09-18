@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import ua.kostenko.recollector.app.dto.StatisticDto;
 import ua.kostenko.recollector.app.dto.UserSettingsDto;
 import ua.kostenko.recollector.app.dto.response.Response;
-import ua.kostenko.recollector.app.security.AuthService;
+import ua.kostenko.recollector.app.security.AuthenticationService;
 import ua.kostenko.recollector.app.service.HelperService;
 import ua.kostenko.recollector.app.util.ResponseHelper;
 
@@ -29,7 +29,7 @@ import java.util.List;
 public class HelperController {
 
     private final HelperService helperService;
-    private final AuthService authService;
+    private final AuthenticationService authService;
 
     /**
      * Retrieves the list of available item statuses.
@@ -52,9 +52,9 @@ public class HelperController {
     @Operation(summary = "Retrieve user statistics", description = "Retrieves statistics for the authenticated user based on their email.")
     @GetMapping("/statistics")
     public ResponseEntity<Response<StatisticDto>> getStatistics() {
-        var email = authService.getUserEmailFromAuthContext();
+        var email = authService.getUserFromAuthContext();
         log.info("Fetching statistics for user with email: {}", email);
-        var statistics = helperService.getStatistics(email);
+        var statistics = helperService.getStatistics(email.getEmail());
         return ResponseHelper.buildDtoResponse(statistics, HttpStatus.OK);
     }
 
@@ -66,9 +66,9 @@ public class HelperController {
     @Operation(summary = "Retrieve user settings", description = "Retrieves settings for the authenticated user based on their email.")
     @GetMapping("/settings")
     public ResponseEntity<Response<UserSettingsDto>> getUserSettings() {
-        var email = authService.getUserEmailFromAuthContext();
+        var email = authService.getUserFromAuthContext();
         log.info("Fetching settings for user with email: {}", email);
-        var settings = helperService.getUserSettings(email);
+        var settings = helperService.getUserSettings(email.getEmail());
         return ResponseHelper.buildDtoResponse(settings, HttpStatus.OK);
     }
 
@@ -81,9 +81,9 @@ public class HelperController {
     @PutMapping("/settings")
     public ResponseEntity<Response<UserSettingsDto>> updateUserSettings(
             @RequestBody @Parameter(description = "Updated userSettings details") UserSettingsDto userSettingsDto) {
-        var email = authService.getUserEmailFromAuthContext();
+        var email = authService.getUserFromAuthContext();
         log.info("Updating settings for user with email: {}", email);
-        var settings = helperService.saveUserSettings(email, userSettingsDto);
+        var settings = helperService.saveUserSettings(email.getEmail(), userSettingsDto);
         return ResponseHelper.buildDtoResponse(settings, HttpStatus.OK);
     }
 }

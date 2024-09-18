@@ -16,12 +16,14 @@ import org.springframework.test.web.servlet.MockMvc;
 import ua.kostenko.recollector.app.dto.ItemDto;
 import ua.kostenko.recollector.app.dto.ItemFilter;
 import ua.kostenko.recollector.app.entity.ItemStatus;
+import ua.kostenko.recollector.app.entity.User;
 import ua.kostenko.recollector.app.exception.ItemAlreadyExistsException;
 import ua.kostenko.recollector.app.exception.ItemNotFoundException;
 import ua.kostenko.recollector.app.exception.ItemValidationException;
 import ua.kostenko.recollector.app.exception.UserNotAuthenticatedException;
-import ua.kostenko.recollector.app.security.AuthService;
-import ua.kostenko.recollector.app.security.JwtUtil;
+import ua.kostenko.recollector.app.repository.InvalidatedTokenRepository;
+import ua.kostenko.recollector.app.security.AuthenticationService;
+import ua.kostenko.recollector.app.security.JwtHelperUtil;
 import ua.kostenko.recollector.app.service.ItemService;
 
 import java.util.List;
@@ -41,6 +43,7 @@ class ItemControllerTest {
     private static final String BASE_URL = "/api/v1/categories/{categoryId}/items";
     private static final String ITEM_NAME = "Test Item";
     private static final String VALID_EMAIL = "valid@email.com";
+    private static final User VALID_USER = User.builder().email(VALID_EMAIL).build();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
@@ -49,9 +52,11 @@ class ItemControllerTest {
     @MockBean
     private ItemService itemService;
     @MockBean
-    private AuthService authService;
+    private AuthenticationService authService;
     @MockBean
-    private JwtUtil jwtUtil;
+    private InvalidatedTokenRepository invalidatedTokenRepository;
+    @MockBean
+    private JwtHelperUtil jwtUtil;
 
     private static Stream<Arguments> exceptionScenarios() {
         String msg = "Failed";
@@ -69,10 +74,9 @@ class ItemControllerTest {
         ItemDto responseDto = ItemDto.builder()
                                      .itemId(itemId)
                                      .categoryId(categoryId)
-                                     .itemName(ITEM_NAME)
-                                     .itemNotes("Notes").itemStatus(ItemStatus.IN_PROGRESS)
+                                     .itemName(ITEM_NAME).itemNotes("Notes").itemStatus(ItemStatus.IN_PROGRESS)
                                      .build();
-        when(authService.getUserEmailFromAuthContext()).thenReturn(VALID_EMAIL);
+        when(authService.getUserFromAuthContext()).thenReturn(VALID_USER);
         when(itemService.createItem(VALID_EMAIL, requestDto)).thenReturn(responseDto);
 
         mockMvc.perform(post(BASE_URL, categoryId).contentType(MediaType.APPLICATION_JSON)
@@ -121,7 +125,7 @@ class ItemControllerTest {
         Pageable pageable = PageRequest.of(0, 2, Sort.by(Sort.Direction.ASC, "itemName"));
         Page<ItemDto> page = new PageImpl<>(List.of(dto1, dto2), pageable, 2);
 
-        when(authService.getUserEmailFromAuthContext()).thenReturn(VALID_EMAIL);
+        when(authService.getUserFromAuthContext()).thenReturn(VALID_USER);
         when(itemService.getItemsByFilters(anyString(), anyLong(), any(ItemFilter.class))).thenReturn(page);
 
         mockMvc.perform(get(BASE_URL, categoryId).contentType(MediaType.APPLICATION_JSON)
@@ -154,10 +158,9 @@ class ItemControllerTest {
         ItemDto responseDto = ItemDto.builder()
                                      .itemId(itemId)
                                      .categoryId(categoryId)
-                                     .itemName(ITEM_NAME)
-                                     .itemNotes("Notes").itemStatus(ItemStatus.IN_PROGRESS)
+                                     .itemName(ITEM_NAME).itemNotes("Notes").itemStatus(ItemStatus.IN_PROGRESS)
                                      .build();
-        when(authService.getUserEmailFromAuthContext()).thenReturn(VALID_EMAIL);
+        when(authService.getUserFromAuthContext()).thenReturn(VALID_USER);
         when(itemService.getItem(VALID_EMAIL, categoryId, itemId)).thenReturn(responseDto);
 
         mockMvc.perform(get(BASE_URL + "/{itemId}", categoryId, itemId))
@@ -180,10 +183,9 @@ class ItemControllerTest {
         ItemDto responseDto = ItemDto.builder()
                                      .itemId(itemId)
                                      .categoryId(categoryId)
-                                     .itemName(ITEM_NAME)
-                                     .itemNotes("Notes").itemStatus(ItemStatus.IN_PROGRESS)
+                                     .itemName(ITEM_NAME).itemNotes("Notes").itemStatus(ItemStatus.IN_PROGRESS)
                                      .build();
-        when(authService.getUserEmailFromAuthContext()).thenReturn(VALID_EMAIL);
+        when(authService.getUserFromAuthContext()).thenReturn(VALID_USER);
         when(itemService.updateItem(any(String.class), any(ItemDto.class))).thenReturn(responseDto);
 
         mockMvc.perform(put(BASE_URL + "/{itemId}", categoryId, itemId).contentType(MediaType.APPLICATION_JSON)
@@ -208,8 +210,7 @@ class ItemControllerTest {
         ItemDto requestDto = ItemDto.builder()
                                     .itemId(itemId)
                                     .categoryId(categoryId)
-                                    .itemName(ITEM_NAME)
-                                    .itemNotes("Notes").itemStatus(ItemStatus.IN_PROGRESS)
+                                    .itemName(ITEM_NAME).itemNotes("Notes").itemStatus(ItemStatus.IN_PROGRESS)
                                     .build();
         mockMvc.perform(put(BASE_URL + "/{itemId}", categoryId, 999L).contentType(MediaType.APPLICATION_JSON)
                                                                      .content(objectMapper.writeValueAsString(requestDto)))
@@ -246,7 +247,7 @@ class ItemControllerTest {
     void deleteItem_ValidInput_ShouldReturnSuccessText() throws Exception {
         long itemId = 1L;
         long categoryId = 11L;
-        when(authService.getUserEmailFromAuthContext()).thenReturn(VALID_EMAIL);
+        when(authService.getUserFromAuthContext()).thenReturn(VALID_USER);
         when(itemService.deleteItem(VALID_EMAIL, categoryId, itemId)).thenReturn("Test Msg");
 
         mockMvc.perform(delete(BASE_URL + "/{itemId}", categoryId, itemId))
@@ -272,11 +273,10 @@ class ItemControllerTest {
         ItemDto requestDto = ItemDto.builder()
                                     .itemId(itemId)
                                     .categoryId(categoryId)
-                                    .itemName(ITEM_NAME)
-                                    .itemNotes("Notes").itemStatus(ItemStatus.IN_PROGRESS)
+                                    .itemName(ITEM_NAME).itemNotes("Notes").itemStatus(ItemStatus.IN_PROGRESS)
                                     .build();
 
-        when(authService.getUserEmailFromAuthContext()).thenReturn(VALID_EMAIL);
+        when(authService.getUserFromAuthContext()).thenReturn(VALID_USER);
         when(itemService.updateItem(VALID_EMAIL, requestDto)).thenThrow(exception);
 
         mockMvc.perform(put(BASE_URL + "/{itemId}", categoryId, itemId).contentType(MediaType.APPLICATION_JSON)

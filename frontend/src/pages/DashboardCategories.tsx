@@ -63,13 +63,12 @@ const DashboardCategories: FC = () => {
         totalItems,
         totalPages
     } = useAppSelector((state) => state.categories);
-    const { userJwtToken } = useAppSelector((state) => state.globals);
     const { settings } = useAppSelector((state) => state.helper);
 
     useEffect(() => {
         log.debug("Component mounted, fetching categories");
         dispatch(appBarSetCustomState(""));
-        dispatch(getAllCategories({ filter: filter, jwtToken: userJwtToken }));
+        dispatch(getAllCategories({ filter: filter }));
     }, [dispatch, filter]);
 
     const [open, setOpen] = useState<boolean>(false);
@@ -105,18 +104,17 @@ const DashboardCategories: FC = () => {
         log.debug(`Saving category in ${ mode } mode`, updatedCategory);
         try {
             if (mode === "create") {
-                await dispatch(createCategory({ categoryDto: updatedCategory, jwtToken: userJwtToken })).unwrap();
+                await dispatch(createCategory({ categoryDto: updatedCategory })).unwrap();
                 log.info("Category created successfully");
             } else if (mode === "edit" && selectedCategory) {
                 await dispatch(updateCategory({
                                                   id: selectedCategory.categoryId ?? -1,
-                                                  categoryDto: updatedCategory,
-                                                  jwtToken: userJwtToken
+                                                  categoryDto: updatedCategory
                                               })).unwrap();
                 log.info(`Category ${ selectedCategory.categoryId } updated successfully`);
             }
             handleClose();
-            dispatch(getAllCategories({ filter: filter, jwtToken: userJwtToken }));
+            dispatch(getAllCategories({ filter: filter }));
         } catch (error) {
             log.error(`Failed to save category in ${ mode } mode:`, error);
         }
@@ -124,10 +122,10 @@ const DashboardCategories: FC = () => {
     const handleViewDelete = async (categoryDto: CategoryDto) => {
         log.debug(`Deleting category in ${ mode } mode`, categoryDto);
         try {
-            await dispatch(deleteCategory({ id: categoryDto?.categoryId ?? -1, jwtToken: userJwtToken })).unwrap();
+            await dispatch(deleteCategory({ id: categoryDto?.categoryId ?? -1 })).unwrap();
             log.info("Category deleted successfully");
             handleClose();
-            dispatch(getAllCategories({ filter: filter, jwtToken: userJwtToken }));
+            dispatch(getAllCategories({ filter: filter }));
         } catch (error) {
             log.error(`Failed to delete category in ${ mode } mode:`, error);
         }

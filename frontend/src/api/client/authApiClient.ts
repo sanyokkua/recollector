@@ -5,8 +5,10 @@ import {
     ChangePasswordRequestDto,
     ForgotPasswordRequestDto,
     LoginRequestDto,
+    LogoutDto,
     RegisterRequestDto,
     ResetPasswordRequestDto,
+    TokenRefreshRequest,
     UserDto
 }                                      from "../dto/authenticationDto.ts";
 import { Response }                    from "../dto/common.ts";
@@ -21,11 +23,9 @@ const log = logger.getLogger("AuthApiClient");
  */
 class AuthApiClient {
     private readonly apiClient: AxiosInstance;
-    private readonly jwtToken: string;
 
-    constructor(apiClient: AxiosInstance, jwtToken: string = "") {
+    constructor(apiClient: AxiosInstance) {
         this.apiClient = apiClient;
-        this.jwtToken = jwtToken;
         log.info("AuthApiClient initialized");
     }
 
@@ -72,6 +72,48 @@ class AuthApiClient {
     }
 
     /**
+     * Logs out a user.
+     * @param request - The Logout data.
+     */
+    async logoutUser(request: LogoutDto): Promise<Response<string>> {
+        log.info("logoutUser called");
+        log.debug("logout request data", request);
+
+        try {
+            const response = await this.apiClient.post<Response<string>>(
+                `${ BASE_URL }/logout`,
+                request
+            );
+            log.info("User logout successful");
+            return handleResponse(response);
+        } catch (error) {
+            log.error("Error during user logout", error);
+            return handleError(error);
+        }
+    }
+
+    /**
+     * Refresh main jwt token for a user.
+     * @param request - The Refresh Token data.
+     */
+    async refreshToken(request: TokenRefreshRequest): Promise<Response<UserDto>> {
+        log.info("refreshToken called");
+        log.debug("refreshToken request data", request);
+
+        try {
+            const response = await this.apiClient.post<Response<UserDto>>(
+                `${ BASE_URL }/refresh-token`,
+                request
+            );
+            log.info("refreshToken successful");
+            return handleResponse(response);
+        } catch (error) {
+            log.error("Error during refreshToken", error);
+            return handleError(error);
+        }
+    }
+
+    /**
      * Sends a forgot password request.
      * @param request - The forgot password data.
      */
@@ -107,12 +149,7 @@ class AuthApiClient {
         try {
             const response = await this.apiClient.post<Response<UserDto>>(
                 `${ BASE_URL }/reset-password`,
-                request,
-                {
-                    headers: {
-                        Authorization: `Bearer ${ this.jwtToken }`
-                    }
-                }
+                request
             );
             log.info("Password reset successful");
             return handleResponse(response);
@@ -135,12 +172,7 @@ class AuthApiClient {
         try {
             const response = await this.apiClient.post<Response<UserDto>>(
                 `${ BASE_URL }/change-password`,
-                request,
-                {
-                    headers: {
-                        Authorization: `Bearer ${ this.jwtToken }`
-                    }
-                }
+                request
             );
             log.info("Password change successful");
             return handleResponse(response);
@@ -163,12 +195,7 @@ class AuthApiClient {
         try {
             const response = await this.apiClient.post<Response<string>>(
                 `${ BASE_URL }/delete-account`,
-                request,
-                {
-                    headers: {
-                        Authorization: `Bearer ${ this.jwtToken }`
-                    }
-                }
+                request
             );
             log.info("Account deletion successful");
             return handleResponse(response);

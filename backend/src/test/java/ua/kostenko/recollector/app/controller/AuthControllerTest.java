@@ -1,6 +1,7 @@
 package ua.kostenko.recollector.app.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -12,19 +13,20 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import ua.kostenko.recollector.app.dto.UserDto;
 import ua.kostenko.recollector.app.dto.auth.*;
 import ua.kostenko.recollector.app.exception.*;
-import ua.kostenko.recollector.app.security.AuthService;
-import ua.kostenko.recollector.app.security.JwtUtil;
+import ua.kostenko.recollector.app.repository.InvalidatedTokenRepository;
+import ua.kostenko.recollector.app.security.AuthenticationService;
+import ua.kostenko.recollector.app.security.JwtHelperUtil;
 
 import java.util.stream.Stream;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -40,15 +42,17 @@ class AuthControllerTest {
     private static final String BAD_REQUEST_MESSAGE = "Bad request";
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+    @MockBean
+    private InvalidatedTokenRepository invalidatedTokenRepository;
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockBean
-    private JwtUtil jwtUtil;
+    private JwtHelperUtil jwtUtil;
 
     @MockBean
-    private AuthService authService;
+    private AuthenticationService authService;
 
     // Test Scenarios
     private static Stream<Arguments> registerExceptionScenarios() {
@@ -153,9 +157,15 @@ class AuthControllerTest {
     @DisplayName("Login User - Valid Request")
     void loginUser_validRequest_shouldReturnUserDto() throws Exception {
         LoginRequestDto requestDto = createLoginRequest();
-        var authentication = new UsernamePasswordAuthenticationToken(requestDto.getEmail(), requestDto.getPassword());
+        JwtUserDetail response = JwtUserDetail.builder()
+                                              .userEmail(requestDto.getEmail())
+                                              .tokensDto(TokensDto.builder()
+                                                                  .refreshToken(requestDto.getPassword())
+                                                                  .jwtToken(requestDto.getPassword())
+                                                                  .build())
+                                              .build();
 
-        when(authService.authenticate(any(Authentication.class))).thenReturn(authentication);
+        when(authService.loginUser(anyString(), anyString())).thenReturn(response);
 
         performPostRequest("/login", requestDto).andExpect(status().isOk())
                                                 .andExpect(jsonPath("$.statusCode").value(200))
@@ -163,7 +173,19 @@ class AuthControllerTest {
                                                 .andExpect(jsonPath("$.data.email").value(requestDto.getEmail()))
                                                 .andExpect(jsonPath("$.data.jwtToken").value(requestDto.getPassword()))
                                                 .andExpect(jsonPath("$.meta").doesNotExist())
-                                                .andExpect(jsonPath("$.error").doesNotExist());
+                                                .andExpect(jsonPath("$.error").doesNotExist())
+                                                .andExpect(result -> {
+                                                    String[] split = result.getResponse()
+                                                                           .getHeader("Set-Cookie")
+                                                                           .split(";");
+                                                    String cookieValue = split[0];
+                                                    String path = split[1];
+                                                    String httpOnly = split[4];
+                                                    // Check the extracted refreshToken value
+                                                    assertThat(cookieValue.trim()).isEqualTo("refreshToken=testPassword");
+                                                    assertThat(path.trim()).isEqualTo("Path=api/v1/auth/refresh-token");
+                                                    assertThat(httpOnly.trim()).isEqualTo("HttpOnly");
+                                                });
     }
 
     @ParameterizedTest
@@ -173,7 +195,7 @@ class AuthControllerTest {
                                                         String errorMessage) throws Exception {
         LoginRequestDto requestDto = createLoginRequest();
 
-        when(authService.authenticate(any(Authentication.class))).thenThrow(exception);
+        when(authService.loginUser(anyString(), anyString())).thenThrow(exception);
 
         performPostRequest("/login", requestDto).andExpect(status().is(status.value()))
                                                 .andExpect(jsonPath("$.statusCode").value(status.value()))
@@ -236,7 +258,8 @@ class AuthControllerTest {
         ChangePasswordRequestDto requestDto = createChangePasswordRequest();
         UserDto userDto = UserDto.builder().email(requestDto.getEmail()).build();
 
-        when(authService.changePassword(requestDto)).thenReturn(userDto);
+        when(authService.changePassword(any(ChangePasswordRequestDto.class), anyString(), anyString())).thenReturn(
+                userDto);
 
         performPostRequest("/change-password", requestDto).andExpect(status().isOk())
                                                           .andExpect(jsonPath("$.statusCode").value(200))
@@ -254,7 +277,8 @@ class AuthControllerTest {
                                                              String errorMessage) throws Exception {
         ChangePasswordRequestDto requestDto = createChangePasswordRequest();
 
-        when(authService.changePassword(any(ChangePasswordRequestDto.class))).thenThrow(exception);
+        when(authService.changePassword(any(ChangePasswordRequestDto.class), anyString(), anyString())).thenThrow(
+                exception);
 
         performPostRequest("/change-password", requestDto).andExpect(status().is(status.value()))
                                                           .andExpect(jsonPath("$.statusCode").value(status.value()))
@@ -298,6 +322,8 @@ class AuthControllerTest {
     // Helper Methods
     private ResultActions performPostRequest(String endpoint, Object requestDto) throws Exception {
         return mockMvc.perform(post(BASE_URL + endpoint).contentType(MediaType.APPLICATION_JSON)
+                                                        .header("Authorization", "Bearer token")
+                                                        .cookie(new Cookie("refreshToken", "value"))
                                                         .content(objectMapper.writeValueAsString(requestDto)));
     }
 

@@ -13,11 +13,9 @@ const log = logger.getLogger("HelperApiClient");
  */
 class HelperApiClient {
     private readonly apiClient: AxiosInstance;
-    private readonly jwtToken: string;
 
-    constructor(apiClient: AxiosInstance, jwtToken: string) {
+    constructor(apiClient: AxiosInstance) {
         this.apiClient = apiClient;
-        this.jwtToken = jwtToken;
         log.info("HelperApiClient initialized");
     }
 
@@ -29,12 +27,7 @@ class HelperApiClient {
 
         try {
             const response = await this.apiClient.get<Response<string[]>>(
-                `${ BASE_URL }/itemStatuses`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${ this.jwtToken }`
-                    }
-                }
+                `${ BASE_URL }/itemStatuses`
             );
             log.info("getItemStatuses successful");
             return handleResponse(response);
@@ -52,12 +45,7 @@ class HelperApiClient {
 
         try {
             const response = await this.apiClient.get<Response<StatisticDto>>(
-                `${ BASE_URL }/statistics`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${ this.jwtToken }`
-                    }
-                }
+                `${ BASE_URL }/statistics`
             );
             log.info("getStatistics successful");
             return handleResponse(response);
@@ -75,12 +63,7 @@ class HelperApiClient {
 
         try {
             const response = await this.apiClient.get<Response<SettingsDto>>(
-                `${ BASE_URL }/settings`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${ this.jwtToken }`
-                    }
-                }
+                `${ BASE_URL }/settings`
             );
             log.info("getSettings successful");
             return handleResponse(response);
@@ -101,12 +84,7 @@ class HelperApiClient {
         try {
             const response = await this.apiClient.put<Response<SettingsDto>>(
                 `${ BASE_URL }/settings`,
-                settingsDto,
-                {
-                    headers: {
-                        Authorization: `Bearer ${ this.jwtToken }`
-                    }
-                }
+                settingsDto
             );
             log.info("updateSettings successful");
             return handleResponse(response);

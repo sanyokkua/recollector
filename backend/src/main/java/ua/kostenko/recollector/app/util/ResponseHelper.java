@@ -4,7 +4,9 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import ua.kostenko.recollector.app.dto.response.Response;
 
@@ -59,6 +61,17 @@ public class ResponseHelper {
         return ResponseEntity.status(status).body(responseBody);
     }
 
+    public static <T> ResponseEntity<Response<T>> buildDtoResponse(T data, HttpStatus status, ResponseCookie cookie) {
+        var responseBody = Response.<T>builder()
+                                   .data(data)
+                                   .statusCode(status.value())
+                                   .statusMessage(status.name())
+                                   .build();
+        String cookieString = cookie.toString();
+        log.debug("Built success response with status {}: {}, cookie: {}", status, responseBody, cookieString);
+        return ResponseEntity.status(status).header(HttpHeaders.SET_COOKIE, cookieString).body(responseBody);
+    }
+
     /**
      * Builds a {@link ResponseEntity} with paginated data and meta information.
      * Includes the page data, meta information, and HTTP status code.
@@ -102,6 +115,16 @@ public class ResponseHelper {
         return ResponseEntity.status(status).body(responseBody);
     }
 
+    /**
+     * Creates an error response body with the provided data, HTTP status, and exception.
+     *
+     * @param data   the data to include in the response body, can be null
+     * @param status the HTTP status to set for the response
+     * @param ex     the {@link Exception} causing the error
+     * @param <T>    the type of the data
+     *
+     * @return a {@link Response} containing the error details
+     */
     public static <T> Response<T> createErrorResponseBody(T data, HttpStatus status, Exception ex) {
         var msg = getErrorMessage(ex);
         return Response.<T>builder()

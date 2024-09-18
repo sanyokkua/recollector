@@ -1,22 +1,16 @@
-import { AccountCircle }                                           from "@mui/icons-material";
-import MenuIcon                                                    from "@mui/icons-material/Menu";
-import { AppBar, IconButton, Menu, MenuItem, Toolbar, Typography } from "@mui/material";
-import log                                                         from "loglevel";
-import React, { FC, useEffect, useState }                          from "react";
-import { Link, useNavigate }                                       from "react-router-dom";
-import { getDateFromSeconds }                                      from "../api/client/utils";
-import { drawerSwitchOn }                                          from "../store/features/drawer/drawerSlice";
+import { AccountCircle }                                                   from "@mui/icons-material";
+import MenuIcon                                                            from "@mui/icons-material/Menu";
+import { AppBar, Button, IconButton, Menu, MenuItem, Toolbar, Typography } from "@mui/material";
+import log                                                                 from "loglevel";
+import React, { FC, useEffect, useState }                                  from "react";
+import { Link, useNavigate }                                               from "react-router-dom";
+import { getDateFromSeconds }                                              from "../api/client/utils";
+import { drawerSwitchOn }                                                  from "../store/features/drawer/drawerSlice";
+import { logoutUser }                                                      from "../store/features/global/globalSlice";
 import {
-    setCurrentCategoryId,
-    setCurrentCategoryName,
-    setUserEmail,
-    setUserIsLoggedIn,
-    setUserJwtRefreshToken,
-    setUserJwtToken,
-    setUserTimeExp
-}                                                                  from "../store/features/global/globalSlice";
-import { getSettings }                                             from "../store/features/helper/helperSlice.ts";
-import { useAppDispatch, useAppSelector }                          from "../store/hooks";
+    getSettings
+}                                                                          from "../store/features/helper/helperSlice.ts";
+import { useAppDispatch, useAppSelector }                                  from "../store/hooks";
 
 
 const RecollectorAppBar: FC = () => {
@@ -29,14 +23,14 @@ const RecollectorAppBar: FC = () => {
 
     // Global state selectors
     const header = useAppSelector((state) => state.appBarHeader.value);
-    const { userIsLoggedIn, userEmail, userTimeExp, userJwtToken } = useAppSelector(
+    const { userIsLoggedIn, userEmail, userTimeExp } = useAppSelector(
         (state) => state.globals
     );
     // Effect hook for logging when the component mounts
     useEffect(() => {
         log.debug("RecollectorAppBar component mounted");
         if (userIsLoggedIn) {
-            dispatch(getSettings(userJwtToken));
+            dispatch(getSettings());
         }
     }, [dispatch, userIsLoggedIn]);
 
@@ -63,13 +57,8 @@ const RecollectorAppBar: FC = () => {
     // Handle logout and reset global state
     const handleLogoutClose = () => {
         handleClose();
-        dispatch(setCurrentCategoryId(-1));
-        dispatch(setCurrentCategoryName(""));
-        dispatch(setUserJwtToken(""));
-        dispatch(setUserJwtRefreshToken(""));
-        dispatch(setUserIsLoggedIn(false));
-        dispatch(setUserEmail(""));
-        dispatch(setUserTimeExp(0));
+        dispatch(logoutUser({ userEmail: userEmail }));
+        navigate("/login");
     };
 
     // Render user information or login link based on authentication status
@@ -101,7 +90,7 @@ const RecollectorAppBar: FC = () => {
                 </>
             );
         }
-        return <Link to={ "/login" }>Login</Link>;
+        return <Button component={ Link } to={ "/login" } color="inherit">Login</Button>;
     };
 
     return (

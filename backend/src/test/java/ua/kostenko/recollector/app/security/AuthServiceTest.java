@@ -8,10 +8,10 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.util.ReflectionTestUtils;
 import ua.kostenko.recollector.app.dto.UserDto;
 import ua.kostenko.recollector.app.dto.auth.*;
 import ua.kostenko.recollector.app.entity.User;
@@ -19,6 +19,7 @@ import ua.kostenko.recollector.app.exception.UserLoginException;
 import ua.kostenko.recollector.app.exception.UserNotAuthenticatedException;
 import ua.kostenko.recollector.app.exception.UserNotFoundException;
 import ua.kostenko.recollector.app.exception.UserRegistrationException;
+import ua.kostenko.recollector.app.repository.InvalidatedTokenRepository;
 import ua.kostenko.recollector.app.repository.UserRepository;
 import ua.kostenko.recollector.app.util.UserUtils;
 
@@ -40,53 +41,26 @@ class AuthServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private JwtUtil jwtUtil;
+    private JwtHelperUtil jwtUtil;
 
-    private AuthService authService;
+    @Mock
+    private InvalidatedTokenRepository invalidatedTokenRepository;
+
+    private AuthenticationService authService;
 
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
         Mockito.reset(userUtils, passwordEncoder, userRepository, jwtUtil);
-        authService = new AuthService(userUtils, passwordEncoder, userRepository, jwtUtil);
-    }
-
-    @Test
-    void authenticate_validCredentials_success() {
-        String email = "test@example.com";
-        String password = "validPassword";
-        User user = new User();
-        user.setPasswordHash("encodedPassword");
-
-        when(userUtils.isEmailValid(email)).thenReturn(true);
-        when(userUtils.isPasswordValid(password)).thenReturn(true);
-        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches(password, user.getPasswordHash())).thenReturn(true);
-        when(jwtUtil.generateToken(email)).thenReturn("jwtToken");
-
-        Authentication authentication = new UsernamePasswordAuthenticationToken(email, password);
-        Authentication result = authService.authenticate(authentication);
-
-        assertEquals(email, result.getPrincipal());
-        String jwtToken = (String) result.getCredentials();
-        assertEquals("jwtToken", jwtToken);
-    }
-
-    @Test
-    void authenticate_invalidCredentials_throwsUserLoginException() {
-        String email = "test@example.com";
-        String password = "validPassword";
-        User user = new User();
-        user.setPasswordHash("encodedPassword");
-
-        when(userUtils.isEmailValid(email)).thenReturn(true);
-        when(userUtils.isPasswordValid(password)).thenReturn(true);
-        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
-        when(passwordEncoder.matches(password, user.getPasswordHash())).thenReturn(false);
-
-        Authentication authentication = new UsernamePasswordAuthenticationToken(email, password);
-
-        assertThrows(UserLoginException.class, () -> authService.authenticate(authentication));
+        authService = new AuthenticationService(userUtils,
+                                                jwtUtil,
+                                                passwordEncoder,
+                                                userRepository,
+                                                invalidatedTokenRepository);
+        ReflectionTestUtils.setField(jwtUtil, "jwtExpMinutes", 1);
+        ReflectionTestUtils.setField(jwtUtil, "jwtRefreshExpHours", 1);
+        ReflectionTestUtils.setField(authService, "jwtExpMinutes", 1);
+        ReflectionTestUtils.setField(authService, "jwtRefreshExpHours", 1);
     }
 
     @Test
@@ -97,7 +71,6 @@ class AuthServiceTest {
 
         RegisterRequestDto requestDto = new RegisterRequestDto("test@example.com", "validPassword", "validPassword");
         when(userRepository.existsByEmail(requestDto.getEmail())).thenReturn(false);
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
         when(userRepository.save(any(User.class))).thenReturn(user);
 
         UserDto result = authService.registerUser(requestDto);
@@ -114,7 +87,7 @@ class AuthServiceTest {
         UserRegistrationException exception = assertThrows(UserRegistrationException.class,
                                                            () -> authService.registerUser(requestDto));
 
-        assertEquals("User with email 'test@example.com' already exists", exception.getMessage());
+        assertEquals("Email 'test@example.com' is already registered", exception.getMessage());
     }
 
     @Test
@@ -145,18 +118,24 @@ class AuthServiceTest {
         String email = "test@example.com";
         String password = "validPassword";
         User user = new User();
+        TokensDto tokensDto = TokensDto.builder()
+                                       .refreshToken("jwtToken")
+                                       .jwtToken("jwtToken")
+                                       .jwtRefreshTokenExpirationDate(0)
+                                       .jwtTokenExpirationDate(0)
+                                       .build();
         user.setPasswordHash("encodedPassword");
 
         when(userUtils.isEmailValid(email)).thenReturn(true);
         when(userUtils.isPasswordValid(password)).thenReturn(true);
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
         when(passwordEncoder.matches(password, user.getPasswordHash())).thenReturn(true);
-        when(jwtUtil.generateToken(email)).thenReturn("jwtToken");
+        when(jwtUtil.generateJwtTokensPair(email)).thenReturn(tokensDto);
 
-        UserDto result = authService.loginUser(email, password);
+        var result = authService.loginUser(email, password);
 
-        assertEquals(email, result.getEmail());
-        assertEquals("jwtToken", result.getJwtToken());
+        assertEquals(email, result.getUserEmail());
+        assertEquals("jwtToken", result.getTokensDto().getJwtToken());
     }
 
     @Test
@@ -233,7 +212,7 @@ class AuthServiceTest {
         when(passwordEncoder.encode(requestDto.getPassword())).thenReturn("encodedNewPassword");
         when(userRepository.save(any(User.class))).thenReturn(user);
 
-        UserDto result = authService.changePassword(requestDto);
+        UserDto result = authService.changePassword(requestDto, "", "");
 
         assertEquals("test@example.com", result.getEmail());
     }
@@ -261,12 +240,13 @@ class AuthServiceTest {
         String email = "test@example.com";
         Authentication authentication = mock(Authentication.class);
         when(authentication.isAuthenticated()).thenReturn(true);
-        when(authentication.getName()).thenReturn(email);
+        when(authentication.getPrincipal()).thenReturn(User.builder().email(email).build());
+        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(User.builder().email(email).build()));
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        String result = authService.getUserEmailFromAuthContext();
+        var result = authService.getUserFromAuthContext();
 
-        assertEquals(email, result);
+        assertEquals(email, result.getEmail());
     }
 
     @Test
@@ -274,7 +254,7 @@ class AuthServiceTest {
         SecurityContextHolder.getContext().setAuthentication(null);
 
         UserNotAuthenticatedException exception = assertThrows(UserNotAuthenticatedException.class,
-                                                               () -> authService.getUserEmailFromAuthContext());
+                                                               () -> authService.getUserFromAuthContext());
 
         assertEquals("User is not authenticated", exception.getMessage());
     }

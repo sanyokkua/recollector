@@ -2,6 +2,7 @@ package ua.kostenko.recollector.app;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -19,15 +20,14 @@ import ua.kostenko.recollector.app.dto.CategoryDto;
 import ua.kostenko.recollector.app.dto.ItemDto;
 import ua.kostenko.recollector.app.dto.UserDto;
 import ua.kostenko.recollector.app.dto.UserSettingsDto;
-import ua.kostenko.recollector.app.dto.auth.AccountDeleteRequestDto;
-import ua.kostenko.recollector.app.dto.auth.ChangePasswordRequestDto;
-import ua.kostenko.recollector.app.dto.auth.LoginRequestDto;
-import ua.kostenko.recollector.app.dto.auth.RegisterRequestDto;
+import ua.kostenko.recollector.app.dto.auth.*;
 import ua.kostenko.recollector.app.dto.response.Response;
 import ua.kostenko.recollector.app.entity.ItemStatus;
 import ua.kostenko.recollector.app.entity.UserSettings;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.*;
@@ -71,10 +71,12 @@ class UserCommonFlowITTest {
     private static final Integer ITEM_PAGE_SIZE = 7;
 
     private static String user1Token = "";
+    private static final Map<String, Cookie> userCookies = new HashMap<>();
     private static String user2Token = "";
     private static Long user1Category1Id, user1Category2Id, user1Category3Id;
     private static Long user1Category1Item1, user1Category1Item2, user1Category1Item3;
     private static Long user2Category1Id, user2Category2Id;
+    private static String user1NewToken = "";
 
     @Autowired
     private MockMvc mockMvc;
@@ -166,6 +168,8 @@ class UserCommonFlowITTest {
         if (expectedStatus == HttpStatus.OK) {
             var content = result.getResponse().getContentAsString();
             Response<UserDto> response = objectMapper.readValue(content, new TypeReference<>() {});
+            Cookie refreshToken = result.getResponse().getCookie("refreshToken");
+            userCookies.put(email, refreshToken);
             return response.getData().getJwtToken();
         }
         return "";
@@ -539,6 +543,7 @@ class UserCommonFlowITTest {
                                                                       .build();
 
         mockMvc.perform(post(BASE_AUTH_URL + "/change-password").header(AUTH_HEADER, BEARER_TOKEN + user2Token)
+                                                                .cookie(userCookies.get(TEST_USER_2_EMAIL))
                                                                 .contentType(MediaType.APPLICATION_JSON)
                                                                 .content(objectMapper.writeValueAsString(requestDto)))
                .andExpect(status().isBadRequest())
@@ -557,6 +562,7 @@ class UserCommonFlowITTest {
                                                                       .build();
 
         mockMvc.perform(post(BASE_AUTH_URL + "/change-password").header(AUTH_HEADER, BEARER_TOKEN + user2Token)
+                                                                .cookie(userCookies.get(TEST_USER_2_EMAIL))
                                                                 .contentType(MediaType.APPLICATION_JSON)
                                                                 .content(objectMapper.writeValueAsString(requestDto)))
                .andExpect(status().isOk())
@@ -576,6 +582,7 @@ class UserCommonFlowITTest {
                                                                     .build();
 
         mockMvc.perform(post(BASE_AUTH_URL + "/delete-account").header(AUTH_HEADER, BEARER_TOKEN + user2Token)
+                                                               .cookie(userCookies.get(TEST_USER_2_EMAIL))
                                                                .contentType(MediaType.APPLICATION_JSON)
                                                                .content(objectMapper.writeValueAsString(requestDto)))
                .andExpect(status().isOk())
@@ -702,6 +709,94 @@ class UserCommonFlowITTest {
                .andExpect(jsonPath("$.data.itemPageSize").value(ITEM_PAGE_SIZE))
                .andExpect(jsonPath("$.meta").doesNotExist())
                .andExpect(jsonPath("$.error").doesNotExist())
+               .andDo(print());
+    }
+
+    @Order(33)
+    @Test
+    void refreshToken_UserOne_Post() throws Exception {
+        TokenRefreshRequest request = TokenRefreshRequest.builder()
+                                                         .userEmail(TEST_USER_1_EMAIL)
+                                                         .accessToken(user1Token)
+                                                         .build();
+        var result = mockMvc.perform(post(BASE_AUTH_URL + "/refresh-token").cookie(userCookies.get(TEST_USER_1_EMAIL))
+                                                                           .contentType(MediaType.APPLICATION_JSON)
+                                                                           .content(objectMapper.writeValueAsString(
+                                                                                   request)))
+                            .andExpect(status().isOk())
+                            .andExpect(jsonPath("$.statusCode").value(200))
+                            .andExpect(jsonPath("$.statusMessage").value("OK"))
+                            .andExpect(jsonPath("$.data").isMap())
+                            .andExpect(jsonPath("$.meta").doesNotExist())
+                            .andExpect(jsonPath("$.error").doesNotExist())
+                            .andDo(print())
+                            .andReturn();
+        var content = result.getResponse().getContentAsString();
+        Response<UserDto> response = objectMapper.readValue(content, new TypeReference<>() {});
+        assertEquals(TEST_USER_1_EMAIL, response.getData().getEmail());
+
+        String jwtToken = response.getData().getJwtToken();
+        assertNotNull(jwtToken);
+        assertNotEquals(user1Token, jwtToken);
+        Cookie refreshToken = result.getResponse().getCookie("refreshToken");
+        assertNull(refreshToken);
+        user1NewToken = jwtToken;
+    }
+
+    @Order(34)
+    @Test
+    void loginUser_POST_invalidatedToken_returnsUnauthorized() throws Exception {
+        mockMvc.perform(get(BASE_CATEGORY_URL).header(AUTH_HEADER, BEARER_TOKEN + user1Token)
+                                              .cookie(userCookies.get(TEST_USER_1_EMAIL)))
+               .andExpect(status().isUnauthorized())
+               .andDo(print());
+
+    }
+
+    @Order(35)
+    @Test
+    void loginUser_POST_invalidatedTokenUseNewToken_returnsResult() throws Exception {
+        mockMvc.perform(get(BASE_CATEGORY_URL).header(AUTH_HEADER, BEARER_TOKEN + user1NewToken)
+                                              .cookie(userCookies.get(TEST_USER_1_EMAIL)))
+               .andExpect(status().isOk())
+               .andDo(print());
+    }
+
+    @Order(36)
+    @Test
+    void logoutUser_POST_invalidateToken_returnsResult() throws Exception {
+        mockMvc.perform(post(BASE_AUTH_URL + "/logout").header(AUTH_HEADER, BEARER_TOKEN + user1NewToken)
+                                                       .cookie(userCookies.get(TEST_USER_1_EMAIL))
+                                                       .contentType(MediaType.APPLICATION_JSON)
+                                                       .content(objectMapper.writeValueAsString(LogoutDto.builder()
+                                                                                                         .userEmail(
+                                                                                                                 TEST_USER_1_EMAIL)
+                                                                                                         .build())))
+               .andExpect(status().isOk())
+               .andExpect(jsonPath("$.statusCode").value(200))
+               .andExpect(jsonPath("$.statusMessage").value("OK"))
+               .andExpect(jsonPath("$.data").isString())
+               .andExpect(jsonPath("$.data").value("Logout successful"))
+               .andExpect(jsonPath("$.meta").doesNotExist())
+               .andExpect(jsonPath("$.error").doesNotExist())
+               .andDo(print());
+    }
+
+    @Order(37)
+    @Test
+    void refreshTokenAfterLogout_UserOne_Fails() throws Exception {
+        mockMvc.perform(post(BASE_AUTH_URL + "/refresh-token").cookie(userCookies.get(TEST_USER_1_EMAIL))
+                                                              .contentType(MediaType.APPLICATION_JSON)
+                                                              .content(objectMapper.writeValueAsString(
+                                                                      TokenRefreshRequest.builder()
+                                                                                         .userEmail(TEST_USER_1_EMAIL)
+                                                                                         .accessToken(user1NewToken)
+                                                                                         .build())))
+               .andExpect(status().isUnauthorized())
+               .andExpect(jsonPath("$.statusCode").value(HttpStatus.UNAUTHORIZED.value()))
+               .andExpect(jsonPath("$.statusMessage").value(HttpStatus.UNAUTHORIZED.name()))
+               .andExpect(jsonPath("$.meta").doesNotExist())
+               .andExpect(jsonPath("$.error").exists())
                .andDo(print());
     }
 

@@ -9,7 +9,9 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
-import ua.kostenko.recollector.app.security.JwtUtil;
+import ua.kostenko.recollector.app.repository.InvalidatedTokenRepository;
+import ua.kostenko.recollector.app.security.AuthenticationService;
+import ua.kostenko.recollector.app.security.JwtHelperUtil;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -22,7 +24,11 @@ class IndexControllerTest {
     private static final String BASE_URL = "/";
 
     @MockBean
-    private JwtUtil jwtUtil;
+    private JwtHelperUtil jwtUtil;
+    @MockBean
+    private InvalidatedTokenRepository invalidatedTokenRepository;
+    @MockBean
+    private AuthenticationService authenticationService;
 
     @Autowired
     private MockMvc mockMvc;

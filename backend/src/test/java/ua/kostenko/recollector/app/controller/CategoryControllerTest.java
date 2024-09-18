@@ -15,9 +15,11 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import ua.kostenko.recollector.app.dto.CategoryDto;
 import ua.kostenko.recollector.app.dto.CategoryFilter;
+import ua.kostenko.recollector.app.entity.User;
 import ua.kostenko.recollector.app.exception.*;
-import ua.kostenko.recollector.app.security.AuthService;
-import ua.kostenko.recollector.app.security.JwtUtil;
+import ua.kostenko.recollector.app.repository.InvalidatedTokenRepository;
+import ua.kostenko.recollector.app.security.AuthenticationService;
+import ua.kostenko.recollector.app.security.JwtHelperUtil;
 import ua.kostenko.recollector.app.service.CategoryService;
 
 import java.util.List;
@@ -38,6 +40,7 @@ class CategoryControllerTest {
     private static final String BASE_URL = "/api/v1/categories";
     private static final String CATEGORY_NAME = "Test Category";
     private static final String VALID_EMAIL = "valid@email.com";
+    private static final User VALID_USER = User.builder().email(VALID_EMAIL).build();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Autowired
@@ -46,9 +49,11 @@ class CategoryControllerTest {
     @MockBean
     private CategoryService categoryService;
     @MockBean
-    private AuthService authService;
+    private AuthenticationService authService;
     @MockBean
-    private JwtUtil jwtUtil;
+    private InvalidatedTokenRepository invalidatedTokenRepository;
+    @MockBean
+    private JwtHelperUtil jwtUtil;
 
     private static Stream<Arguments> exceptionScenarios() {
         String msg = "Failed";
@@ -64,7 +69,7 @@ class CategoryControllerTest {
         CategoryDto requestDto = CategoryDto.builder().categoryName(CATEGORY_NAME).build();
         CategoryDto responseDto = CategoryDto.builder().categoryName(CATEGORY_NAME).categoryId(1L).build();
 
-        when(authService.getUserEmailFromAuthContext()).thenReturn(VALID_EMAIL);
+        when(authService.getUserFromAuthContext()).thenReturn(VALID_USER);
         when(categoryService.createCategory(VALID_EMAIL, requestDto)).thenReturn(responseDto);
 
         mockMvc.perform(post(BASE_URL).contentType(MediaType.APPLICATION_JSON)
@@ -80,9 +85,7 @@ class CategoryControllerTest {
 
     @Test
     void getAllCategories_ValidInput_ShouldReturnAllCategories() throws Exception {
-        CategoryFilter requestDto = CategoryFilter.builder()
-                                                  .page(1)
-                                                  .size(2).categoryName("")
+        CategoryFilter requestDto = CategoryFilter.builder().page(1).size(2).categoryName("")
                                                   .direction(Sort.Direction.ASC)
                                                   .build();
         CategoryDto dto1 = CategoryDto.builder().categoryName(CATEGORY_NAME).categoryId(1L).build();
@@ -90,7 +93,7 @@ class CategoryControllerTest {
         Pageable pageable = PageRequest.of(0, 2, Sort.by(Sort.Direction.ASC, "categoryName"));
         Page<CategoryDto> page = new PageImpl<>(List.of(dto1, dto2), pageable, 2);
 
-        when(authService.getUserEmailFromAuthContext()).thenReturn(VALID_EMAIL);
+        when(authService.getUserFromAuthContext()).thenReturn(VALID_USER);
         when(categoryService.getCategoriesByFilters(anyString(), any(CategoryFilter.class))).thenReturn(page);
 
         mockMvc.perform(get(BASE_URL).contentType(MediaType.APPLICATION_JSON)
@@ -120,7 +123,7 @@ class CategoryControllerTest {
     void getCategory_ValidInput_ShouldReturnCategory() throws Exception {
         CategoryDto responseDto = CategoryDto.builder().categoryName(CATEGORY_NAME).categoryId(1L).build();
 
-        when(authService.getUserEmailFromAuthContext()).thenReturn(VALID_EMAIL);
+        when(authService.getUserFromAuthContext()).thenReturn(VALID_USER);
         when(categoryService.getCategory(VALID_EMAIL, 1L)).thenReturn(responseDto);
 
         mockMvc.perform(get(BASE_URL + "/{category_id}", 1L))
@@ -138,7 +141,7 @@ class CategoryControllerTest {
         long categoryId = 1L;
         CategoryDto responseDto = CategoryDto.builder().categoryName(CATEGORY_NAME).categoryId(categoryId).build();
 
-        when(authService.getUserEmailFromAuthContext()).thenReturn(VALID_EMAIL);
+        when(authService.getUserFromAuthContext()).thenReturn(VALID_USER);
         when(categoryService.updateCategory(VALID_EMAIL, responseDto)).thenReturn(responseDto);
 
         mockMvc.perform(put(BASE_URL + "/{category_id}", categoryId).contentType(MediaType.APPLICATION_JSON)
@@ -155,7 +158,7 @@ class CategoryControllerTest {
     @Test
     void deleteCategory_ValidInput_ShouldReturnDeletedCategory() throws Exception {
         long categoryId = 1L;
-        when(authService.getUserEmailFromAuthContext()).thenReturn(VALID_EMAIL);
+        when(authService.getUserFromAuthContext()).thenReturn(VALID_USER);
         when(categoryService.deleteCategory(VALID_EMAIL, categoryId)).thenReturn("Test Msg");
 
         mockMvc.perform(delete(BASE_URL + "/{category_id}", categoryId))
@@ -175,7 +178,7 @@ class CategoryControllerTest {
         long differentCategoryId = 222L;
         CategoryDto responseDto = CategoryDto.builder().categoryName(CATEGORY_NAME).categoryId(categoryId).build();
 
-        when(authService.getUserEmailFromAuthContext()).thenReturn(VALID_EMAIL);
+        when(authService.getUserFromAuthContext()).thenReturn(VALID_USER);
         when(categoryService.updateCategory(VALID_EMAIL, responseDto)).thenReturn(responseDto);
 
         mockMvc.perform(put(BASE_URL + "/{category_id}", differentCategoryId).contentType(MediaType.APPLICATION_JSON)
@@ -198,7 +201,7 @@ class CategoryControllerTest {
         long categoryId = 1L;
         CategoryDto responseDto = CategoryDto.builder().categoryName(CATEGORY_NAME).categoryId(categoryId).build();
 
-        when(authService.getUserEmailFromAuthContext()).thenReturn(VALID_EMAIL);
+        when(authService.getUserFromAuthContext()).thenReturn(VALID_USER);
         when(categoryService.updateCategory(VALID_EMAIL, responseDto)).thenThrow(exception);
 
         mockMvc.perform(put(BASE_URL + "/{category_id}", categoryId).contentType(MediaType.APPLICATION_JSON)

@@ -9,15 +9,15 @@ import ua.kostenko.recollector.app.entity.Category;
 import ua.kostenko.recollector.app.entity.CategoryItemCount;
 import ua.kostenko.recollector.app.exception.CategoryValidationException;
 
-import java.util.Objects;
-
 /**
  * Utility class for operations related to {@link Category} and {@link CategoryDto}.
- * This class provides static methods to validate CategoryDto objects and map Category entities to CategoryDto objects.
+ * <p>
+ * This class provides static methods to validate {@link CategoryDto} objects and map {@link Category}
+ * entities to {@link CategoryDto} objects.
  * <p>
  * The constructor is private to prevent instantiation.
  * <p>
- * Logging is enabled using Lombok's @Slf4j annotation for logging important events and errors.
+ * Logging is enabled using Lombok's {@link Slf4j} annotation for logging important events and errors.
  */
 @Slf4j
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -25,14 +25,14 @@ public class CategoryUtils {
 
     /**
      * Validates if the given {@link CategoryDto} object is valid.
-     * A valid CategoryDto should not be null and should have a non-blank category name.
+     * A valid {@link CategoryDto} should not be null and should have a non-blank category name.
      *
      * @param categoryDto the {@link CategoryDto} object to be validated
      *
-     * @return true if the CategoryDto is valid, false otherwise
+     * @return true if the {@link CategoryDto} is valid, false otherwise
      */
     public static boolean isValidCategory(CategoryDto categoryDto) {
-        var isValid = !Objects.isNull(categoryDto) && !StringUtils.isBlank(categoryDto.getCategoryName());
+        boolean isValid = categoryDto != null && StringUtils.isNotBlank(categoryDto.getCategoryName());
         log.debug("CategoryDto validation result: {}", isValid);
         return isValid;
     }
@@ -46,7 +46,7 @@ public class CategoryUtils {
      * @return the corresponding {@link CategoryDto} or null if the input category is null
      */
     public static CategoryDto mapToDto(Category category) {
-        if (Objects.isNull(category)) {
+        if (category == null) {
             log.warn("Attempted to map a null Category to CategoryDto.");
             return null;
         }
@@ -59,35 +59,43 @@ public class CategoryUtils {
         return categoryDto;
     }
 
-    public static CategoryDto mapCategoryItemCountToCategoryDto(CategoryItemCount category) {
-        if (Objects.isNull(category)) {
+    /**
+     * Maps the given {@link CategoryItemCount} entity to a {@link CategoryDto}.
+     * If the categoryItemCount parameter is null, this method will return null.
+     *
+     * @param categoryItemCount the {@link CategoryItemCount} entity to be mapped
+     *
+     * @return the corresponding {@link CategoryDto} or null if the input categoryItemCount is null
+     */
+    public static CategoryDto mapCategoryItemCountToCategoryDto(CategoryItemCount categoryItemCount) {
+        if (categoryItemCount == null) {
             log.warn("Attempted to map a null CategoryItemCount to CategoryDto.");
             return null;
         }
 
         CategoryDto categoryDto = CategoryDto.builder()
-                                             .categoryId(category.getCategoryId())
-                                             .categoryName(category.getCategoryName())
-                                             .todoItems(category.getCountTodoLater())
-                                             .inProgressItems(category.getCountInProgress())
-                                             .finishedItems(category.getCountFinished())
+                                             .categoryId(categoryItemCount.getCategoryId())
+                                             .categoryName(categoryItemCount.getCategoryName())
+                                             .todoItems(categoryItemCount.getCountTodoLater())
+                                             .inProgressItems(categoryItemCount.getCountInProgress())
+                                             .finishedItems(categoryItemCount.getCountFinished())
                                              .build();
-        log.debug("Mapped Category to CategoryDto: {}", categoryDto);
+        log.debug("Mapped CategoryItemCount to CategoryDto: {}", categoryDto);
         return categoryDto;
     }
 
     /**
-     * Validates a CategoryDto object.
+     * Validates a {@link CategoryDto} object.
      * Ensures that the category name is not null or blank.
      *
-     * @param categoryDto the category data transfer object to validate
+     * @param categoryDto the {@link CategoryDto} to validate
      *
-     * @throws CategoryValidationException if the category is invalid
+     * @throws CategoryValidationException if the {@link CategoryDto} is invalid
      */
     public static void validateCategoryDto(CategoryDto categoryDto) {
-        if (!CategoryUtils.isValidCategory(categoryDto)) {
-            log.error("Invalid categoryDto: {}", categoryDto);
-            throw new CategoryValidationException("Category is null or has blank name");
+        if (!isValidCategory(categoryDto)) {
+            log.error("Invalid CategoryDto: {}", categoryDto);
+            throw new CategoryValidationException("CategoryDto is null or has a blank name");
         }
     }
 
@@ -100,9 +108,9 @@ public class CategoryUtils {
      * @throws CategoryValidationException if the category ID is null
      */
     public static void validateCategoryId(Long categoryId) {
-        if (Objects.isNull(categoryId)) {
+        if (categoryId == null) {
             log.error("CategoryId is null");
-            throw new CategoryValidationException("Category id is null");
+            throw new CategoryValidationException("Category ID cannot be null");
         }
     }
 }

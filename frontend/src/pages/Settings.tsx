@@ -81,15 +81,14 @@ const SettingsSection: FC<SettingsSectionProps> = ({
 const Settings: FC = () => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
-    const { userJwtToken } = useAppSelector((state) => state.globals);
     const { settings } = useAppSelector((state) => state.helper);
     const [localSettings, setLocalSettings] = useState<SettingsDto>(settings);
 
     useEffect(() => {
         log.info("Settings component mounted");
-        dispatch(getSettings(userJwtToken));
+        dispatch(getSettings());
         dispatch(appBarSetCustomState("Settings"));
-    }, [dispatch, userJwtToken]);
+    }, [dispatch]);
     useEffect(() => {
         log.debug("Settings updated from store", settings);
         setLocalSettings(settings);
@@ -120,7 +119,7 @@ const Settings: FC = () => {
     const handleSaveSettings = () => {
         log.info("Saving settings", localSettings);
         try {
-            dispatch(updateSettings({ settings: localSettings, jwtToken: userJwtToken }));
+            dispatch(updateSettings({ settings: localSettings }));
             dispatch(setCategoryFilterSize(localSettings.categoryPageSize));
             dispatch(setItemFilterSize(localSettings.itemPageSize));
             log.info("Settings saved successfully");

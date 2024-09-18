@@ -73,7 +73,6 @@ const ItemView: FC<ItemViewProps> = React.memo(({ item, open, onClose, onSave, o
     log.debug(`Item received: ${ JSON.stringify(item) }`);
 
     const dispatch = useAppDispatch();
-    const { userJwtToken } = useAppSelector((state) => state.globals);
     const { statuses } = useAppSelector((state) => state.helper);
 
     const initialItemState: ItemDto = {
@@ -85,8 +84,8 @@ const ItemView: FC<ItemViewProps> = React.memo(({ item, open, onClose, onSave, o
 
     useEffect(() => {
         log.debug("Component mounted, fetching statuses");
-        dispatch(getItemStatuses(userJwtToken));
-    }, [dispatch, userJwtToken]);
+        dispatch(getItemStatuses());
+    }, [dispatch]);
 
     useEffect(() => {
         setItemToProcess(mode === "create" ? initialItemState : { ...initialItemState, ...item });

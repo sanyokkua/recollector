@@ -5,7 +5,6 @@ const log = logger.getLogger("BrowserStore");
 
 export enum ItemType {
     JWT_TOKEN = "JWT_USER_TOKEN",
-    REFRESH_TOKEN = "JWT_REFRESH_TOKEN",
     USER_EMAIL = "USER_EMAIL",
     CURRENT_CATEGORY_ID = "CURRENT_CATEGORY_ID",
     CURRENT_CATEGORY_NAME = "CURRENT_CATEGORY_NAME",
@@ -51,15 +50,6 @@ export const userJwtTokenSaver = (jwtToken: string | undefined) => {
 };
 export const userJwtTokenExtractor = () => {
     return browserStore.getData(ItemType.JWT_TOKEN);
-};
-export const userJwtRefreshTokenSaver = (jwtRefresh: string | undefined) => {
-    if (jwtRefresh === undefined || jwtRefresh === null) {
-        throw new Error("JwtRefresh is undefined or empty");
-    }
-    return browserStore.saveData(ItemType.REFRESH_TOKEN, jwtRefresh);
-};
-export const userJwtRefreshTokenExtractor = () => {
-    return browserStore.getData(ItemType.REFRESH_TOKEN);
 };
 export const currentCategoryIdSaver = (currentCategoryId: number | undefined) => {
     if (currentCategoryId === undefined || currentCategoryId === null) {

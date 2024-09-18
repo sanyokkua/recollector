@@ -37,3 +37,11 @@ export interface UserDto {
     email: string;
     jwtToken: string;
 }
+
+export interface TokenRefreshRequest {
+    userEmail: string;
+}
+
+export interface LogoutDto {
+    userEmail: string;
+}

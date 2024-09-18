@@ -3,31 +3,34 @@ import { Box, Button, FormControl, Snackbar, TextField, Typography } from "@mui/
 import Alert                                                         from "@mui/material/Alert";
 import { FC, useEffect, useState }                                   from "react";
 import { Controller, useForm }                                       from "react-hook-form";
+import { useNavigate }                                               from "react-router-dom";
 import * as yup                                                      from "yup";
 import { parseErrorMessage }                                         from "../api/client/utils";
 import { logger }                                                    from "../config/appConfig";
 import { appBarSetCustomState }                                      from "../store/features/appBar/appBarSlice";
-import { changePassword }                                            from "../store/features/global/globalSlice"; // Assuming there's a changePassword action in your slice
+import { changePassword, logoutUser }                                from "../store/features/global/globalSlice"; // Assuming there's a changePassword action in your slice
 import { useAppDispatch, useAppSelector }                            from "../store/hooks";
 
 
 const log = logger.getLogger("ChangePassword");
 
 // Define validation schema with Yup
-const schema = yup.object({
-                              currentPassword: yup
-                                  .string()
-                                  .required("Current password is required"),
-                              newPassword: yup
-                                  .string()
-                                  .min(6, "New password must be at least 6 characters")
-                                  .max(24, "New password must be up to 24 characters")
-                                  .required("New password is required"),
-                              confirmNewPassword: yup
-                                  .string()
-                                  .oneOf([yup.ref("newPassword")], "Passwords must match")
-                                  .required("Confirm new password is required")
-                          });
+const schema = yup.object(
+    {
+        currentPassword: yup
+            .string()
+            .required("Current password is required"),
+        newPassword: yup
+            .string()
+            .min(6, "New password must be at least 6 characters")
+            .max(24, "New password must be up to 24 characters")
+            .required("New password is required"),
+        confirmNewPassword: yup
+            .string()
+            .oneOf([yup.ref("newPassword")], "Passwords must match")
+            .required("Confirm new password is required")
+    }
+);
 
 interface FormValues {
     currentPassword: string;
@@ -37,6 +40,7 @@ interface FormValues {
 
 const ChangePassword: FC = () => {
     const dispatch = useAppDispatch();
+    const navigate = useNavigate();
     const { userJwtToken, userEmail } = useAppSelector((state) => state.globals);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -68,6 +72,8 @@ const ChangePassword: FC = () => {
             ).unwrap();
             log.info("Password changed successfully");
             setSuccessMessage("Password changed successfully!");
+            dispatch(logoutUser({ userEmail: userEmail }));
+            setTimeout(() => navigate("/login"), 3000);
         } catch (error: any) {
             const errorMessage = parseErrorMessage(error, "Failed to change password. Please try again.");
             setErrorMessage(errorMessage);
