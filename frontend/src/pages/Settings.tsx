@@ -134,7 +134,7 @@ const Settings: FC = () => {
     };
     const handleDeleteAccount = () => {
         log.warn("Account deletion feature not implemented");
-        alert("Account deletion is not implemented yet.");
+        navigate("/delete_account");
     };
 
     return (

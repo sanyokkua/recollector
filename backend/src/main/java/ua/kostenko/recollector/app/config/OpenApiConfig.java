@@ -32,6 +32,6 @@ public class OpenApiConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/swagger-ui/**")
                 .addResourceLocations("classpath:/META-INF/resources/webjars/springdoc-openapi-ui/")
                 .resourceChain(false);
-        // Check http://localhost:8081/swagger-ui/index.html for API Description
+        // Check http://localhost:8080/swagger-ui/index.html for API Description
     }
 }

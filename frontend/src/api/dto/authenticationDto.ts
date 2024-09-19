@@ -17,9 +17,9 @@ export interface ResetPasswordRequestDto {
 }
 
 export interface AccountDeleteRequestDto {
-    email?: string;
-    password?: string;
-    passwordConfirm?: string;
+    email: string;
+    password: string;
+    passwordConfirm: string;
 }
 
 export interface ChangePasswordRequestDto {

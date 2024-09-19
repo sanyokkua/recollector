@@ -12,6 +12,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import ua.kostenko.recollector.app.dto.CategoryDto;
 import ua.kostenko.recollector.app.dto.CategoryFilter;
@@ -33,6 +34,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
+@ActiveProfiles("test")
 @WebMvcTest(CategoryController.class)
 @AutoConfigureMockMvc(addFilters = false)
 class CategoryControllerTest {

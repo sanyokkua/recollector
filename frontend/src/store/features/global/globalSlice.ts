@@ -10,6 +10,7 @@ import {
     parseErrorMessage
 }                                                       from "../../../api/client/utils.ts";
 import {
+    AccountDeleteRequestDto,
     ChangePasswordRequestDto,
     LoginRequestDto,
     LogoutDto,
@@ -124,6 +125,22 @@ export const registerUser = createAsyncThunk(
         } catch (error: any) {
             const errorMessage = parseErrorMessage(error, "Failed to Register");
             log.error("Register API call failed", error);
+            return rejectWithValue(errorMessage);
+        }
+    }
+);
+
+export const deleteUser = createAsyncThunk(
+    "globals/delete",
+    async (registerRequest: AccountDeleteRequestDto, { rejectWithValue }) => {
+        log.info("Attempting to delete");
+        log.debug(`Delete request parameters: ${ JSON.stringify(registerRequest) }`);
+        try {
+            const client = new AuthApiClient(axiosClient);
+            return await client.deleteAccount(registerRequest);
+        } catch (error: any) {
+            const errorMessage = parseErrorMessage(error, "Failed to delete");
+            log.error("Delete API call failed", error);
             return rejectWithValue(errorMessage);
         }
     }
@@ -264,6 +281,30 @@ export const globalSlice = createSlice(
                     state.userEmail = "";
                     state.userTimeExp = 0;
                     state.error = "Failed to Logout";
+                })
+
+                .addCase(deleteUser.pending, (state: GlobalState) => {
+                    log.debug("deleteUser request pending", state);
+                })
+                .addCase(deleteUser.fulfilled, (state: GlobalState) => {
+                    log.debug("deleteUser request fulfilled");
+                    state.currentCategoryId = -1;
+                    state.currentCategoryName = "";
+                    state.userJwtToken = "";
+                    state.userIsLoggedIn = false;
+                    state.userEmail = "";
+                    state.userTimeExp = 0;
+                    state.error = "";
+                })
+                .addCase(deleteUser.rejected, (state: GlobalState) => {
+                    log.debug("deleteUser request rejected");
+                    state.currentCategoryId = -1;
+                    state.currentCategoryName = "";
+                    state.userJwtToken = "";
+                    state.userIsLoggedIn = false;
+                    state.userEmail = "";
+                    state.userTimeExp = 0;
+                    state.error = "Failed to deleteUser";
                 })
             ;
         }

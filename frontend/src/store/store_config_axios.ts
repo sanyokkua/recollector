@@ -11,6 +11,7 @@ import store, { AppStore }                                                  from
 
 const log = logger.getLogger("AxiosStoreConfig");
 const rawAxiosInstance = axios.create();
+const baseUrl = import.meta.env.VITE_APP_BASE_URL;
 
 export const configureAxiosWithReduxStore = (reduxStore: AppStore) => {
     // Helper function to check if the token is expired
@@ -43,7 +44,7 @@ export const configureAxiosWithReduxStore = (reduxStore: AppStore) => {
 
             log.debug("Fetching new token from AuthApiClient");
             const userDtoResponse: AxiosResponse<Response<UserDto>> = await rawAxiosInstance.post<Response<UserDto>>(
-                `http://localhost:8081/api/v1/auth/refresh-token`,
+                `${ baseUrl }/api/v1/auth/refresh-token`,
                 {
                     userEmail: email,
                     accessToken: jwtToken

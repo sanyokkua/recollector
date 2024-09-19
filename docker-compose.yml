@@ -14,9 +14,45 @@ services:
       POSTGRES_DB: recollector
       POSTGRES_USER: development
       POSTGRES_PASSWORD: dev_pass
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U development -d recollector" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  liquibase:
+    build: ./liquibase  # Path to the Liquibase Dockerfile
+    environment:
+      DB_USER_NAME: development
+      DB_USER_PASSWORD: dev_pass
+      JDBC_URL: jdbc:postgresql://db:5432/recollector
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"  # Liquibase applies migrations and exits.
+
+  backend:
+    build: ./backend  # Path to the Backend Dockerfile
+    environment:
+      DB_USER_NAME: development
+      DB_USER_PASSWORD: dev_pass
+      JDBC_URL: jdbc:postgresql://db:5432/recollector
+      JWT_REFRESH: secretd21uy3id28ib3duybc2uy3vfbuyfdkey
+      JWT_REFRESH_EXP_HOURS: 24
+      JWT_SECRET: secretdb2uy3id28ib3duybc2uy3vfbuyfdkey
+      JWT_SECRET_EXP_MINUTES: 15
+      LOG_LEVEL: DEBUG
+    ports:
+      - '8080:8080'
+    depends_on:
+      db:
+        condition: service_healthy
+      liquibase:
+        condition: service_completed_successfully
+    restart: always
 
   adminer:
     image: adminer
     restart: always
     ports:
-      - 8080:8080
+      - '8085:8080'
