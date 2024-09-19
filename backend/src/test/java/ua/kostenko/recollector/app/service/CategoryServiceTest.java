@@ -15,13 +15,14 @@ import org.springframework.data.jpa.domain.Specification;
 import ua.kostenko.recollector.app.dto.CategoryDto;
 import ua.kostenko.recollector.app.dto.CategoryFilter;
 import ua.kostenko.recollector.app.entity.Category;
+import ua.kostenko.recollector.app.entity.CategoryItemCount;
 import ua.kostenko.recollector.app.entity.User;
 import ua.kostenko.recollector.app.exception.CategoryAlreadyExistsException;
 import ua.kostenko.recollector.app.exception.CategoryNotFoundException;
 import ua.kostenko.recollector.app.exception.CategoryValidationException;
+import ua.kostenko.recollector.app.repository.CategoryItemCountRepository;
 import ua.kostenko.recollector.app.repository.CategoryRepository;
-import ua.kostenko.recollector.app.repository.ItemRepository;
-import ua.kostenko.recollector.app.security.AuthService;
+import ua.kostenko.recollector.app.security.AuthenticationService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -37,23 +38,24 @@ class CategoryServiceTest {
     private final Long categoryId = 1L;
 
     @Mock
-    private AuthService authService;
+    private AuthenticationService authService;
     @Mock
     private CategoryRepository categoryRepository;
     @Mock
-    private ItemRepository itemRepository;
+    private CategoryItemCountRepository categoryItemCountRepository;
     private CategoryService categoryService;
 
     private User user;
     private CategoryDto categoryDto;
     private Category category;
+    private CategoryItemCount categoryItemCount;
     private Category updatedCategory;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
         Mockito.reset(categoryRepository);
-        categoryService = new CategoryService(authService, categoryRepository, itemRepository);
+        categoryService = new CategoryService(authService, categoryRepository, categoryItemCountRepository);
 
         user = User.builder().userId(1L).build();
         categoryDto = CategoryDto.builder().categoryId(categoryId).categoryName("Work").build();
@@ -64,6 +66,15 @@ class CategoryServiceTest {
                            .createdAt(LocalDateTime.now())
                            .updatedAt(LocalDateTime.now())
                            .build();
+        categoryItemCount = CategoryItemCount.builder()
+                                             .userId(user.getUserId())
+                                             .categoryId(categoryId)
+                                             .categoryName("Work")
+                                             .countInProgress(1L)
+                                             .countTodoLater(2L)
+                                             .countFinished(3L)
+                                             .build();
+
         updatedCategory = Category.builder()
                                   .categoryId(categoryId)
                                   .categoryName("Updated Work")
@@ -105,13 +116,14 @@ class CategoryServiceTest {
         CategoryDto expectedDto = CategoryDto.builder()
                                              .categoryId(categoryId)
                                              .categoryName("Work")
-                                             .todoItems(0L)
-                                             .inProgressItems(0L)
-                                             .finishedItems(0L)
+                                             .todoItems(1L)
+                                             .inProgressItems(2L)
+                                             .finishedItems(3L)
                                              .build();
         when(authService.findUserByEmail(userEmail)).thenReturn(user);
-        when(categoryRepository.findByCategoryIdAndUser_UserId(categoryId, user.getUserId())).thenReturn(Optional.of(
-                category));
+        when(categoryItemCountRepository.findByCategoryIdAndUserId(categoryId,
+                                                                   user.getUserId())).thenReturn(Optional.of(
+                categoryItemCount));
         // Act
         CategoryDto result = categoryService.getCategory(userEmail, categoryId);
 
@@ -125,8 +137,8 @@ class CategoryServiceTest {
     void getCategory_whenCategoryDoesNotExist_throwsException() {
         // Arrange
         when(authService.findUserByEmail(userEmail)).thenReturn(user);
-        when(categoryRepository.findByCategoryIdAndUser_UserId(categoryId,
-                                                               user.getUserId())).thenReturn(Optional.empty());
+        when(categoryItemCountRepository.findByCategoryIdAndUserId(categoryId,
+                                                                   user.getUserId())).thenReturn(Optional.empty());
 
         // Act & Assert
         assertThrows(CategoryNotFoundException.class,
@@ -201,9 +213,10 @@ class CategoryServiceTest {
                                               .size(10)
                                               .direction(Sort.Direction.ASC)
                                               .build();
-        Page<Category> categoryPage = new PageImpl<>(List.of(category));
+        Page<CategoryItemCount> categoryPage = new PageImpl<>(List.of(categoryItemCount));
         when(authService.findUserByEmail(userEmail)).thenReturn(user);
-        when(categoryRepository.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(categoryPage);
+        when(categoryItemCountRepository.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(
+                categoryPage);
 
         // Act
         Page<CategoryDto> result = categoryService.getCategoriesByFilters(userEmail, filter);

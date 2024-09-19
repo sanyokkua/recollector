@@ -13,8 +13,8 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import ua.kostenko.recollector.app.entity.User;
+import ua.kostenko.recollector.app.repository.InvalidatedTokenRepository;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -24,10 +24,12 @@ import static org.mockito.Mockito.*;
 class JwtRequestFilterTest {
 
     @Mock
-    private JwtUtil jwtUtil;
+    private JwtHelperUtil jwtUtil;
 
     @Mock
-    private UserDetailsService userDetailsService;
+    private AuthenticationService authenticationService;
+    @Mock
+    private InvalidatedTokenRepository invalidatedTokenRepository;
 
     @Mock
     private HttpServletRequest request;
@@ -44,37 +46,36 @@ class JwtRequestFilterTest {
     void setup() {
         MockitoAnnotations.openMocks(this);
         // Initialize any required fields or mock behavior
-        Mockito.reset(jwtUtil, userDetailsService, request, response, filterChain);
+        Mockito.reset(jwtUtil, request, response, filterChain);
         SecurityContextHolder.getContext().setAuthentication(null);
 
-        jwtRequestFilter = new JwtRequestFilter(jwtUtil, userDetailsService);
+        jwtRequestFilter = new JwtRequestFilter(jwtUtil, authenticationService, invalidatedTokenRepository);
     }
 
     @Test
     void doFilterInternal_validToken_authenticatesUser() throws Exception {
         String jwt = "valid.jwt.token";
         String email = "user@example.com";
-        UserDetails userDetails = mock(UserDetails.class);
+        User userDetails = mock(User.class);
 
         when(request.getHeader("Authorization")).thenReturn("Bearer " + jwt);
-        when(jwtUtil.extractClaims(jwt)).thenReturn(mock(Claims.class));
-        when(jwtUtil.extractClaims(jwt).getSubject()).thenReturn(email);
-        when(jwtUtil.validateToken(jwt, email)).thenReturn(true);
-        when(userDetailsService.loadUserByUsername(email)).thenReturn(userDetails);
-        when(userDetails.getUsername()).thenReturn(email);
+        when(jwtUtil.extractClaimsFromMainJwtToken(jwt)).thenReturn(mock(Claims.class));
+        when(jwtUtil.extractClaimsFromMainJwtToken(jwt).getSubject()).thenReturn(email);
+        when(jwtUtil.validateMainJwtToken(jwt, email)).thenReturn(true);
+        when(authenticationService.findUserByEmail(email)).thenReturn(userDetails);
+        when(userDetails.getEmail()).thenReturn(email);
 
         jwtRequestFilter.doFilterInternal(request, response, filterChain);
 
-        verify(jwtUtil, times(2)).extractClaims(jwt);
-        verify(jwtUtil).validateToken(jwt, email);
-        verify(userDetailsService).loadUserByUsername(email);
+        verify(jwtUtil, times(2)).extractClaimsFromMainJwtToken(jwt);
+        verify(jwtUtil).validateMainJwtToken(jwt, email);
+        verify(authenticationService).findUserByEmail(email);
 
         UsernamePasswordAuthenticationToken auth = (UsernamePasswordAuthenticationToken) SecurityContextHolder.getContext()
                                                                                                               .getAuthentication();
-
+        User user = (User) auth.getPrincipal();
         assertNotNull(auth);
-        assertEquals(email, auth.getName());
-        assertEquals(userDetails.getAuthorities(), auth.getAuthorities());
+        assertEquals(email, user.getEmail());
     }
 
     @Test
@@ -82,13 +83,13 @@ class JwtRequestFilterTest {
         String jwt = "invalid.jwt.token";
 
         when(request.getHeader("Authorization")).thenReturn("Bearer " + jwt);
-        when(jwtUtil.extractClaims(jwt)).thenThrow(new RuntimeException("Invalid JWT"));
+        when(jwtUtil.extractClaimsFromMainJwtToken(jwt)).thenThrow(new RuntimeException("Invalid JWT"));
 
         jwtRequestFilter.doFilterInternal(request, response, filterChain);
 
-        verify(jwtUtil).extractClaims(jwt);
-        verify(jwtUtil, never()).validateToken(anyString(), anyString());
-        verify(userDetailsService, never()).loadUserByUsername(anyString());
+        verify(jwtUtil).extractClaimsFromMainJwtToken(jwt);
+        verify(jwtUtil, never()).validateMainJwtToken(anyString(), anyString());
+        verify(authenticationService, never()).findUserByEmail(anyString());
 
         assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
@@ -99,8 +100,8 @@ class JwtRequestFilterTest {
 
         jwtRequestFilter.doFilterInternal(request, response, filterChain);
 
-        verify(jwtUtil, never()).extractClaims(anyString());
-        verify(userDetailsService, never()).loadUserByUsername(anyString());
+        verify(jwtUtil, never()).extractClaimsFromMainJwtToken(anyString());
+        verify(authenticationService, never()).findUserByEmail(anyString());
 
         assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
@@ -110,13 +111,13 @@ class JwtRequestFilterTest {
         String jwt = "malformed.jwt.token";
 
         when(request.getHeader("Authorization")).thenReturn("Bearer " + jwt);
-        when(jwtUtil.extractClaims(jwt)).thenThrow(new RuntimeException("Malformed JWT"));
+        when(jwtUtil.extractClaimsFromMainJwtToken(jwt)).thenThrow(new RuntimeException("Malformed JWT"));
 
         jwtRequestFilter.doFilterInternal(request, response, filterChain);
 
-        verify(jwtUtil).extractClaims(jwt);
-        verify(jwtUtil, never()).validateToken(anyString(), anyString());
-        verify(userDetailsService, never()).loadUserByUsername(anyString());
+        verify(jwtUtil).extractClaimsFromMainJwtToken(jwt);
+        verify(jwtUtil, never()).validateMainJwtToken(anyString(), anyString());
+        verify(authenticationService, never()).findUserByEmail(anyString());
 
         assertNull(SecurityContextHolder.getContext().getAuthentication());
     }

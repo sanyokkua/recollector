@@ -7,16 +7,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import ua.kostenko.recollector.app.TestApplicationContextInitializer;
 import ua.kostenko.recollector.app.entity.Category;
 import ua.kostenko.recollector.app.entity.User;
-import ua.kostenko.recollector.app.entity.specification.CategorySpecification;
 
 import java.util.List;
 import java.util.Optional;
@@ -226,123 +221,5 @@ class CategoryRepositoryTest {
         // Assert
         Optional<Category> deletedCategory = categoryRepository.findById(nonExistingCategoryId);
         assertThat(deletedCategory).isEmpty();
-    }
-
-    private void saveCategoriesForUser(User user) {
-        categoryRepository.save(Category.builder().categoryName("Food").user(user).build());
-        categoryRepository.save(Category.builder().categoryName("Books").user(user).build());
-        categoryRepository.save(Category.builder().categoryName("Electronics").user(user).build());
-    }
-
-    @Test
-    void findAllBySpecification_validUserIdAndCategoryName_categoriesAreFiltered() {
-        // Arrange
-        saveCategoriesForUser(testUser);
-        String categoryName = "Books";
-        PageRequest pageable = PageRequest.of(0, 10, Sort.by("categoryName"));
-        Specification<Category> spec = CategorySpecification.builder()
-                                                            .userId(testUser.getUserId())
-                                                            .categoryName(categoryName)
-                                                            .build();
-
-        // Act
-        Page<Category> result = categoryRepository.findAll(spec, pageable);
-
-        // Assert
-        assertThat(result).hasSize(1);
-        assertThat(result.getContent().get(0).getCategoryName()).isEqualTo(categoryName);
-    }
-
-    @Test
-    void findAllBySpecification_validUserIdWithoutCategoryName_allCategoriesAreReturned() {
-        // Arrange
-        saveCategoriesForUser(testUser);
-        PageRequest pageable = PageRequest.of(0, 10, Sort.by("categoryName"));
-        Specification<Category> spec = CategorySpecification.builder()
-                                                            .userId(testUser.getUserId())
-                                                            .categoryName(null)
-                                                            .build();
-
-        // Act
-        Page<Category> result = categoryRepository.findAll(spec, pageable);
-
-        // Assert
-        assertThat(result).hasSize(3);
-        assertThat(result.getContent().stream().map(Category::getCategoryName)).containsExactlyInAnyOrder("Food",
-                                                                                                          "Books",
-                                                                                                          "Electronics");
-    }
-
-    @Test
-    void findAllBySpecification_invalidUserId_noCategoriesAreReturned() {
-        // Arrange
-        saveCategoriesForUser(testUser);
-        Long invalidUserId = -1L;
-        PageRequest pageable = PageRequest.of(0, 10, Sort.by("categoryName"));
-        Specification<Category> spec = CategorySpecification.builder().userId(invalidUserId).categoryName(null).build();
-
-        // Act
-        Page<Category> result = categoryRepository.findAll(spec, pageable);
-
-        // Assert
-        assertThat(result).isEmpty();
-    }
-
-    @Test
-    void findAllBySpecification_validUserIdAndPartialCategoryName_categoriesAreFilteredByPartialName() {
-        // Arrange
-        saveCategoriesForUser(testUser);
-        String categoryNamePart = "oo";
-        PageRequest pageable = PageRequest.of(0, 10, Sort.by("categoryName"));
-        Specification<Category> spec = CategorySpecification.builder()
-                                                            .userId(testUser.getUserId())
-                                                            .categoryName(categoryNamePart)
-                                                            .build();
-
-        // Act
-        Page<Category> result = categoryRepository.findAll(spec, pageable);
-
-        // Assert
-        assertThat(result).hasSize(2);
-        assertThat(result.getContent().stream().map(Category::getCategoryName)).containsExactlyInAnyOrder("Food",
-                                                                                                          "Books");
-    }
-
-    @Test
-    void findAllBySpecification_validUserIdAndEmptyCategoryName_noCategoryIsFiltered() {
-        // Arrange
-        saveCategoriesForUser(testUser);
-        String emptyCategoryName = "";
-        PageRequest pageable = PageRequest.of(0, 10, Sort.by("categoryName"));
-        Specification<Category> spec = CategorySpecification.builder()
-                                                            .userId(testUser.getUserId())
-                                                            .categoryName(emptyCategoryName)
-                                                            .build();
-
-        // Act
-        Page<Category> result = categoryRepository.findAll(spec, pageable);
-
-        // Assert
-        assertThat(result).size().isEqualTo(3);
-    }
-
-    @Test
-    void findAllBySpecification_validUserIdAndCategoryNameSortedByCategoryName_categoriesAreSorted() {
-        // Arrange
-        saveCategoriesForUser(testUser);
-        String categoryName = "s";
-        PageRequest pageable = PageRequest.of(0, 10, Sort.by(Sort.Order.asc("categoryName")));
-        Specification<Category> spec = CategorySpecification.builder()
-                                                            .userId(testUser.getUserId())
-                                                            .categoryName(categoryName)
-                                                            .build();
-
-        // Act
-        Page<Category> result = categoryRepository.findAll(spec, pageable);
-
-        // Assert
-        assertThat(result).hasSize(2);
-        assertThat(result.getContent().get(0).getCategoryName()).isEqualTo("Books");
-        assertThat(result.getContent().get(1).getCategoryName()).isEqualTo("Electronics");
     }
 }

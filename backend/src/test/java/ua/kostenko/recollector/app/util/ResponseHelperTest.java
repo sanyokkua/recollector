@@ -111,7 +111,7 @@ class ResponseHelperTest {
         assertTrue(responseBody.getData().isEmpty(), "Response data should be empty");
         assertNotNull(responseBody.getMeta(), "Meta information should not be null");
         assertEquals(1, responseBody.getMeta().getPagination().getCurrentPage(), "Current page should be 1");
-        assertEquals(0, responseBody.getMeta().getPagination().getItemsPerPage(), "Items per page should be 0");
+        assertEquals(10, responseBody.getMeta().getPagination().getItemsPerPage(), "Items per page should be 1-");
         assertEquals(0, responseBody.getMeta().getPagination().getTotalPages(), "Total pages should be 0");
         assertEquals(0, responseBody.getMeta().getPagination().getTotalItems(), "Total items should be 0");
         assertEquals("", responseBody.getMeta().getPagination().getSortField(), "Sort field should be empty");

@@ -12,7 +12,7 @@ import ua.kostenko.recollector.app.dto.CategoryDto;
 import ua.kostenko.recollector.app.dto.CategoryFilter;
 import ua.kostenko.recollector.app.dto.response.Response;
 import ua.kostenko.recollector.app.exception.CategoryValidationException;
-import ua.kostenko.recollector.app.security.AuthService;
+import ua.kostenko.recollector.app.security.AuthenticationService;
 import ua.kostenko.recollector.app.service.CategoryService;
 import ua.kostenko.recollector.app.util.ResponseHelper;
 
@@ -31,7 +31,7 @@ import java.util.Objects;
 public class CategoryController {
 
     private final CategoryService categoryService;
-    private final AuthService authService;
+    private final AuthenticationService authService;
 
     /**
      * Creates a new category.
@@ -44,9 +44,9 @@ public class CategoryController {
     @PostMapping
     public ResponseEntity<Response<CategoryDto>> createCategory(
             @RequestBody @Parameter(description = "Details of the category to be created") CategoryDto category) {
-        var email = authService.getUserEmailFromAuthContext();
+        var email = authService.getUserFromAuthContext();
         log.info("Creating category for user with email: {}", email);
-        var dto = categoryService.createCategory(email, category);
+        var dto = categoryService.createCategory(email.getEmail(), category);
         return ResponseHelper.buildDtoResponse(dto, HttpStatus.CREATED);
     }
 
@@ -61,9 +61,9 @@ public class CategoryController {
     @GetMapping
     public ResponseEntity<Response<List<CategoryDto>>> getAllCategories(
             @Parameter(description = "Filter criteria for categories") CategoryFilter categoryFilter) {
-        var email = authService.getUserEmailFromAuthContext();
+        var email = authService.getUserFromAuthContext();
         log.info("Retrieving categories for user with email: {}", email);
-        var dto = categoryService.getCategoriesByFilters(email, categoryFilter);
+        var dto = categoryService.getCategoriesByFilters(email.getEmail(), categoryFilter);
         return ResponseHelper.buildPageDtoResponse(dto, HttpStatus.OK);
     }
 
@@ -78,9 +78,9 @@ public class CategoryController {
     @GetMapping("/{category_id}")
     public ResponseEntity<Response<CategoryDto>> getCategory(
             @PathVariable("category_id") @Parameter(description = "ID of the category to retrieve") Long categoryId) {
-        var email = authService.getUserEmailFromAuthContext();
+        var email = authService.getUserFromAuthContext();
         log.info("Retrieving category with ID: {} for user with email: {}", categoryId, email);
-        var dto = categoryService.getCategory(email, categoryId);
+        var dto = categoryService.getCategory(email.getEmail(), categoryId);
         return ResponseHelper.buildDtoResponse(dto, HttpStatus.OK);
     }
 
@@ -99,7 +99,7 @@ public class CategoryController {
     public ResponseEntity<Response<CategoryDto>> updateCategory(
             @PathVariable("category_id") @Parameter(description = "ID of the category to be updated") Long categoryId,
             @RequestBody @Parameter(description = "Updated category details") CategoryDto category) {
-        var email = authService.getUserEmailFromAuthContext();
+        var email = authService.getUserFromAuthContext();
         log.info("Updating category with ID: {} for user with email: {}", categoryId, email);
 
         if (Objects.nonNull(categoryId) && !categoryId.equals(category.getCategoryId())) {
@@ -109,7 +109,7 @@ public class CategoryController {
             throw new CategoryValidationException("Category id in path and payload mismatch");
         }
 
-        var dto = categoryService.updateCategory(email, category);
+        var dto = categoryService.updateCategory(email.getEmail(), category);
         return ResponseHelper.buildDtoResponse(dto, HttpStatus.ACCEPTED);
     }
 
@@ -124,9 +124,9 @@ public class CategoryController {
     @DeleteMapping("/{category_id}")
     public ResponseEntity<Response<String>> deleteCategory(
             @PathVariable("category_id") @Parameter(description = "ID of the category to be deleted") Long categoryId) {
-        var email = authService.getUserEmailFromAuthContext();
+        var email = authService.getUserFromAuthContext();
         log.info("Deleting category with ID: {} for user with email: {}", categoryId, email);
-        var dto = categoryService.deleteCategory(email, categoryId);
+        var dto = categoryService.deleteCategory(email.getEmail(), categoryId);
         return ResponseHelper.buildDtoResponse(dto, HttpStatus.OK);
     }
 }

@@ -1,8 +1,9 @@
-import React from 'react';
-import RecollectorAppBar from './RecollectorAppBar';
-import RecollectorAppDrawer from './RecollectorAppDrawer';
-import {Box} from '@mui/material';
-import {Outlet} from 'react-router-dom';
+import { Box }              from "@mui/material";
+import React                from "react";
+import { Outlet }           from "react-router-dom";
+import RecollectorAppBar    from "./RecollectorAppBar";
+import RecollectorAppDrawer from "./RecollectorAppDrawer";
+
 
 /**
  * Layout component that defines the overall structure of the application.
@@ -13,13 +14,13 @@ import {Outlet} from 'react-router-dom';
 const Layout: React.FC = (): React.JSX.Element => {
     return (
         <Box>
-            {/* AppBar component for the top section of the app */}
+            {/* AppBar component for the top section of the app */ }
             <RecollectorAppBar/>
 
-            {/* Drawer component for the side navigation */}
+            {/* Drawer component for the side navigation */ }
             <RecollectorAppDrawer/>
 
-            {/* Outlet for rendering child routes */}
+            {/* Outlet for rendering child routes */ }
             <Outlet/>
         </Box>
     );

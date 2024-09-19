@@ -1,19 +1,61 @@
-import {configureStore} from '@reduxjs/toolkit';
-import drawerToggledReducer from './features/drawer/drawerSlice';
-import appBarSliceReducer from './features/appBar/appBarSlice';
+import { configureStore }                                                                      from "@reduxjs/toolkit";
+import {
+    logger
+}                                                                                              from "../config/appConfig.ts";
+import { currentCategoryIdSaver, currentCategoryNameSaver, userEmailSaver, userJwtTokenSaver } from "./browserStore.ts";
+import appBarSliceReducer
+                                                                                               from "./features/appBar/appBarSlice";
+import categoriesSliceReducer
+                                                                                               from "./features/categories/categoriesSlice";
+import drawerToggledReducer
+                                                                                               from "./features/drawer/drawerSlice";
+import globalsSliceReducer
+                                                                                               from "./features/global/globalSlice";
+import helperSliceReducer
+                                                                                               from "./features/helper/helperSlice.ts";
+import itemsSliceReducer
+                                                                                               from "./features/items/itemsSlice";
+import {
+    configureAxiosWithReduxStore
+}                                                                                              from "./store_config_axios";
+
+
+const log = logger.getLogger("reduxStore");
 
 /**
  * Configures and creates the Redux store with the specified reducers.
  * The store manages the global state of the application.
  */
-const store = configureStore({
-    reducer: {
-        // Reducer for managing the drawer toggled state
-        drawerToggled: drawerToggledReducer,
+const store = configureStore(
+    {
+        reducer: {
+            drawerToggled: drawerToggledReducer,
+            appBarHeader: appBarSliceReducer,
+            categories: categoriesSliceReducer,
+            items: itemsSliceReducer,
+            globals: globalsSliceReducer,
+            helper: helperSliceReducer
+        }
+    }
+);
 
-        // Reducer for managing the AppBar header state
-        appBarHeader: appBarSliceReducer,
-    },
+store.subscribe(() => {
+    try {
+        const state = store.getState();
+
+        const email = state.globals.userEmail;
+        const jwt = state.globals.userJwtToken;
+
+        const currentCategoryId = state.globals.currentCategoryId ?? -1;
+        const currentCategoryName = state.globals.currentCategoryName ?? "";
+
+        currentCategoryIdSaver(currentCategoryId);
+        currentCategoryNameSaver(currentCategoryName);
+        userEmailSaver(email);
+        userJwtTokenSaver(jwt);
+    } catch (err) {
+        log.error("Could not save partial state", err);
+    }
 });
 
 /**
@@ -33,5 +75,9 @@ export type AppDispatch = typeof store.dispatch;
  * Useful for when you need to access the store directly.
  */
 export type AppStore = typeof store;
+
+//
+configureAxiosWithReduxStore(store);
+//
 
 export default store;

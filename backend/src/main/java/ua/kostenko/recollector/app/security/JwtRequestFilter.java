@@ -8,13 +8,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import ua.kostenko.recollector.app.entity.User;
+import ua.kostenko.recollector.app.repository.InvalidatedTokenRepository;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -26,8 +27,9 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class JwtRequestFilter extends OncePerRequestFilter {
 
-    private final JwtUtil jwtUtil;
-    private final UserDetailsService userDetailsService;
+    private final JwtHelperUtil jwtUtil;
+    private final AuthenticationService authenticationService;
+    private final InvalidatedTokenRepository invalidatedTokenRepository;
 
     /**
      * Filters incoming HTTP requests to check for a JWT token in the Authorization header.
@@ -54,7 +56,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         if (Objects.nonNull(authorizationHeader) && authorizationHeader.startsWith("Bearer ")) {
             jwt = authorizationHeader.substring(7);
             try {
-                email = jwtUtil.extractClaims(jwt).getSubject();
+                email = jwtUtil.extractClaimsFromMainJwtToken(jwt).getSubject();
                 log.debug("Extracted email '{}' from JWT token", email);
             } catch (Exception e) {
                 log.warn("Failed to extract claims from JWT token: {}", e.getMessage());
@@ -65,16 +67,24 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
         // Authenticate the user if the JWT is valid and the user is not already authenticated
         if (Objects.nonNull(email) && Objects.isNull(SecurityContextHolder.getContext().getAuthentication())) {
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(email);
+            User foundUser = authenticationService.findUserByEmail(email);
 
-            if (jwtUtil.validateToken(jwt, userDetails.getUsername())) {
-                log.debug("JWT token is valid for user '{}'", email);
-                var authenticationToken = new UsernamePasswordAuthenticationToken(userDetails,
-                                                                                  null,
-                                                                                  userDetails.getAuthorities());
-                authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-                log.info("User '{}' authenticated successfully", email);
+            if (jwtUtil.validateMainJwtToken(jwt, foundUser.getEmail())) {
+                var tokenInDb = invalidatedTokenRepository.findByUser_UserIdAndToken(foundUser.getUserId(), jwt);
+                var isTokenNotInBlackList = tokenInDb.isEmpty();
+
+                if (isTokenNotInBlackList) {
+                    log.debug("JWT token is valid for user '{}'", email);
+                    var passwordHash = foundUser.getPasswordHash();
+                    var details = new WebAuthenticationDetailsSource().buildDetails(request);
+                    var authenticationToken = new UsernamePasswordAuthenticationToken(foundUser,
+                                                                                      passwordHash,
+                                                                                      List.of());
+                    authenticationToken.setDetails(details);
+
+                    SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                    log.info("User '{}' authenticated successfully", email);
+                }
             } else {
                 log.warn("Invalid JWT token for user '{}'", email);
             }

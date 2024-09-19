@@ -39,7 +39,7 @@ public class PageRequestUtils {
         }
 
         var currentPage = data.getNumber() + 1;
-        var itemsPerPage = data.getNumberOfElements();
+        var itemsPerPage = data.getSize();
         var totalPages = data.getTotalPages();
         var totalItems = data.getTotalElements();
 

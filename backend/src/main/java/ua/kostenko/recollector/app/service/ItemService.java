@@ -16,10 +16,8 @@ import ua.kostenko.recollector.app.exception.ItemAlreadyExistsException;
 import ua.kostenko.recollector.app.exception.ItemNotFoundException;
 import ua.kostenko.recollector.app.repository.CategoryRepository;
 import ua.kostenko.recollector.app.repository.ItemRepository;
-import ua.kostenko.recollector.app.security.AuthService;
+import ua.kostenko.recollector.app.security.AuthenticationService;
 import ua.kostenko.recollector.app.util.ItemUtils;
-
-import java.time.LocalDateTime;
 
 import static ua.kostenko.recollector.app.util.PageRequestUtils.createPageRequest;
 
@@ -36,7 +34,7 @@ import static ua.kostenko.recollector.app.util.PageRequestUtils.createPageReques
 @RequiredArgsConstructor
 public class ItemService {
 
-    private final AuthService authService;
+    private final AuthenticationService authService;
     private final ItemRepository itemRepository;
     private final CategoryRepository categoryRepository;
 
@@ -241,14 +239,11 @@ public class ItemService {
      */
     private Item buildNewItem(ItemDto itemDto, Category category) {
         var status = itemDto.getItemStatus();
-        var creationTime = LocalDateTime.now();
         return Item.builder()
                    .category(category)
                    .itemName(itemDto.getItemName())
                    .itemStatus(status.name())
                    .itemNotes(itemDto.getItemNotes())
-                   .createdAt(creationTime)
-                   .updatedAt(creationTime)
                    .build();
     }
 
@@ -263,6 +258,5 @@ public class ItemService {
         item.setItemName(itemDto.getItemName());
         item.setItemStatus(status.name());
         item.setItemNotes(itemDto.getItemNotes());
-        item.setUpdatedAt(LocalDateTime.now());
     }
 }

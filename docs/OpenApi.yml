@@ -3,7 +3,7 @@ info:
   title: OpenAPI definition
   version: v0
 servers:
-  - url: http://localhost:8081
+  - url: http://localhost:8080
     description: Generated server url
 tags:
   - name: Item Management
@@ -23,6 +23,33 @@ tags:
       Endpoints for retrieving helper information such as item statuses and user
       statistics.
 paths:
+  /api/v1/helper/settings:
+    get:
+      tags:
+        - Helper Operations
+      summary: Retrieve user settings
+      description: Retrieves settings for the authenticated user based on their email.
+      operationId: getUserSettings
+      responses:
+        '200':
+          description: OK
+          content: { }
+    put:
+      tags:
+        - Helper Operations
+      summary: Update user settings
+      description: Updates settings for the authenticated user based on their email.
+      operationId: updateUserSettings
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserSettingsDto'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content: { }
   /api/v1/categories/{category_id}:
     get:
       tags:
@@ -295,6 +322,60 @@ paths:
         '200':
           description: OK
           content: { }
+  /api/v1/auth/refresh-token:
+    post:
+      tags:
+        - Authentication REST Controller
+      summary: Refresh access token
+      description: Refreshes the access token using the refresh token.
+      operationId: refreshToken
+      parameters:
+        - name: refreshToken
+          in: cookie
+          description: Refresh token stored in a cookie
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefreshRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content: { }
+  /api/v1/auth/logout:
+    post:
+      tags:
+        - Authentication REST Controller
+      summary: Logout user
+      description: Logs out the user by invalidating the access and refresh tokens.
+      operationId: logoutUser
+      parameters:
+        - name: Authorization
+          in: header
+          description: Authorization header containing access token
+          required: true
+          schema:
+            type: string
+        - name: refreshToken
+          in: cookie
+          description: Refresh token stored in a cookie
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutDto'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content: { }
   /api/v1/auth/login:
     post:
       tags:
@@ -359,6 +440,19 @@ paths:
         Changes the user's password from the old one to the new password
         provided in the request.
       operationId: changePassword
+      parameters:
+        - name: Authorization
+          in: header
+          description: Authorization header containing access token
+          required: true
+          schema:
+            type: string
+        - name: refreshToken
+          in: cookie
+          description: Refresh token stored in a cookie
+          required: true
+          schema:
+            type: string
       requestBody:
         content:
           application/json:
@@ -393,6 +487,54 @@ paths:
           content: { }
 components:
   schemas:
+    UserSettingsDto:
+      type: object
+      properties:
+        userEmail:
+          type: string
+          description: The email address of the user.
+          example: user@example.com
+        categoryBackgroundColor:
+          type: string
+          description: The color of the category view background.
+          example: '#1de9b6'
+          default: '#f9fbe7'
+        categoryItemColor:
+          type: string
+          description: The color of the category item background.
+          example: '#1de9b6'
+          default: '#f0f4c3'
+        categoryFabColor:
+          type: string
+          description: The color of the category view fab background.
+          example: '#1de9b6'
+          default: '#8bc34a'
+        categoryPageSize:
+          type: integer
+          description: The size of the page. Number of items in Category view.
+          format: int32
+          example: 10
+        itemBackgroundColor:
+          type: string
+          description: The color of the item view background.
+          example: '#1de9b6'
+          default: '#e0f7fa'
+        itemItemColor:
+          type: string
+          description: The color of the item background.
+          example: '#1de9b6'
+          default: '#b2ebf2'
+        itemFabColor:
+          type: string
+          description: The color of the item view fab background.
+          example: '#1de9b6'
+          default: '#03a9f4'
+        itemPageSize:
+          type: integer
+          description: The size of the page. Number of items in Items view.
+          format: int32
+          example: 10
+      description: Updated userSettings details
     CategoryDto:
       type: object
       properties:
@@ -493,6 +635,26 @@ components:
           description: Confirmation of the password to ensure it matches.
           example: newPassword123
       description: Details of the user to be registered
+    TokenRefreshRequest:
+      type: object
+      properties:
+        userEmail:
+          type: string
+          description: Email of the user requesting the token refresh.
+          example: user@example.com
+        accessToken:
+          type: string
+          description: JWT access token used for authentication.
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+      description: Token refresh request containing user email
+    LogoutDto:
+      type: object
+      properties:
+        userEmail:
+          type: string
+          description: Email of the user requesting to log out.
+          example: user@example.com
+      description: Details of the user requesting logout
     LoginRequestDto:
       type: object
       properties:

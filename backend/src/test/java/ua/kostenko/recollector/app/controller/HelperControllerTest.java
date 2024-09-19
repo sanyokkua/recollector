@@ -6,11 +6,14 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import ua.kostenko.recollector.app.dto.StatisticDto;
+import ua.kostenko.recollector.app.entity.User;
 import ua.kostenko.recollector.app.exception.UserNotAuthenticatedException;
-import ua.kostenko.recollector.app.security.AuthService;
-import ua.kostenko.recollector.app.security.JwtUtil;
+import ua.kostenko.recollector.app.repository.InvalidatedTokenRepository;
+import ua.kostenko.recollector.app.security.AuthenticationService;
+import ua.kostenko.recollector.app.security.JwtHelperUtil;
 import ua.kostenko.recollector.app.service.HelperService;
 
 import java.util.List;
@@ -22,19 +25,23 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@ActiveProfiles("test")
 @WebMvcTest(HelperController.class)
 @AutoConfigureMockMvc(addFilters = false)
 class HelperControllerTest {
 
     private static final String BASE_URL = "/api/v1/helper";
     private static final String VALID_EMAIL = "valid@email.com";
+    private static final User VALID_USER = User.builder().email(VALID_EMAIL).build();
 
     @Autowired
     private MockMvc mockMvc;
     @MockBean
-    private JwtUtil jwtUtil;
+    private JwtHelperUtil jwtUtil;
     @MockBean
-    private AuthService authService;
+    private AuthenticationService authService;
+    @MockBean
+    private InvalidatedTokenRepository invalidatedTokenRepository;
     @MockBean
     private HelperService helperService;
 
@@ -67,7 +74,7 @@ class HelperControllerTest {
                                                       .totalNumberOfItemsFinished(5)
                                                       .build();
 
-        when(authService.getUserEmailFromAuthContext()).thenReturn(VALID_EMAIL);
+        when(authService.getUserFromAuthContext()).thenReturn(VALID_USER);
         when(helperService.getStatistics(VALID_EMAIL)).thenReturn(expectedStatistics);
 
         // Act & Assert
@@ -88,8 +95,7 @@ class HelperControllerTest {
     @Test
     void getStatistics_getRequestWithMissingEmail_shouldReturnUnauthorized() throws Exception {
         // Arrange
-        when(authService.getUserEmailFromAuthContext()).thenThrow(new UserNotAuthenticatedException(
-                "User not authenticated"));
+        when(authService.getUserFromAuthContext()).thenThrow(new UserNotAuthenticatedException("User not authenticated"));
 
         // Act & Assert
         mockMvc.perform(get(BASE_URL + "/statistics"))

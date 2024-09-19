@@ -22,7 +22,7 @@ import ua.kostenko.recollector.app.exception.ItemNotFoundException;
 import ua.kostenko.recollector.app.exception.ItemValidationException;
 import ua.kostenko.recollector.app.repository.CategoryRepository;
 import ua.kostenko.recollector.app.repository.ItemRepository;
-import ua.kostenko.recollector.app.security.AuthService;
+import ua.kostenko.recollector.app.security.AuthenticationService;
 
 import java.util.List;
 import java.util.Optional;
@@ -36,7 +36,7 @@ import static org.mockito.Mockito.when;
 class ItemServiceTest {
 
     @Mock
-    private AuthService authService;
+    private AuthenticationService authService;
 
     @Mock
     private ItemRepository itemRepository;
@@ -61,9 +61,7 @@ class ItemServiceTest {
         user = User.builder().userId(1L).email(userEmail).build();
         category = Category.builder().categoryId(1L).categoryName("Test").build();
         itemDto = ItemDto.builder()
-                         .itemId(1L)
-                         .categoryId(1L)
-                         .itemName("Test Item").itemStatus(ItemStatus.IN_PROGRESS)
+                         .itemId(1L).categoryId(1L).itemName("Test Item").itemStatus(ItemStatus.IN_PROGRESS)
                          .build();
         item = Item.builder()
                    .itemId(1L)
@@ -110,11 +108,11 @@ class ItemServiceTest {
         ItemFilter itemFilter = ItemFilter.builder()
                                           .categoryId(category.getCategoryId())
                                           .direction(Sort.Direction.ASC)
-                                          .itemName(itemDto.getItemName()).itemStatus(itemDto.getItemStatus().name())
+                                          .itemName(itemDto.getItemName())
+                                          .itemStatus(itemDto.getItemStatus().name())
                                           .page(0)
                                           .size(10)
                                           .build();
-        Pageable pageable = Pageable.ofSize(10);
         Page<Item> page = new PageImpl<>(List.of(item));
 
         when(itemRepository.findAll(any(ItemSpecification.class), any(Pageable.class))).thenReturn(page);
@@ -148,15 +146,16 @@ class ItemServiceTest {
     @Test
     void getItem_nonExistingItemId_throwsItemNotFoundException() {
         // Arrange
+        Long categoryId = category.getCategoryId();
+        Long itemId = itemDto.getItemId();
+
         when(authService.findUserByEmail(userEmail)).thenReturn(user);
-        when(categoryRepository.findByCategoryIdAndUser_UserId(category.getCategoryId(), user.getUserId())).thenReturn(
-                Optional.of(category));
-        when(itemRepository.findByItemIdAndCategory_CategoryId(itemDto.getItemId(),
-                                                               category.getCategoryId())).thenReturn(Optional.empty());
+        when(categoryRepository.findByCategoryIdAndUser_UserId(categoryId, user.getUserId())).thenReturn(Optional.of(
+                category));
+        when(itemRepository.findByItemIdAndCategory_CategoryId(itemId, categoryId)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(ItemNotFoundException.class,
-                     () -> itemService.getItem(userEmail, category.getCategoryId(), itemDto.getItemId()));
+        assertThrows(ItemNotFoundException.class, () -> itemService.getItem(userEmail, categoryId, itemId));
     }
 
     @Test

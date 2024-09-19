@@ -8,17 +8,15 @@ import org.springframework.stereotype.Service;
 import ua.kostenko.recollector.app.dto.CategoryDto;
 import ua.kostenko.recollector.app.dto.CategoryFilter;
 import ua.kostenko.recollector.app.entity.Category;
-import ua.kostenko.recollector.app.entity.ItemStatus;
+import ua.kostenko.recollector.app.entity.CategoryItemCount;
 import ua.kostenko.recollector.app.entity.User;
-import ua.kostenko.recollector.app.entity.specification.CategorySpecification;
+import ua.kostenko.recollector.app.entity.specification.CategoryItemCountSpecification;
 import ua.kostenko.recollector.app.exception.CategoryAlreadyExistsException;
 import ua.kostenko.recollector.app.exception.CategoryNotFoundException;
+import ua.kostenko.recollector.app.repository.CategoryItemCountRepository;
 import ua.kostenko.recollector.app.repository.CategoryRepository;
-import ua.kostenko.recollector.app.repository.ItemRepository;
-import ua.kostenko.recollector.app.security.AuthService;
+import ua.kostenko.recollector.app.security.AuthenticationService;
 import ua.kostenko.recollector.app.util.CategoryUtils;
-
-import java.time.LocalDateTime;
 
 import static ua.kostenko.recollector.app.util.PageRequestUtils.createPageRequest;
 
@@ -31,9 +29,9 @@ import static ua.kostenko.recollector.app.util.PageRequestUtils.createPageReques
 @RequiredArgsConstructor
 public class CategoryService {
 
-    private final AuthService authService;
+    private final AuthenticationService authService;
     private final CategoryRepository categoryRepository;
-    private final ItemRepository itemRepository;
+    private final CategoryItemCountRepository categoryItemCountRepository;
 
     private static String buildErrorMessage(Long categoryId) {
         return "Category with id '" + categoryId + "' not found";
@@ -64,26 +62,6 @@ public class CategoryService {
     }
 
     /**
-     * Updates the given CategoryDto with the counts of items in various statuses.
-     * <p>
-     * This method retrieves the number of items associated with the specified category that are
-     * in the TODO_LATER, IN_PROGRESS, and FINISHED statuses, and updates the corresponding
-     * fields in the CategoryDto.
-     *
-     * @param category the CategoryDto to update with item counts
-     */
-    private void updateCategoryWithCounts(CategoryDto category) {
-        Long categoryId = category.getCategoryId();
-        long todo = itemRepository.countItemsByCategoryAndStatus(categoryId, ItemStatus.TODO_LATER.name());
-        long progress = itemRepository.countItemsByCategoryAndStatus(categoryId, ItemStatus.IN_PROGRESS.name());
-        long finished = itemRepository.countItemsByCategoryAndStatus(categoryId, ItemStatus.FINISHED.name());
-
-        category.setTodoItems(todo);
-        category.setInProgressItems(progress);
-        category.setFinishedItems(finished);
-    }
-
-    /**
      * Retrieves a specific category by its ID.
      *
      * @param userEmail  the email of the user
@@ -95,12 +73,12 @@ public class CategoryService {
         log.info("Retrieving category with id: {} for user: {}", categoryId, userEmail);
 
         User user = getUser(userEmail);
-        Category foundCategory = categoryRepository.findByCategoryIdAndUser_UserId(categoryId, user.getUserId())
-                                                   .orElseThrow(() -> new CategoryNotFoundException(buildErrorMessage(
-                                                           categoryId)));
+        CategoryItemCount foundCategory = categoryItemCountRepository.findByCategoryIdAndUserId(categoryId,
+                                                                                                user.getUserId())
+                                                                     .orElseThrow(() -> new CategoryNotFoundException(
+                                                                             buildErrorMessage(categoryId)));
 
-        CategoryDto categoryDto = CategoryUtils.mapToDto(foundCategory);
-        updateCategoryWithCounts(categoryDto);
+        CategoryDto categoryDto = CategoryUtils.mapCategoryItemCountToCategoryDto(foundCategory);
 
         log.info("Category retrieved successfully with id: {}", categoryId);
         return categoryDto;
@@ -170,18 +148,20 @@ public class CategoryService {
         log.info("Retrieving categories with filters for user: {}", userEmail);
 
         User user = getUser(userEmail);
+
         var pageable = createPageRequest(categoryFilter.getPage(),
                                          categoryFilter.getSize(),
                                          Sort.by(categoryFilter.getDirection(), "categoryName"));
 
-        var spec = CategorySpecification.builder()
-                                        .userId(user.getUserId()).categoryName(categoryFilter.getCategoryName())
-                                        .build();
+        var spec = CategoryItemCountSpecification.builder()
+                                                 .userId(user.getUserId())
+                                                 .categoryName(categoryFilter.getCategoryName())
+                                                 .build();
 
-        Page<Category> resultFromDb = categoryRepository.findAll(spec, pageable);
-
+        Page<CategoryItemCount> resultFromDb = categoryItemCountRepository.findAll(spec, pageable);
+        Page<CategoryDto> page = resultFromDb.map(CategoryUtils::mapCategoryItemCountToCategoryDto);
         log.info("Retrieved {} categories with filters for user: {}", resultFromDb.getTotalElements(), userEmail);
-        return resultFromDb.map(CategoryUtils::mapToDto);
+        return page;
     }
 
     /**
@@ -224,10 +204,7 @@ public class CategoryService {
      * @return a new Category entity
      */
     private Category buildNewCategory(CategoryDto categoryDto, User user) {
-        LocalDateTime now = LocalDateTime.now();
-        return Category.builder().user(user).createdAt(now).updatedAt(now)
-                       .categoryName(categoryDto.getCategoryName())
-                       .build();
+        return Category.builder().user(user).categoryName(categoryDto.getCategoryName()).build();
     }
 
     /**
@@ -238,6 +215,5 @@ public class CategoryService {
      */
     private void updateCategoryDetails(Category category, CategoryDto categoryDto) {
         category.setCategoryName(categoryDto.getCategoryName());
-        category.setUpdatedAt(LocalDateTime.now());
     }
 }

@@ -67,8 +67,11 @@ public class ItemUtils {
         }
 
         ItemStatus itemStatus = ItemStatus.valueOf(item.getItemStatus());
-        ItemDto itemDto = ItemDto.builder().itemId(item.getItemId()).categoryId(item.getCategory().getCategoryId())
-                                 .itemName(item.getItemName()).itemStatus(itemStatus)
+        ItemDto itemDto = ItemDto.builder()
+                                 .itemId(item.getItemId())
+                                 .categoryId(item.getCategory().getCategoryId())
+                                 .itemName(item.getItemName())
+                                 .itemStatus(itemStatus)
                                  .itemNotes(item.getItemNotes())
                                  .build();
         log.debug("Mapped Item to ItemDto: {}", itemDto);

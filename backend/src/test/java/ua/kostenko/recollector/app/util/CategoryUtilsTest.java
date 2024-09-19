@@ -110,7 +110,7 @@ class CategoryUtilsTest {
         CategoryValidationException thrown = assertThrows(CategoryValidationException.class,
                                                           () -> CategoryUtils.validateCategoryDto(null),
                                                           "Expected validateCategoryDto to throw, but it didn't");
-        assertEquals("Category is null or has blank name", thrown.getMessage(), "Exception message should match");
+        assertEquals("CategoryDto is null or has a blank name", thrown.getMessage(), "Exception message should match");
     }
 
     @Test
@@ -123,7 +123,7 @@ class CategoryUtilsTest {
         CategoryValidationException thrown = assertThrows(CategoryValidationException.class,
                                                           () -> CategoryUtils.validateCategoryDto(invalidCategory),
                                                           "Expected validateCategoryDto to throw, but it didn't");
-        assertEquals("Category is null or has blank name", thrown.getMessage(), "Exception message should match");
+        assertEquals("CategoryDto is null or has a blank name", thrown.getMessage(), "Exception message should match");
     }
 
     @Test
@@ -136,7 +136,7 @@ class CategoryUtilsTest {
         CategoryValidationException thrown = assertThrows(CategoryValidationException.class,
                                                           () -> CategoryUtils.validateCategoryDto(invalidCategory),
                                                           "Expected validateCategoryDto to throw, but it didn't");
-        assertEquals("Category is null or has blank name", thrown.getMessage(), "Exception message should match");
+        assertEquals("CategoryDto is null or has a blank name", thrown.getMessage(), "Exception message should match");
     }
 
     @Test
@@ -152,6 +152,6 @@ class CategoryUtilsTest {
         CategoryValidationException thrown = assertThrows(CategoryValidationException.class,
                                                           () -> CategoryUtils.validateCategoryId(null),
                                                           "Expected validateCategoryId to throw, but it didn't");
-        assertEquals("Category id is null", thrown.getMessage(), "Exception message should match");
+        assertEquals("Category ID cannot be null", thrown.getMessage(), "Exception message should match");
     }
 }

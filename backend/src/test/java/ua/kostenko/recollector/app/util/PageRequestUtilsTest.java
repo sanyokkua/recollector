@@ -23,7 +23,7 @@ class PageRequestUtilsTest {
         PaginationInfo pagination = metaInfo.getPagination();
         assertNotNull(pagination, "PaginationInfo should not be null");
         assertEquals(1, pagination.getCurrentPage(), "Current page should be 1");
-        assertEquals(1, pagination.getItemsPerPage(), "Items per page should be 1");
+        assertEquals(10, pagination.getItemsPerPage(), "Items per page should be 1");
         assertEquals(10, pagination.getTotalPages(), "Total pages should be 10");
         assertEquals(100, pagination.getTotalItems(), "Total items should be 100");
         assertEquals("name", pagination.getSortField(), "Sort field should be 'name'");
@@ -40,7 +40,7 @@ class PageRequestUtilsTest {
         PaginationInfo pagination = metaInfo.getPagination();
         assertNotNull(pagination, "PaginationInfo should not be null");
         assertEquals(1, pagination.getCurrentPage(), "Current page should be 1");
-        assertEquals(1, pagination.getItemsPerPage(), "Items per page should be 1");
+        assertEquals(10, pagination.getItemsPerPage(), "Items per page should be 1");
         assertEquals(10, pagination.getTotalPages(), "Total pages should be 10");
         assertEquals(100, pagination.getTotalItems(), "Total items should be 100");
         assertEquals("", pagination.getSortField(), "Sort field should be empty");
@@ -57,7 +57,7 @@ class PageRequestUtilsTest {
         PaginationInfo pagination = metaInfo.getPagination();
         assertNotNull(pagination, "PaginationInfo should not be null");
         assertEquals(1, pagination.getCurrentPage(), "Current page should be 1");
-        assertEquals(0, pagination.getItemsPerPage(), "Items per page should be 0");
+        assertEquals(10, pagination.getItemsPerPage(), "Items per page should be 0");
         assertEquals(0, pagination.getTotalPages(), "Total pages should be 0");
         assertEquals(0, pagination.getTotalItems(), "Total items should be 0");
         assertEquals("", pagination.getSortField(), "Sort field should be empty");
